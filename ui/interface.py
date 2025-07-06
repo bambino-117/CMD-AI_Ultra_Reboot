@@ -251,6 +251,12 @@ class AppUI:
             if daily_suggestion:
                 self.text_area.display_message("")
                 self.text_area.display_message(daily_suggestion)
+            
+            # Vérifier les mises à jour
+            update_message = self.dispatcher.check_startup_update()
+            if update_message:
+                self.text_area.display_message("")
+                self.text_area.display_message(update_message)
 
     def toggle_settings(self):
         if self.settings_visible:

@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  windows-builder:
+    build:
+      context: .
+      dockerfile: Dockerfile.windows
+    volumes:
+      - ./dist_docker:/app/dist
+      - ./:/app:ro
+    environment:
+      - DISPLAY=:99
+    command: >
+      sh -c "
+        mkdir -p /app/dist &&
+        xvfb-run -a wine python -m PyInstaller 
+          --onefile 
+          --windowed 
+          --name CMD-AI_Ultra_Reboot 
+          --icon ressources/icons/CMD-AI_Ultra_main.ico 
+          --add-data 'ressources;ressources' 
+          --add-data 'extensions;extensions' 
+          main.py &&
+        cp dist/CMD-AI_Ultra_Reboot.exe /app/dist/
+      "
+
+  # Service pour tester l'exécutable Linux
+  linux-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./:/app
+    working_dir: /app
+    command: python main.py --version

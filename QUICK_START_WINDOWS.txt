@@ -1,0 +1,39 @@
+🪟 DÉMARRAGE RAPIDE WINDOWS 10
+==============================
+
+📋 ÉTAPES ESSENTIELLES :
+
+1. INSTALLER PYTHON 3.11+
+   - Télécharger : python.org/downloads/
+   - ✅ Cocher "Add Python to PATH"
+   - ✅ Cocher "Install for all users"
+
+2. COPIER LE PROJET
+   - Extraire CMD-AI_Ultra_Reboot_USB.tar.gz avec 7-Zip
+   - Ou copier le dossier depuis USB
+
+3. OUVRIR POWERSHELL/CMD
+   - cd C:\CMD-AI_Ultra_Reboot
+   - Ou clic droit → "Ouvrir dans le terminal"
+
+4. COMPILER
+   - Double-clic sur build_windows.bat
+   - OU taper : python build_executable.py
+
+5. TESTER
+   - dist\CMD-AI_Ultra_Reboot.exe
+
+⚡ COMMANDES RAPIDES :
+pip install -r requirements.txt pyinstaller
+pyinstaller --onefile --windowed --name CMD-AI_Ultra_Reboot --icon ressources/icons/CMD-AI_Ultra_main.ico --add-data "ressources;ressources" --add-data "extensions;extensions" main.py
+
+🎯 RÉSULTAT : Exécutable ~50MB dans dist\
+
+📞 PROBLÈME ? Vérifiez :
+- python --version
+- pip --version  
+- Antivirus (peut bloquer compilation)
+
+💡 VSCODE + AMAZON Q (optionnel) :
+- code.visualstudio.com
+- Extension "Amazon Q Developer"

@@ -1,0 +1,46 @@
+# Dockerfile pour compiler des .exe Windows sur Linux
+FROM ubuntu:22.04
+
+# Éviter les prompts interactifs
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Installer les dépendances de base
+RUN apt-get update && apt-get install -y \
+    wget \
+    software-properties-common \
+    gnupg2 \
+    xvfb \
+    && rm -rf /var/lib/apt/lists/*
+
+# Installer Wine
+RUN dpkg --add-architecture i386 && \
+    wget -nc https://dl.winehq.org/wine-builds/winehq.key && \
+    apt-key add winehq.key && \
+    add-apt-repository 'deb https://dl.winehq.org/wine-builds/ubuntu/ jammy main' && \
+    apt-get update && \
+    apt-get install -y winehq-stable && \
+    rm -rf /var/lib/apt/lists/*
+
+# Installer Python Windows via Wine
+RUN wget https://www.python.org/ftp/python/3.11.0/python-3.11.0-amd64.exe && \
+    xvfb-run -a wine python-3.11.0-amd64.exe /quiet InstallAllUsers=1 PrependPath=1 && \
+    rm python-3.11.0-amd64.exe
+
+# Configurer Wine
+RUN winecfg
+
+# Installer pip et PyInstaller
+RUN xvfb-run -a wine python -m pip install --upgrade pip && \
+    xvfb-run -a wine python -m pip install pyinstaller
+
+# Créer le répertoire de travail
+WORKDIR /app
+
+# Script de compilation
+COPY . .
+
+# Installer les dépendances Python
+RUN xvfb-run -a wine python -m pip install -r requirements.txt
+
+# Compiler l'exécutable Windows
+CMD ["xvfb-run", "-a", "wine", "python", "-m", "PyInstaller", "--onefile", "--windowed", "--name", "CMD-AI_Ultra_Reboot", "--icon", "ressources/icons/CMD-AI_Ultra_main.ico", "--add-data", "ressources;ressources", "--add-data", "extensions;extensions", "main.py"]

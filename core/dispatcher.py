@@ -3,6 +3,7 @@ from core.extension_manager import ExtensionManager
 from core.installation_manager import InstallationManager
 from core.system_executor import SystemExecutor
 from core.daily_suggestions import DailySuggestions
+from core.updater import AppUpdater
 from core.logger import app_logger
 
 class Dispatcher:
@@ -21,7 +22,12 @@ class Dispatcher:
         self.daily_suggestions = DailySuggestions()
         app_logger.debug("Suggestions quotidiennes créées", "DISPATCHER")
         
+        self.updater = AppUpdater()
+        app_logger.debug("Système de mise à jour créé", "DISPATCHER")
+        
         self.awaiting_installation_response = False
+        self.awaiting_update_response = False
+        self.pending_update_info = None
         self.awaiting_model_selection = False
         self.awaiting_api_key = False
         self.awaiting_elevation_confirm = False
@@ -42,8 +48,14 @@ class Dispatcher:
             return self._handle_api_key_input(user_input)
         elif self.awaiting_elevation_confirm:
             return self._handle_elevation_confirmation(user_input)
+        elif self.awaiting_update_response:
+            return self._handle_update_response(user_input)
         
         command_type, processed_text = self.interpreter.interpret(user_input)
+        
+        # Vérifier les commandes de mise à jour
+        if user_input.startswith("update "):
+            return self._handle_update_command(user_input[7:])
         
         # Vérifier les commandes de suggestion
         if user_input.startswith("install "):
@@ -189,4 +201,83 @@ Exemples:
         if self.daily_suggestions.should_show_screenshot_suggestion():
             self.daily_suggestions.mark_screenshot_shown()
             return self.daily_suggestions.get_screenshot_suggestion()
+        return None
+    
+    def _handle_update_command(self, command):
+        """Gère les commandes de mise à jour"""
+        if command == "check":
+            update_info = self.updater.check_for_updates(force=True)
+            if update_info:
+                self.pending_update_info = update_info
+                self.awaiting_update_response = True
+                return self.updater.get_update_message(update_info)
+            else:
+                return f"✅ Vous avez la dernière version (v{self.updater.current_version})"
+        
+        elif command == "download":
+            if self.pending_update_info:
+                return self._download_update()
+            else:
+                return "❌ Aucune mise à jour en attente"
+        
+        elif command == "later":
+            self.awaiting_update_response = False
+            self.pending_update_info = None
+            return "🕰️ Mise à jour reportée"
+        
+        elif command == "never":
+            # TODO: Implémenter désactivation permanente
+            self.awaiting_update_response = False
+            self.pending_update_info = None
+            return "❌ Vérifications de mise à jour désactivées"
+        
+        else:
+            return "Commandes: update check, update download, update later, update never"
+    
+    def _handle_update_response(self, response):
+        """Gère les réponses aux mises à jour"""
+        self.awaiting_update_response = False
+        
+        if response.lower() in ['download', 'oui', 'yes', 'y']:
+            return self._download_update()
+        elif response.lower() in ['later', 'plus tard']:
+            self.pending_update_info = None
+            return "🕰️ Mise à jour reportée"
+        else:
+            self.pending_update_info = None
+            return "❌ Mise à jour annulée"
+    
+    def _download_update(self):
+        """Télécharge et installe la mise à jour"""
+        if not self.pending_update_info:
+            return "❌ Aucune mise à jour en attente"
+        
+        try:
+            download_url = self.pending_update_info["download_url"]
+            
+            # Téléchargement
+            file_path = self.updater.download_update(download_url)
+            
+            if file_path:
+                # Installation
+                if self.updater.install_update(file_path):
+                    return f"✅ Mise à jour téléchargée !\n\n🚀 L'installation va commencer.\n⚠️ Fermez l'application après installation."
+                else:
+                    return f"⚠️ Téléchargement réussi mais installation manuelle requise.\n📁 Fichier: {file_path}"
+            else:
+                return "❌ Échec du téléchargement"
+                
+        except Exception as e:
+            app_logger.error(f"Erreur download update: {e}", "DISPATCHER")
+            return f"❌ Erreur: {e}"
+        finally:
+            self.pending_update_info = None
+    
+    def check_startup_update(self):
+        """Vérifie les mises à jour au démarrage"""
+        update_info = self.updater.check_for_updates()
+        if update_info:
+            self.pending_update_info = update_info
+            self.awaiting_update_response = True
+            return self.updater.get_update_message(update_info)
         return None

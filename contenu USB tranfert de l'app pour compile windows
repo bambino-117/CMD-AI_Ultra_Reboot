@@ -1,0 +1,10 @@
+📁 CMD-AI_Ultra_Reboot/
+├── 📄 QUICK_START_WINDOWS.txt    ← LIRE EN PREMIER
+├── 📄 WINDOWS_SETUP_GUIDE.md     ← Guide détaillé
+├── 🔨 build_windows.bat          ← Double-clic pour compiler
+├── 🐍 main.py                    ← Application principale
+├── 📋 requirements.txt           ← Dépendances Python
+├── 📁 core/                      ← Code source
+├── 📁 ui/                        ← Interface
+├── 📁 extensions/                ← Extensions
+└── 📁 ressources/                ← Icônes, logos
