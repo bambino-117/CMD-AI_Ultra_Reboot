@@ -2,6 +2,7 @@ from core.text_interpreter import TextInterpreter, CommandType
 from core.extension_manager import ExtensionManager
 from core.installation_manager import InstallationManager
 from core.system_executor import SystemExecutor
+from core.daily_suggestions import DailySuggestions
 from core.logger import app_logger
 
 class Dispatcher:
@@ -16,6 +17,9 @@ class Dispatcher:
         
         self.installation_manager = InstallationManager()
         app_logger.debug("Gestionnaire d'installation créé", "DISPATCHER")
+        
+        self.daily_suggestions = DailySuggestions()
+        app_logger.debug("Suggestions quotidiennes créées", "DISPATCHER")
         
         self.awaiting_installation_response = False
         self.awaiting_model_selection = False
@@ -40,6 +44,14 @@ class Dispatcher:
             return self._handle_elevation_confirmation(user_input)
         
         command_type, processed_text = self.interpreter.interpret(user_input)
+        
+        # Vérifier les commandes de suggestion
+        if user_input.startswith("install "):
+            return self._handle_install_command(user_input[8:])
+        elif user_input.startswith("dismiss "):
+            return self._handle_dismiss_command(user_input[8:])
+        elif user_input.startswith("never "):
+            return self._handle_never_command(user_input[6:])
         
         # Vérifier les commandes d'extension
         if user_input.startswith("ext "):
@@ -153,3 +165,28 @@ Exemples:
         else:
             self.pending_elevated_command = None
             return "Exécution annulée par l'utilisateur."
+    
+    def _handle_install_command(self, extension_name):
+        """Gère l'installation d'extensions"""
+        if extension_name.lower() == "screenshot":
+            return self.daily_suggestions.install_screenshot()
+        return f"Extension '{extension_name}' non reconnue"
+    
+    def _handle_dismiss_command(self, extension_name):
+        """Gère le report de suggestions"""
+        if extension_name.lower() == "screenshot":
+            return self.daily_suggestions.dismiss_screenshot(permanently=False)
+        return f"Suggestion '{extension_name}' non reconnue"
+    
+    def _handle_never_command(self, extension_name):
+        """Gère le rejet définitif de suggestions"""
+        if extension_name.lower() == "screenshot":
+            return self.daily_suggestions.dismiss_screenshot(permanently=True)
+        return f"Suggestion '{extension_name}' non reconnue"
+    
+    def get_daily_suggestion(self):
+        """Récupère la suggestion quotidienne"""
+        if self.daily_suggestions.should_show_screenshot_suggestion():
+            self.daily_suggestions.mark_screenshot_shown()
+            return self.daily_suggestions.get_screenshot_suggestion()
+        return None

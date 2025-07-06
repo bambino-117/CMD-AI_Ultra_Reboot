@@ -1,8 +1,17 @@
 # CHANGELOG - CMD-AI Ultra Reboot
 
-## [1.0.0] - 2025-07-06
+## [1.1.0] - 2025-07-06
 
 ### ✨ Nouvelles fonctionnalités
+- **Extension Screenshot** 📸 - Capture d'écran intégrée
+- **Coloration syntaxique** 🎨 - Code Python coloré automatiquement
+- **Interface améliorée** - Boutons Capture et Code
+- **Vignettes d'images** - Aperçu des captures dans l'interface
+- **Multi-plateforme** - Screenshot Windows/macOS/Linux
+
+## [1.0.0] - 2025-07-06
+
+### ✨ Fonctionnalités de base
 - **Interface graphique moderne** avec Tkinter
 - **Chat IA multi-modèles** (OpenAI, Gemini, DeepSeek, Ollama)
 - **Extensions modulaires** (AIchat, Exemple)

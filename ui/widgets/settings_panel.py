@@ -84,6 +84,21 @@ class SettingsPanel:
         
         create_button(aichat_frame, "Config", self.config_aichat, width=8, symbol="⚙️").pack(side='right')
         
+        # Extension Screenshot
+        screenshot_frame = ttk.Frame(ext_frame)
+        screenshot_frame.pack(fill='x', pady=2)
+        ttk.Label(screenshot_frame, text="📸 Screenshot:").pack(side='left')
+        
+        from core.daily_suggestions import DailySuggestions
+        daily_suggestions = DailySuggestions()
+        
+        if daily_suggestions.is_screenshot_installed():
+            ttk.Label(screenshot_frame, text="Installée", foreground='green').pack(side='left', padx=10)
+            create_button(screenshot_frame, "Test", self.test_screenshot, width=8, symbol="📷").pack(side='right')
+        else:
+            ttk.Label(screenshot_frame, text="Non installée", foreground='orange').pack(side='left', padx=10)
+            create_button(screenshot_frame, "Installer", self.install_screenshot, width=8, symbol="📥").pack(side='right')
+        
         # 4. Dossier utilisateur
         folder_frame = ttk.LabelFrame(self.frame, text="📁 Dossier", padding="5")
         folder_frame.pack(fill='x', pady=10)
@@ -140,7 +155,8 @@ class SettingsPanel:
                     'user/conversations/',
                     'user/cache/',
                     'user/session_reports/',
-                    'user/github_reports/'
+                    'user/github_reports/',
+                    'user/screenshots/'
                 ]
                 
                 deleted_count = 0
@@ -205,6 +221,27 @@ class SettingsPanel:
             self.setup_ui()
         else:
             messagebox.showerror("❌", f"Erreur activation modèle {model_num}\n\n{KaamelottResponses.get_error()}")
+    
+    def install_screenshot(self):
+        """Installe l'extension Screenshot"""
+        try:
+            from core.daily_suggestions import DailySuggestions
+            daily_suggestions = DailySuggestions()
+            result = daily_suggestions.install_screenshot()
+            messagebox.showinfo("✅", f"{result}\n\n{KaamelottResponses.get_encouragement()}")
+            self.setup_ui()  # Rafraîchir l'interface
+        except Exception as e:
+            messagebox.showerror("❌", f"Erreur installation Screenshot: {e}\n\n{KaamelottResponses.get_error()}")
+    
+    def test_screenshot(self):
+        """Teste l'extension Screenshot"""
+        try:
+            from extensions.screenshot_extension import ScreenshotExtension
+            screenshot_ext = ScreenshotExtension()
+            result = screenshot_ext.show_help("")
+            messagebox.showinfo("📸 Screenshot", result)
+        except Exception as e:
+            messagebox.showerror("❌", f"Erreur test Screenshot: {e}\n\n{KaamelottResponses.get_error()}")
     
     def show(self):
         self.frame.pack(side='left', fill='y', padx=10, pady=10)

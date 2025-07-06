@@ -139,35 +139,90 @@ class AppUI:
         # Frame pour la saisie
         input_frame = ttk.Frame(self.chat_frame)
         input_frame.pack(fill='x', padx=10, pady=10)
+        
+        # Frame pour les boutons et vignettes
+        controls_frame = ttk.Frame(input_frame)
+        controls_frame.pack(fill='x', pady=(0, 5))
+        
+        # Widget de capture d'écran
+        from ui.widgets.screenshot_widget import ScreenshotWidget
+        self.screenshot_widget = ScreenshotWidget(controls_frame, self.on_screenshot_taken)
 
+        # Frame pour l'entrée de texte
+        text_input_frame = ttk.Frame(input_frame)
+        text_input_frame.pack(fill='x')
+        
         # Import du widget d'inactivité
         try:
             from ui.widgets.inactivity_entry import InactivityEntry
             self.input_var = tk.StringVar()
-            self.input_entry = InactivityEntry(input_frame, textvariable=self.input_var)
+            self.input_entry = InactivityEntry(text_input_frame, textvariable=self.input_var)
             self.input_entry.pack(side='left', fill='x', expand=True)
             self.input_entry.bind('<Return>', self.on_send)
         except ImportError:
             # Fallback vers Entry normal
             self.input_var = tk.StringVar()
-            self.input_entry = ttk.Entry(input_frame, textvariable=self.input_var)
+            self.input_entry = ttk.Entry(text_input_frame, textvariable=self.input_var)
             self.input_entry.pack(side='left', fill='x', expand=True)
             self.input_entry.bind('<Return>', self.on_send)
 
         from ui.widgets.custom_button import create_button
-        send_btn = create_button(input_frame, "Envoyer", self.on_send, width=8, symbol="✈️")
+        
+        # Bouton capture d'écran
+        screenshot_btn = create_button(text_input_frame, "Capture", self.on_screenshot, width=8, symbol="📷")
+        screenshot_btn.pack(side='left', padx=(5, 0))
+        
+        # Bouton coloration syntaxique
+        syntax_btn = create_button(text_input_frame, "Code", self.toggle_syntax, width=6, symbol="🎨")
+        syntax_btn.pack(side='left', padx=(5, 0))
+        
+        # Bouton envoyer
+        send_btn = create_button(text_input_frame, "Envoyer", self.on_send, width=8, symbol="✈️")
         send_btn.pack(side='left', padx=(5, 0))
 
     def on_send(self, event=None):
         user_input = self.input_var.get().strip()
-        if user_input:
+        screenshot_path = self.screenshot_widget.get_screenshot_path()
+        
+        if user_input or screenshot_path:
             # Logger la commande pour les testeurs
-            self.exit_reporter.log_command(user_input)
+            if user_input:
+                self.exit_reporter.log_command(user_input)
             
-            self.text_area.display_message(f"> {user_input}")
-            response = self.dispatcher.process(user_input)
+            # Construire la commande avec image si nécessaire
+            if screenshot_path and user_input:
+                full_command = f"ext AIchat image {screenshot_path} {user_input}"
+                display_input = f"> 📷 {user_input}"
+            elif screenshot_path:
+                full_command = f"ext AIchat image {screenshot_path} Que vois-tu sur cette image ?"
+                display_input = "> 📷 Que vois-tu sur cette image ?"
+            else:
+                full_command = user_input
+                display_input = f"> {user_input}"
+            
+            self.text_area.display_message(display_input)
+            response = self.dispatcher.process(full_command)
             self.text_area.display_message(response)
+            
+            # Nettoyer
             self.input_var.set("")
+            self.screenshot_widget.remove_thumbnail()
+    
+    def on_screenshot(self):
+        """Gère la capture d'écran"""
+        result = self.screenshot_widget.take_screenshot()
+        if result.startswith("❌"):
+            self.text_area.display_message(result)
+    
+    def on_screenshot_taken(self, screenshot_path):
+        """Callback quand une capture est prise"""
+        self.exit_reporter.log_feature_used("Screenshot")
+    
+    def toggle_syntax(self):
+        """Active/désactive la coloration syntaxique"""
+        result = self.text_area.toggle_syntax_highlighting()
+        self.text_area.display_message(result)
+        self.exit_reporter.log_feature_used("SyntaxHighlighting")
     
     def show_startup_message(self):
         # Forcer l'affichage du message au premier lancement
@@ -190,6 +245,12 @@ class AppUI:
             self.text_area.display_message("   • ext AIchat chat Bonjour - Parler à l'IA")
             self.text_area.display_message("   • help - Aide générale")
             app_logger.debug("Messages de suggestion affichés", "UI")
+            
+            # Vérifier les suggestions quotidiennes
+            daily_suggestion = self.dispatcher.get_daily_suggestion()
+            if daily_suggestion:
+                self.text_area.display_message("")
+                self.text_area.display_message(daily_suggestion)
 
     def toggle_settings(self):
         if self.settings_visible:

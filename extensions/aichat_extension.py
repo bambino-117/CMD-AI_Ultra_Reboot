@@ -26,6 +26,8 @@ class AIChatExtension(BaseExtension):
             return self._set_api_key(args)
         elif command == "chat":
             return self._chat(args)
+        elif command == "image":
+            return self._chat_with_image(args)
         elif command == "history":
             return self._show_history()
         elif command == "status":
@@ -84,6 +86,33 @@ class AIChatExtension(BaseExtension):
         
         return f"[{current_model['name']}] {response}"
     
+    def _chat_with_image(self, args):
+        """Chat avec une image"""
+        if not args:
+            return "Usage: ext AIchat image [chemin_image] [question]\n\nExemple: ext AIchat image screenshot.png Que vois-tu ?"
+        
+        parts = args.split(' ', 1)
+        if len(parts) < 2:
+            return "Usage: ext AIchat image [chemin_image] [question]"
+        
+        image_path, question = parts
+        
+        # Vérifier si le fichier existe
+        import os
+        if not os.path.exists(image_path):
+            return f"❌ Image non trouvée: {image_path}"
+        
+        current_model = self.llm_manager.get_current_model_info()
+        if not current_model:
+            return f"Aucun modèle. Usage: ext AIchat setup\n\n{KaamelottResponses.get_error()}"
+        
+        # Pour l'instant, simuler l'analyse d'image
+        response = f"[ANALYSE IMAGE] {image_path}\n\nJe vois une image, mais l'analyse d'image n'est pas encore implémentée pour ce modèle.\n\nVotre question: {question}\n\n🚧 Fonctionnalité en développement - Prochaine mise à jour !"
+        
+        self.chat_history.add_message(f"[IMAGE] {question}", response, current_model['name'])
+        
+        return f"[{current_model['name']}] {response}"
+    
     def _show_history(self):
         recent = self.chat_history.get_recent_messages(3)
         if not recent:
@@ -102,4 +131,4 @@ class AIChatExtension(BaseExtension):
         return f"Modèle actuel: {current['name']} ({current['type']})"
     
     def get_commands(self):
-        return ["setup", "select", "apikey", "chat", "history", "status"]
+        return ["setup", "select", "apikey", "chat", "image", "history", "status"]
