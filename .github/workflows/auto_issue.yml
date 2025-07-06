@@ -1,0 +1,55 @@
+name: 🤖 Création automatique d'Issues
+
+on:
+  repository_dispatch:
+    types: [tester-report]
+
+jobs:
+  create-issue:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Créer Issue depuis rapport testeur
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { data } = context.payload.client_payload;
+            
+            const title = data.is_tester ? 
+              `[TESTEUR] ${data.error_type} - ${data.user_pseudo}` : 
+              `[BUG] ${data.error_type} - ${data.user_pseudo}`;
+            
+            const body = `## 🐛 Description du problème
+            ${data.description || 'Erreur automatiquement détectée'}
+            
+            ## 💻 Informations système
+            **OS:** ${data.system.os}
+            **Version Python:** ${data.system.python}
+            **Version CMD-AI:** ${data.system.app_version}
+            **Architecture:** ${data.system.arch}
+            
+            ## ❌ Erreur rencontrée
+            \`\`\`
+            ${data.error_traceback}
+            \`\`\`
+            
+            ## 📊 Logs
+            \`\`\`
+            ${data.logs}
+            \`\`\`
+            
+            ## 👤 ${data.is_tester ? 'Testeur' : 'Utilisateur'}
+            **ID:** ${data.user_pseudo}
+            **Statut:** ${data.is_tester ? '🧪 Testeur officiel' : '👤 Utilisateur'}
+            **Niveau technique:** ${data.user_level}
+            **Première utilisation:** ${data.first_time ? 'Oui' : 'Non'}
+            
+            ---
+            *Rapport généré automatiquement le ${data.timestamp} par CMD-AI Ultra Reboot*`;
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['bug', 'tester-feedback', 'auto-generated']
+            });

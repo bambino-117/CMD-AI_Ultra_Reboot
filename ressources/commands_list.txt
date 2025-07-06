@@ -1,0 +1,130 @@
+# LISTE DES COMMANDES SYSTÈME
+
+## COMMANDES WINDOWS (CMD/PowerShell)
+
+### Navigation et fichiers
+- cd [chemin]                    # Changer de répertoire
+- dir                           # Lister le contenu du répertoire
+- ls                            # Lister (PowerShell)
+- mkdir [nom]                   # Créer un dossier
+- rmdir [nom]                   # Supprimer un dossier vide
+- del [fichier]                 # Supprimer un fichier
+- copy [source] [destination]   # Copier un fichier
+- move [source] [destination]   # Déplacer/renommer un fichier
+- ren [ancien] [nouveau]        # Renommer un fichier
+- type [fichier]                # Afficher le contenu d'un fichier
+- find "texte" [fichier]        # Rechercher du texte dans un fichier
+- tree                          # Afficher l'arborescence
+
+### Système
+- systeminfo                    # Informations système
+- tasklist                      # Liste des processus
+- taskkill /PID [id]           # Tuer un processus
+- services.msc                  # Gestionnaire de services
+- msconfig                      # Configuration système
+- regedit                       # Éditeur de registre
+- control                       # Panneau de configuration
+- cmd                          # Ouvrir une nouvelle invite
+- powershell                   # Ouvrir PowerShell
+- exit                         # Fermer la session
+
+### Réseau
+- ping [adresse]               # Tester la connectivité
+- ipconfig                     # Configuration IP
+- ipconfig /all                # Configuration IP détaillée
+- ipconfig /release            # Libérer l'IP
+- ipconfig /renew              # Renouveler l'IP
+- nslookup [domaine]           # Résolution DNS
+- netstat                      # Connexions réseau
+- tracert [adresse]            # Tracer la route
+
+### Utilisateurs et permissions
+- net user                     # Liste des utilisateurs
+- net user [nom]               # Infos utilisateur
+- whoami                       # Utilisateur actuel
+- runas                        # Exécuter en tant que
+- icacls [fichier]             # Permissions de fichier
+
+## COMMANDES macOS (Terminal)
+
+### Navigation et fichiers
+- cd [chemin]                  # Changer de répertoire
+- ls                           # Lister le contenu
+- ls -la                       # Liste détaillée avec fichiers cachés
+- pwd                          # Répertoire actuel
+- mkdir [nom]                  # Créer un dossier
+- rmdir [nom]                  # Supprimer un dossier vide
+- rm [fichier]                 # Supprimer un fichier
+- rm -rf [dossier]             # Supprimer récursivement
+- cp [source] [destination]    # Copier un fichier
+- mv [source] [destination]    # Déplacer/renommer
+- cat [fichier]                # Afficher le contenu
+- less [fichier]               # Afficher avec pagination
+- head [fichier]               # Premières lignes
+- tail [fichier]               # Dernières lignes
+- find [chemin] -name [nom]    # Rechercher un fichier
+- grep "texte" [fichier]       # Rechercher du texte
+- tree                         # Arborescence (si installé)
+
+### Système
+- top                          # Processus en cours
+- ps aux                       # Liste des processus
+- kill [PID]                   # Tuer un processus
+- killall [nom]                # Tuer par nom
+- df -h                        # Espace disque
+- du -sh [dossier]             # Taille d'un dossier
+- free                         # Mémoire disponible
+- uptime                       # Temps de fonctionnement
+- uname -a                     # Informations système
+- sw_vers                      # Version macOS
+- system_profiler              # Profil système complet
+- activity monitor             # Moniteur d'activité
+
+### Réseau
+- ping [adresse]               # Tester la connectivité
+- ifconfig                     # Configuration réseau
+- netstat                      # Connexions réseau
+- nslookup [domaine]           # Résolution DNS
+- traceroute [adresse]         # Tracer la route
+- curl [url]                   # Télécharger/tester HTTP
+- wget [url]                   # Télécharger (si installé)
+
+### Utilisateurs et permissions
+- whoami                       # Utilisateur actuel
+- id                           # ID utilisateur et groupes
+- sudo [commande]              # Exécuter en tant qu'admin
+- su [utilisateur]             # Changer d'utilisateur
+- passwd                       # Changer le mot de passe
+- chmod [permissions] [fichier] # Modifier les permissions
+- chown [utilisateur] [fichier] # Changer le propriétaire
+- groups                       # Groupes de l'utilisateur
+
+### Processus et services
+- launchctl list               # Services système
+- launchctl start [service]    # Démarrer un service
+- launchctl stop [service]     # Arrêter un service
+- brew services list           # Services Homebrew
+- crontab -l                   # Tâches programmées
+- jobs                         # Tâches en arrière-plan
+
+### Archives et compression
+- tar -czf [archive.tar.gz] [dossier]  # Créer une archive
+- tar -xzf [archive.tar.gz]            # Extraire une archive
+- zip -r [archive.zip] [dossier]       # Créer un ZIP
+- unzip [archive.zip]                  # Extraire un ZIP
+
+### Éditeurs de texte
+- nano [fichier]               # Éditeur simple
+- vim [fichier]                # Éditeur avancé
+- emacs [fichier]              # Éditeur Emacs
+- open -a TextEdit [fichier]   # Ouvrir avec TextEdit
+
+### Utilitaires spécifiques macOS
+- open [fichier/dossier]       # Ouvrir avec l'app par défaut
+- open -a [app] [fichier]      # Ouvrir avec une app spécifique
+- say "texte"                  # Synthèse vocale
+- screencapture [fichier]      # Capture d'écran
+- pbcopy                       # Copier vers le presse-papier
+- pbpaste                      # Coller depuis le presse-papier
+- caffeinate                   # Empêcher la mise en veille
+- pmset                        # Gestion de l'alimentation
