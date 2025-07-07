@@ -1,8 +1,11 @@
-# Python
+# Fichiers Python compilés
+*.pyc
+*.pyo
+*.pyd
 __pycache__/
-*.py[cod]
-*$py.class
 *.so
+
+# Distribution / packaging
 .Python
 build/
 develop-eggs/
@@ -20,31 +23,56 @@ wheels/
 .installed.cfg
 *.egg
 
-# Virtual Environment
-venv/
+# PyInstaller
+*.manifest
+*.spec
+
+# Environnements virtuels
+.env
+.venv
 env/
+venv/
 ENV/
+env.bak/
+venv.bak/
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
 
 # OS
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
 
-# Application specific
-user/
-logs/
+# Logs
 *.log
+logs/
 
-# Sensitive data
-tester_codes.txt
-*.key
-*.token
-
-# Temporary files
+# Fichiers temporaires
 *.tmp
+*.temp
 *.bak
+*.backup
+
+# Fichiers utilisateur sensibles
+user/api_keys.json
+user/config.json
+user/session_data.json
+
+# Archives de transfert
+*.tar.gz
+*.zip
+
+# Scripts de debug temporaires
+debug_*.py
+fix_*.py
+rebuild_*.py
+test_*.py

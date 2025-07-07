@@ -53,6 +53,10 @@ class AppUI:
         
         # Créer l'interface
         self.setup_ui()
+        
+        # Affichage marketplace avec tuiles
+        from ui.marketplace_tiles import MarketplaceTiles
+        self.marketplace_tiles = MarketplaceTiles(self, self.dispatcher)
     
     def set_icon(self):
         """Configure l'icône de l'application"""
@@ -126,6 +130,15 @@ class AppUI:
         fichier_menu.add_command(label="⚙️ Paramètres", command=self.toggle_settings)
         fichier_menu.add_separator()
         fichier_menu.add_command(label="❌ Quitter", command=self.on_quit)
+        
+        # Menu Marketplace
+        marketplace_menu = tk.Menu(menu_bar, tearoff=0)
+        menu_bar.add_cascade(label="🔌 Marketplace", menu=marketplace_menu)
+        
+        marketplace_menu.add_command(label="📦 Extensions disponibles", command=self.show_marketplace)
+        marketplace_menu.add_command(label="✅ Extensions installées", command=self.show_installed_extensions)
+        marketplace_menu.add_separator()
+        marketplace_menu.add_command(label="🔄 Actualiser marketplace", command=self.refresh_marketplace)
         
         # Menu Aide
         aide_menu = tk.Menu(menu_bar, tearoff=0)
@@ -264,9 +277,9 @@ class AppUI:
                 self.settings_panel.hide()
             self.settings_visible = False
         else:
-            # Toujours recréer le panneau pour avoir les derniers boutons
-            from ui.widgets.settings_panel import SettingsPanel
-            self.settings_panel = SettingsPanel(self.root.winfo_children()[0])  # main_frame
+            # Panneau de paramètres simplifié
+            from ui.simple_settings_panel import SimpleSettingsPanel
+            self.settings_panel = SimpleSettingsPanel(self.root.winfo_children()[0])  # main_frame
             self.settings_panel.show()
             self.settings_visible = True
             # Ajouter bouton fermer
@@ -277,16 +290,27 @@ class AppUI:
 
     def show_help(self):
         """Affiche le guide d'utilisation"""
+        # Guide de base
         help_text = """📖 GUIDE D'UTILISATION CMD-AI Ultra Reboot
 
 🚀 Démarrage rapide:
 1. Configurez votre IA: ext AIchat setup
 2. Commencez à chatter: ext AIchat chat Bonjour
-3. Explorez les commandes: help
+3. Explorez le marketplace: 🔌 Marketplace > Extensions disponibles
+4. Installez des extensions: plugin install [nom]
 
-🤖 Extensions disponibles:
-• AIchat - Chat avec IA
-• Exemple - Extension de démonstration
+🔌 MARKETPLACE D'EXTENSIONS:
+• 🔌 Marketplace > Extensions disponibles - Voir toutes les extensions
+• 🔌 Marketplace > Extensions installées - Gérer vos extensions
+• plugin install [id] - Installer une extension
+• plugin remove [id] - Désinstaller une extension
+
+💬 NOUVELLES FONCTIONNALITÉS:
+• conv save [titre] - Sauvegarder conversations
+• conv pdf [titre] - Exporter en PDF
+• theme toggle - Changer de thème
+• cache status - Mode hors-ligne
+• system info - Informations système
 
 ⚙️ Configuration:
 • Fichier > Paramètres pour configurer
@@ -298,25 +322,73 @@ class AppUI:
 • Élévation automatique si nécessaire
 • Confirmation pour actions sensibles"""
         
+        # Ajouter les guides des extensions installées
+        installed_extensions = self.dispatcher.plugin_manager.installed_plugins.get('plugins', [])
+        if installed_extensions:
+            help_text += "\n\n🔌 EXTENSIONS INSTALLÉES:\n"
+            for ext in installed_extensions:
+                ext_id = ext['id']
+                ext_name = ext['name']
+                help_text += f"\n📦 {ext_name}:\n"
+                help_text += f"   • ext {ext_name} help - Aide complète\n"
+                
+                # Ajouter des exemples spécifiques selon l'extension
+                if ext_id == 'filemanager':
+                    help_text += f"   • ext {ext_name} search \"*.pdf\" - Rechercher fichiers\n"
+                    help_text += f"   • ext {ext_name} organize ~/Downloads - Organiser dossier\n"
+                elif ext_id == 'networktools':
+                    help_text += f"   • ext {ext_name} ping google.com - Tester connexion\n"
+                    help_text += f"   • ext {ext_name} speed - Test de vitesse\n"
+                elif ext_id == 'systemmonitor':
+                    help_text += f"   • ext {ext_name} status - Statut système\n"
+                    help_text += f"   • ext {ext_name} processes - Top processus\n"
+                elif ext_id == 'texttools':
+                    help_text += f"   • ext {ext_name} hash \"texte|sha256\" - Générer hash\n"
+                    help_text += f"   • ext {ext_name} regex \"\\\\d+|texte avec nombres\" - Regex\n"
+                elif ext_id == 'weather':
+                    help_text += f"   • ext {ext_name} current Paris - Météo actuelle\n"
+                    help_text += f"   • ext {ext_name} forecast - Prévisions\n"
+        
         self.text_area.display_message(help_text)
     
     def show_commands(self):
         """Affiche la liste des commandes"""
         commands_text = """⌨️ COMMANDES DISPONIBLES
 
-🤖 Extensions:
+🔌 MARKETPLACE & EXTENSIONS:
+• plugin list - Voir extensions disponibles
+• plugin install [id] - Installer extension
+• plugin remove [id] - Désinstaller extension
+• plugin installed - Extensions installées
+• ext [nom] [commande] - Utiliser extension
+
+🤖 EXTENSIONS PRINCIPALES:
 • ext AIchat setup - Configurer l'IA
 • ext AIchat chat [message] - Parler à l'IA
-• ext AIchat status - Statut de l'IA
-• ext Exemple test - Test extension
+• ext Screenshot take - Capture d'écran
 
-📊 Système:
-• help - Aide générale
-• version - Version de l'application
-• clear - Effacer l'écran
-• exit - Quitter l'application
+💬 CONVERSATIONS:
+• conv save [titre] - Sauvegarder conversation
+• conv list - Lister conversations
+• conv pdf [titre] - Exporter en PDF
+• conv html [titre] - Exporter en HTML
 
-💻 Commandes OS:
+🎨 INTERFACE:
+• theme list - Lister thèmes
+• theme set [nom] - Changer thème
+• theme toggle - Basculer clair/sombre
+
+💾 CACHE & HORS-LIGNE:
+• cache status - Statut connexion
+• cache stats - Statistiques cache
+• cache clear - Vider cache
+
+⚙️ SYSTÈME:
+• system info - Informations système
+• system notify "titre" "message" - Notification
+• update check - Vérifier mises à jour
+
+💻 COMMANDES OS:
 • ls / dir - Lister fichiers
 • cd [dossier] - Changer répertoire
 • whoami - Utilisateur actuel
@@ -411,3 +483,17 @@ class AppUI:
         # Configurer la fermeture propre
         self.root.protocol("WM_DELETE_WINDOW", self.on_quit)
         self.root.mainloop()
+
+    def show_marketplace(self):
+        """Affiche le marketplace avec tuiles cliquables"""
+        self.marketplace_tiles.show_marketplace_tiles()
+
+    def show_installed_extensions(self):
+        """Affiche les extensions installées"""
+        result = self.dispatcher.plugin_manager.get_installed_plugins()
+        self.text_area.display_message(result)
+
+    def refresh_marketplace(self):
+        """Actualise le marketplace"""
+        self.text_area.display_message("🔄 Marketplace actualisé !")
+        self.show_marketplace()

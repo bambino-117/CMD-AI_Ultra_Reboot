@@ -1,0 +1,52 @@
+{
+  "sessions": [
+    {
+      "id": "20250706_061725",
+      "timestamp": "2025-07-06T06:17:25.717098",
+      "messages": [
+        {
+          "timestamp": "2025-07-06T06:17:25.717980",
+          "user": "Bonjour",
+          "ai": "Bonjour ! Ravi de vous voir !",
+          "model": "fallback"
+        }
+      ]
+    },
+    {
+      "id": "20250706_063225",
+      "timestamp": "2025-07-06T06:32:25.698909",
+      "messages": [
+        {
+          "timestamp": "2025-07-06T06:32:26.033176",
+          "user": "Hello",
+          "ai": "Erreur HF: 401",
+          "model": "microsoft/DialoGPT-small"
+        }
+      ]
+    },
+    {
+      "id": "20250706_063415",
+      "timestamp": "2025-07-06T06:34:15.715558",
+      "messages": [
+        {
+          "timestamp": "2025-07-06T06:34:15.717017",
+          "user": "Hello",
+          "ai": "Bonne observation !",
+          "model": "IA Simple"
+        }
+      ]
+    },
+    {
+      "id": "20250706_065801",
+      "timestamp": "2025-07-06T06:58:01.183586",
+      "messages": [
+        {
+          "timestamp": "2025-07-06T06:58:01.183780",
+          "user": "Bonjour",
+          "ai": "Bonjour ! Comment ça va ?",
+          "model": "IA Simple"
+        }
+      ]
+    }
+  ]
+}

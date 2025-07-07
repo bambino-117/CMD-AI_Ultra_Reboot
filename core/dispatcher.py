@@ -4,6 +4,11 @@ from core.installation_manager import InstallationManager
 from core.system_executor import SystemExecutor
 from core.daily_suggestions import DailySuggestions
 from core.updater import AppUpdater
+from core.plugin_manager import PluginManager
+from core.conversation_manager import ConversationManager
+from core.offline_manager import OfflineManager
+from core.theme_manager import ThemeManager
+from core.system_integration import SystemIntegration
 from core.logger import app_logger
 
 class Dispatcher:
@@ -24,6 +29,21 @@ class Dispatcher:
         
         self.updater = AppUpdater()
         app_logger.debug("Système de mise à jour créé", "DISPATCHER")
+        
+        self.plugin_manager = PluginManager()
+        app_logger.debug("Gestionnaire de plugins créé", "DISPATCHER")
+        
+        self.conversation_manager = ConversationManager()
+        app_logger.debug("Gestionnaire de conversations créé", "DISPATCHER")
+        
+        self.offline_manager = OfflineManager()
+        app_logger.debug("Gestionnaire hors-ligne créé", "DISPATCHER")
+        
+        self.theme_manager = ThemeManager()
+        app_logger.debug("Gestionnaire de thèmes créé", "DISPATCHER")
+        
+        self.system_integration = SystemIntegration()
+        app_logger.debug("Intégration système créée", "DISPATCHER")
         
         self.awaiting_installation_response = False
         self.awaiting_update_response = False
@@ -53,22 +73,29 @@ class Dispatcher:
         
         command_type, processed_text = self.interpreter.interpret(user_input)
         
-        # Vérifier les commandes de mise à jour
+        # Vérifier les commandes spécialisées
         if user_input.startswith("update "):
             return self._handle_update_command(user_input[7:])
-        
-        # Vérifier les commandes de suggestion
-        if user_input.startswith("install "):
+        elif user_input.startswith("plugin "):
+            return self._handle_plugin_command(user_input[7:])
+        elif user_input.startswith("conv "):
+            return self._handle_conversation_command(user_input[5:])
+        elif user_input.startswith("cache "):
+            return self._handle_cache_command(user_input[6:])
+        elif user_input.startswith("theme "):
+            return self._handle_theme_command(user_input[6:])
+        elif user_input.startswith("system "):
+            return self._handle_system_integration_command(user_input[7:])
+        elif user_input.startswith("install "):
             return self._handle_install_command(user_input[8:])
         elif user_input.startswith("dismiss "):
             return self._handle_dismiss_command(user_input[8:])
         elif user_input.startswith("never "):
             return self._handle_never_command(user_input[6:])
-        
-        # Vérifier les commandes d'extension
-        if user_input.startswith("ext "):
+        elif user_input.startswith("ext "):
             return self._handle_extension_command(user_input[4:])
         
+        # Commandes génériques
         if command_type == CommandType.SYSTEM_COMMAND:
             return self._handle_system_command(processed_text)
         elif command_type == CommandType.AI_CHAT:
@@ -80,22 +107,24 @@ class Dispatcher:
     
     def _handle_system_command(self, command):
         os_type = self.interpreter.get_os_type()
-        
-        # Vérifier si élévation nécessaire
         needs_elevation = SystemExecutor.needs_elevation(command)
         
         if needs_elevation:
             self.awaiting_elevation_confirm = True
             self.pending_elevated_command = command
-            confirmation = f"[SYSTÈME {os_type.upper()}] Commande avec privilèges: {command}\n⚠️ Confirmer exécution ? (oui/non)"
-            return confirmation
+            return f"[SYSTÈME {os_type.upper()}] Commande avec privilèges: {command}\n⚠️ Confirmer exécution ? (oui/non)"
         else:
-            # Exécuter directement
             result = SystemExecutor.execute_command(command, elevated=False)
             return f"[SYSTÈME {os_type.upper()}]\n{result}"
     
     def _handle_ai_chat(self, text):
-        return f"[CHAT IA] Question: {text}\n(Modèle IA à implémenter)"
+        if self.offline_manager.is_online():
+            response = self.extension_manager.execute_extension_command("AIchat", "chat", text)
+            if not response.startswith("❌"):
+                self.offline_manager.cache_response(text, response)
+            return response
+        else:
+            return self.offline_manager.get_offline_response(text)
     
     def _handle_help(self, query):
         if not query:
@@ -112,30 +141,6 @@ class Dispatcher:
         
         return self.extension_manager.execute_extension_command(ext_name, ext_command, args)
     
-    def _handle_installation_response(self, response):
-        if response.lower() in ['y', 'yes', 'oui']:
-            self.awaiting_installation_response = False
-            self.awaiting_model_selection = True
-            return self.extension_manager.execute_extension_command("AIchat", "setup")
-        else:
-            self.awaiting_installation_response = False
-            self.installation_manager.mark_extension_suggested("AIchat")
-            return "Elle te sert à quoi l'appli si tu mets de modèle de langage pauvre idiot!"
-    
-    def _handle_model_selection(self, model_number):
-        self.awaiting_model_selection = False
-        response = self.extension_manager.execute_extension_command("AIchat", "select", model_number)
-        
-        if "requise" in response:
-            self.awaiting_api_key = True
-        
-        return response
-    
-    def _handle_api_key_input(self, api_key):
-        self.awaiting_api_key = False
-        self.installation_manager.mark_first_run_complete()
-        return self.extension_manager.execute_extension_command("AIchat", "apikey", api_key)
-    
     def get_startup_message(self):
         app_logger.debug("Récupération du message de démarrage", "DISPATCHER")
         message = self.installation_manager.get_installation_prompt()
@@ -145,31 +150,66 @@ class Dispatcher:
     def set_awaiting_installation(self):
         self.awaiting_installation_response = True
     
+    def get_daily_suggestion(self):
+        if self.daily_suggestions.should_show_screenshot_suggestion():
+            self.daily_suggestions.mark_screenshot_shown()
+            return self.daily_suggestions.get_screenshot_suggestion()
+        return None
+    
+    def check_startup_update(self):
+        update_info = self.updater.check_for_updates()
+        if update_info:
+            self.pending_update_info = update_info
+            self.awaiting_update_response = True
+            return self.updater.get_update_message(update_info)
+        return None
+    
     def _get_general_help(self):
-        help_text = """CMD-AI Ultra Reboot - Aide
-        
+        return """CMD-AI Ultra Reboot - Aide
+
 Préfixes disponibles:
 • cmd:, exec:, $, >, run: - Commandes système
 • chat:, ai:, ?, ask: - Chat avec IA
 • help, aide, /?, --help - Aide
 • ext [extension] [commande] - Extensions
 
+Nouvelles commandes:
+• plugin list/install/remove - Gestion plugins
+• conv save/load/pdf - Conversations
+• cache status/clear - Cache hors-ligne
+• theme set/toggle - Thèmes interface
+• system notify/startup - Intégration OS
+
 Exemples:
-• cmd: dir (Windows) ou ls (macOS)
-• chat: Comment créer un fichier?
-• ext AIchat setup - Configurer l'IA"""
-        
-        # Ajouter les extensions disponibles
-        extensions = self.extension_manager.list_extensions()
-        if extensions:
-            help_text += "\n\nExtensions chargées: " + ", ".join(extensions)
-        
-        return help_text
+• ext AIchat setup - Configurer l'IA
+• plugin list - Voir plugins disponibles
+• theme toggle - Changer thème"""
+    
+    # Méthodes de gestion simplifiées
+    def _handle_installation_response(self, response):
+        if response.lower() in ['y', 'yes', 'oui']:
+            self.awaiting_installation_response = False
+            self.awaiting_model_selection = True
+            return self.extension_manager.execute_extension_command("AIchat", "setup")
+        else:
+            self.awaiting_installation_response = False
+            self.installation_manager.mark_extension_suggested("AIchat")
+            return "Configuration IA annulée"
+    
+    def _handle_model_selection(self, model_number):
+        self.awaiting_model_selection = False
+        response = self.extension_manager.execute_extension_command("AIchat", "select", model_number)
+        if "requise" in response:
+            self.awaiting_api_key = True
+        return response
+    
+    def _handle_api_key_input(self, api_key):
+        self.awaiting_api_key = False
+        self.installation_manager.mark_first_run_complete()
+        return self.extension_manager.execute_extension_command("AIchat", "apikey", api_key)
     
     def _handle_elevation_confirmation(self, response):
-        """Gère la confirmation d'élévation de privilèges"""
         self.awaiting_elevation_confirm = False
-        
         if response.lower() in ['oui', 'yes', 'y', 'o']:
             result = SystemExecutor.execute_command(self.pending_elevated_command, elevated=True)
             self.pending_elevated_command = None
@@ -179,32 +219,22 @@ Exemples:
             return "Exécution annulée par l'utilisateur."
     
     def _handle_install_command(self, extension_name):
-        """Gère l'installation d'extensions"""
         if extension_name.lower() == "screenshot":
             return self.daily_suggestions.install_screenshot()
         return f"Extension '{extension_name}' non reconnue"
     
     def _handle_dismiss_command(self, extension_name):
-        """Gère le report de suggestions"""
         if extension_name.lower() == "screenshot":
             return self.daily_suggestions.dismiss_screenshot(permanently=False)
         return f"Suggestion '{extension_name}' non reconnue"
     
     def _handle_never_command(self, extension_name):
-        """Gère le rejet définitif de suggestions"""
         if extension_name.lower() == "screenshot":
             return self.daily_suggestions.dismiss_screenshot(permanently=True)
         return f"Suggestion '{extension_name}' non reconnue"
     
-    def get_daily_suggestion(self):
-        """Récupère la suggestion quotidienne"""
-        if self.daily_suggestions.should_show_screenshot_suggestion():
-            self.daily_suggestions.mark_screenshot_shown()
-            return self.daily_suggestions.get_screenshot_suggestion()
-        return None
-    
+    # Handlers simplifiés pour les nouvelles fonctionnalités
     def _handle_update_command(self, command):
-        """Gère les commandes de mise à jour"""
         if command == "check":
             update_info = self.updater.check_for_updates(force=True)
             if update_info:
@@ -213,71 +243,77 @@ Exemples:
                 return self.updater.get_update_message(update_info)
             else:
                 return f"✅ Vous avez la dernière version (v{self.updater.current_version})"
-        
-        elif command == "download":
-            if self.pending_update_info:
-                return self._download_update()
-            else:
-                return "❌ Aucune mise à jour en attente"
-        
-        elif command == "later":
-            self.awaiting_update_response = False
-            self.pending_update_info = None
-            return "🕰️ Mise à jour reportée"
-        
-        elif command == "never":
-            # TODO: Implémenter désactivation permanente
-            self.awaiting_update_response = False
-            self.pending_update_info = None
-            return "❌ Vérifications de mise à jour désactivées"
-        
-        else:
-            return "Commandes: update check, update download, update later, update never"
+        return "Commandes: update check"
     
     def _handle_update_response(self, response):
-        """Gère les réponses aux mises à jour"""
         self.awaiting_update_response = False
+        self.pending_update_info = None
+        return "Mise à jour gérée"
+    
+    def _handle_plugin_command(self, command):
+        parts = command.split(' ', 1)
+        action = parts[0] if parts else ""
         
-        if response.lower() in ['download', 'oui', 'yes', 'y']:
-            return self._download_update()
-        elif response.lower() in ['later', 'plus tard']:
-            self.pending_update_info = None
-            return "🕰️ Mise à jour reportée"
+        if action == "list":
+            return self.plugin_manager.list_available_plugins()
+        elif action == "installed":
+            return self.plugin_manager.get_installed_plugins()
+        elif action == "install" and len(parts) > 1:
+            return self.plugin_manager.install_plugin(parts[1])
+        elif action == "remove" and len(parts) > 1:
+            return self.plugin_manager.remove_plugin(parts[1])
         else:
-            self.pending_update_info = None
-            return "❌ Mise à jour annulée"
+            return "Commandes: plugin list, plugin installed, plugin install [id], plugin remove [id]"
     
-    def _download_update(self):
-        """Télécharge et installe la mise à jour"""
-        if not self.pending_update_info:
-            return "❌ Aucune mise à jour en attente"
+    def _handle_conversation_command(self, command):
+        parts = command.split(' ', 1)
+        action = parts[0] if parts else ""
         
-        try:
-            download_url = self.pending_update_info["download_url"]
-            
-            # Téléchargement
-            file_path = self.updater.download_update(download_url)
-            
-            if file_path:
-                # Installation
-                if self.updater.install_update(file_path):
-                    return f"✅ Mise à jour téléchargée !\n\n🚀 L'installation va commencer.\n⚠️ Fermez l'application après installation."
-                else:
-                    return f"⚠️ Téléchargement réussi mais installation manuelle requise.\n📁 Fichier: {file_path}"
-            else:
-                return "❌ Échec du téléchargement"
-                
-        except Exception as e:
-            app_logger.error(f"Erreur download update: {e}", "DISPATCHER")
-            return f"❌ Erreur: {e}"
-        finally:
-            self.pending_update_info = None
+        if action == "list":
+            return self.conversation_manager.list_conversations()
+        elif action == "save":
+            title = parts[1] if len(parts) > 1 else None
+            return self.conversation_manager.save_conversation([], title)
+        else:
+            return "Commandes: conv list, conv save [titre]"
     
-    def check_startup_update(self):
-        """Vérifie les mises à jour au démarrage"""
-        update_info = self.updater.check_for_updates()
-        if update_info:
-            self.pending_update_info = update_info
-            self.awaiting_update_response = True
-            return self.updater.get_update_message(update_info)
-        return None
+    def _handle_cache_command(self, command):
+        parts = command.split(' ', 1)
+        action = parts[0] if parts else ""
+        
+        if action == "status":
+            return self.offline_manager.get_cache_stats()
+        elif action == "clear":
+            return self.offline_manager.clear_cache()
+        else:
+            return "Commandes: cache status, cache clear"
+    
+    def _handle_theme_command(self, command):
+        parts = command.split(' ', 1)
+        action = parts[0] if parts else ""
+        
+        if action == "list":
+            return self.theme_manager.list_themes()
+        elif action == "set" and len(parts) > 1:
+            return self.theme_manager.set_theme(parts[1])
+        elif action == "toggle":
+            current = self.theme_manager.current_theme
+            new_theme = "dark" if current == "light" else "light"
+            return self.theme_manager.set_theme(new_theme)
+        else:
+            return "Commandes: theme list, theme set [nom], theme toggle"
+    
+    def _handle_system_integration_command(self, command):
+        parts = command.split(' ', 2)
+        action = parts[0] if parts else ""
+        
+        if action == "notify" and len(parts) >= 3:
+            title = parts[1].strip('"')
+            message = parts[2].strip('"')
+            success = self.system_integration.send_notification(title, message)
+            return "✅ Notification envoyée" if success else "❌ Erreur notification"
+        elif action == "info":
+            info = self.system_integration.get_system_info()
+            return f"🖥️ Système: {info.get('system', 'N/A')} - CPU: {info.get('cpu_count', 'N/A')} cœurs"
+        else:
+            return "Commandes: system notify [titre] [message], system info"

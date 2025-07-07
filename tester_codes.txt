@@ -1,0 +1,16 @@
+# CODES TESTEURS CMD-AI Ultra Reboot
+# Format: 3 chiffres + 1 lettre
+# Usage: Saisir le code dans le champ pseudo pour activer le mode testeur
+
+JimmyThree: 001Z
+Masturbain: 010H
+Kisda: 200A
+Sebinou: 911R
+Le J: 806Z
+Fôv: 002W
+
+# Instructions:
+# 1. Le testeur saisit son code dans "Pseudo" (ex: 001Z)
+# 2. L'application détecte automatiquement le mode testeur
+# 3. Les rapports utilisent le code au lieu du nom réel
+# 4. Respect de la vie privée garanti
