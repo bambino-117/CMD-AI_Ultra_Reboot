@@ -132,6 +132,45 @@ class PluginManager:
                     "tags": ["traduction", "langues", "google"]
                 },
                 {
+                    "id": "usbmanager",
+                    "name": "USBManager",
+                    "version": "2.0.0",
+                    "description": "💾 Toolkit USB complet: bootable, formatage, firmware, identification",
+                    "author": "CMD-AI Team",
+                    "category": "System",
+                    "download_url": "local://usb_manager_extension.py",
+                    "size": "25KB",
+                    "rating": 4.8,
+                    "downloads": 1200,
+                    "tags": ["usb", "bootable", "firmware", "formatage", "toolkit"]
+                },
+                {
+                    "id": "securitytoolkit",
+                    "name": "SecurityToolkit",
+                    "version": "1.0.0",
+                    "description": "🛡️ Boîte à outils de sécurité - KillRAM, BadUSB, USBKiller",
+                    "author": "CMD-AI Team",
+                    "category": "Security",
+                    "download_url": "local://security_toolkit_extension.py",
+                    "size": "22KB",
+                    "rating": 4.5,
+                    "downloads": 850,
+                    "tags": ["🛡️ toolkit", "killram", "badusb", "usbkiller", "pentest"]
+                },
+                {
+                    "id": "osint",
+                    "name": "OSINT",
+                    "version": "1.0.0",
+                    "description": "🔍 Outils OSINT - Recherche et analyse de données publiques",
+                    "author": "CMD-AI Team",
+                    "category": "Security",
+                    "download_url": "local://osint_extension.py",
+                    "size": "28KB",
+                    "rating": 4.6,
+                    "downloads": 1150,
+                    "tags": ["🔍 osint", "recherche", "investigation", "données publiques", "sécurité"]
+                },
+                {
                     "id": "calculator",
                     "name": "Calculator",
                     "version": "1.1.0",

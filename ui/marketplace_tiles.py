@@ -240,7 +240,179 @@ COMMANDES:
 EXEMPLES:
 • ext TextTools hash "password|sha256"
 • ext TextTools regex "\\d+|J'ai 25 ans"
-• ext TextTools encode "Hello|base64" """
+• ext TextTools encode "Hello|base64" """,
+
+            'usbmanager': """💾 GESTIONNAIRE USB
+
+FONCTIONNALITÉS:
+• Détection automatique des périphériques USB
+• Informations détaillées (taille, espace libre, type)
+• Éjection sécurisée cross-platform
+• Support Windows, macOS, Linux
+• Scan du contenu des périphériques
+
+COMMANDES:
+• ext USBManager list - Lister périphériques USB
+• ext USBManager info [device] - Infos détaillées
+• ext USBManager unmount [device] - Éjection sécurisée
+• ext USBManager scan [device] - Scanner le contenu
+• ext USBManager help - Aide complète
+
+EXEMPLES:
+• ext USBManager list
+• ext USBManager info D: (Windows)
+• ext USBManager info /dev/sdb1 (Linux)
+• ext USBManager unmount /dev/sdb1
+
+⚠️ SÉCURITÉ:
+• Toujours éjecter avant de débrancher
+• Vérifier qu'aucun fichier n'est en cours d'écriture
+• Sauvegarder les données importantes""",
+
+            'securitytoolkit': """🛡️ SECURITY TOOLKIT - BOÎTE À OUTILS
+
+⚠️ CONTENEUR D'OUTILS DE SÉCURITÉ :
+Regroupe 3 outils puissants pour tests de sécurité.
+Utilisation strictement limitée aux fins légitimes !
+
+OUTILS INCLUS :
+• 💀 KillRAM - Saturation mémoire (désactivé)
+• ⚡ BadUSB Creator - Émulation clavier malveillant
+• 🔥 USBKiller Designer - Circuits destructeurs
+
+FONCTIONNALITÉS :
+• Menu interactif avec choix numérotés
+• Décharge de responsabilité intégrée
+• Codes BadUSB intégrés depuis collection
+• Schémas USBKiller détaillés
+• Documentation technique complète
+
+COMMANDES :
+• ext SecurityToolkit disclaimer - Voir avertissements
+• ext SecurityToolkit accept - Accepter les risques
+• ext SecurityToolkit menu - Menu principal
+• ext SecurityToolkit killram - KillRAM (désactivé)
+• ext SecurityToolkit badusb - BadUSB Creator
+• ext SecurityToolkit usbkiller - USBKiller Designer
+
+EXEMPLES :
+• ext SecurityToolkit disclaimer
+• ext SecurityToolkit menu
+• ext SecurityToolkit badusb
+
+KILLRAM (DÉSACTIVÉ) :
+• Saturation mémoire RAM du système
+• 10 niveaux d'intensité (1=léger, 10=critique)
+• Actuellement désactivé pour sécurité
+• Fichier isolé : killram_extension_SECURE_BACKUP.py
+
+BADUSB CREATOR :
+• Émulation clavier/souris malveillant
+• Codes intégrés depuis votre collection
+• Payloads Windows, Linux, macOS
+• Émulateur HID avancé avec sécurités
+• Simulation éducative sécurisée
+
+USBKILLER DESIGNER :
+• Schémas circuits destructeurs
+• 4 types : Simple, Amplifié, Total, Répétitif
+• Surtension 5V→220V+ (DESTRUCTEUR !)
+• Liste composants + précautions
+• Documentation électronique détaillée
+
+🚫 UTILISATIONS INTERDITES :
+• Attaques malveillantes
+• Destruction de matériel tiers
+• Violation de systèmes sans autorisation
+• Toute utilisation illégale
+
+⚖️ DÉCHARGE DE RESPONSABILITÉ :
+Le développeur décline toute responsabilité pour les dommages
+matériels, logiciels ou légaux. Utilisateur seul responsable.
+
+🎯 UTILISATIONS LÉGITIMES :
+• Tests de sécurité autorisés (pentest)
+• Recherche en cybersécurité
+• Éducation et formation
+• Tests sur matériel personnel
+
+🛡️ INTERFACE UNIFIÉE :
+Menu interactif en zone de texte avec navigation
+par choix numérotés et accès direct aux outils.""",
+
+            'killram_old': """🔒 KILLRAM - EXTENSION DÉSACTIVÉE
+
+🔒 STATUT : DÉSACTIVÉE POUR SÉCURITÉ
+
+Cette extension a été désactivée pour protéger votre système.
+
+⚠️ RAISONS DE LA DÉSACTIVATION :
+• Risque de crash système complet
+• Perte de données possible
+• Outil potentiellement destructif
+• Non adapté aux machines de production
+
+FONCTIONNALITÉS ORIGINALES :
+• Saturation mémoire RAM du système
+• Tests de stress mémoire extrêmes
+• 10 niveaux d'intensité (1=léger, 10=critique)
+• Threads multiples pour saturation rapide
+
+COMMANDE ACTUELLE :
+• ext KillRAM disabled - Message de désactivation
+
+🔓 POUR RÉACTIVER (DÉCONSEILLÉ) :
+1. Localiser : extensions/killram_extension_SECURE_BACKUP.py
+2. Renommer en : killram_extension.py
+3. Redémarrer l'application
+4. Accepter la décharge de responsabilité
+
+⚠️ AVERTISSEMENT :
+La réactivation de cette extension peut endommager votre système.
+Utilisez uniquement sur des machines de test ou virtuelles.
+
+🔒 PROTECTION ACTIVE :
+Votre système est protégé contre l'exécution accidentelle de cet outil
+
+⚠️ AVERTISSEMENT CRITIQUE :
+Cet outil peut ENDOMMAGER votre système et causer une PERTE DE DONNÉES.
+Utilisation à vos propres risques uniquement !
+
+FONCTIONNALITÉS :
+• Saturation mémoire RAM du système
+• Tests de stress mémoire
+• Simulation de conditions dégradées
+• 10 niveaux d'intensité (1=léger, 10=critique)
+• Décharge de responsabilité intégrée
+
+COMMANDES :
+• ext KillRAM disclaimer - Voir avertissements
+• ext KillRAM accept - Accepter les risques
+• ext KillRAM start [1-10] - Démarrer attaque
+• ext KillRAM stop - Arrêter (si possible)
+• ext KillRAM status - Statut de l'attaque
+
+EXEMPLES :
+• ext KillRAM disclaimer
+• ext KillRAM accept
+• ext KillRAM start 3 (intensité légère)
+• ext KillRAM start 8 CONFIRM (critique)
+
+🚫 UTILISATIONS INTERDITES :
+• Attaques malveillantes
+• Sabotage de systèmes tiers
+• Déni de service
+• Toute utilisation illégale
+
+⚖️ DÉCHARGE DE RESPONSABILITÉ :
+Le développeur (CMD-AI Team) décline toute responsabilité
+pour les dommages causés par cet outil. Utilisateur seul responsable.
+
+🎯 UTILISATIONS LÉGITIMES :
+• Tests de robustesse d'applications
+• Recherche en sécurité informatique
+• Tests de stress mémoire
+• Simulation de conditions de faible mémoire"""
         }
         
         return readmes.get(plugin_id, f"""📖 README - {plugin_id.upper()}

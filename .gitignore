@@ -1,11 +1,8 @@
-# Fichiers Python compilés
-*.pyc
-*.pyo
-*.pyd
+# Python
 __pycache__/
+*.py[cod]
+*$py.class
 *.so
-
-# Distribution / packaging
 .Python
 build/
 develop-eggs/
@@ -22,16 +19,11 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
 
-# PyInstaller
-*.manifest
-*.spec
-
-# Environnements virtuels
-.env
-.venv
-env/
+# Virtual Environment
 venv/
+env/
 ENV/
 env.bak/
 venv.bak/
@@ -43,6 +35,19 @@ venv.bak/
 *.swo
 *~
 
+# User Data (Private)
+user/
+!user/.gitkeep
+logs/
+!logs/.gitkeep
+
+# API Keys and Secrets
+*.key
+*.pem
+api_keys.json
+secrets.json
+config_private.json
+
 # OS
 .DS_Store
 .DS_Store?
@@ -52,27 +57,64 @@ venv.bak/
 ehthumbs.db
 Thumbs.db
 
-# Logs
-*.log
-logs/
-
-# Fichiers temporaires
+# Temporary Files
 *.tmp
 *.temp
-*.bak
-*.backup
+*.log
+*.cache
 
-# Fichiers utilisateur sensibles
-user/api_keys.json
-user/config.json
-user/session_data.json
+# Extensions Backup
+extensions/*_SECURE_BACKUP.py
+extensions/*_DISABLED.py
 
-# Archives de transfert
+# Reports and Exports
+user/exports/
+user/osint_reports/
+user/security_projects/
+user/badusb_projects/
+
+# Cache
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Build and Distribution Files
+cmd_ai_ultra_reboot.egg-info/
+CMD-AI_Ultra_Reboot_v*/
+dist_linux/
 *.tar.gz
-*.zip
+*.spec
 
-# Scripts de debug temporaires
-debug_*.py
-fix_*.py
-rebuild_*.py
-test_*.py
+# Build Scripts and Executables
+build_*.py
+build_*.bat
+build_*.sh
+CMD-AI_Ultra_Reboot
+
+# Development and Planning Files
+*.pdf
+*.txt
+!requirements.txt
+!README.txt
+plan de route.txt
+tester_codes.txt
+contenu USB tranfert de l'app pour compile windows
+
+# Docker Files (if not needed)
+docker-compose.yml
+Dockerfile.*
+
+# Compatibility and Validation Scripts
+check_compatibility.py
+compatibility_patch.py
+validate_release.py
+
+# Launch Scripts (keep main.py)
+launch.py
+launch.sh
+
+# Setup Files
+setup.py
+
+# Empty Utils Directory
+utils/

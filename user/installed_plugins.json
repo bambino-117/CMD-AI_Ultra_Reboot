@@ -11,6 +11,12 @@
       "name": "SystemMonitor",
       "version": "1.1.0",
       "installed_at": "2025-07-07T09:39:39.583803"
+    },
+    {
+      "id": "filemanager",
+      "name": "FileManager",
+      "version": "1.0.0",
+      "installed_at": "2025-07-07T21:01:41.407989"
     }
   ],
   "last_update": null

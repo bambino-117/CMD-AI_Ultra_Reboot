@@ -31,10 +31,10 @@ class TextInterpreter:
         return command_type, processed_text
     
     def _detect_command_type(self, text):
-        """Détecte le type de commande basé sur les préfixes"""
+        """Détecte le type de commande basé sur les préfixes et reconnaissance native"""
         text_lower = text.lower()
         
-        # Vérifier les préfixes système
+        # Vérifier les préfixes explicites système
         for prefix in self.command_prefixes['system']:
             if text_lower.startswith(prefix):
                 return CommandType.SYSTEM_COMMAND
@@ -48,6 +48,11 @@ class TextInterpreter:
         for prefix in self.command_prefixes['help']:
             if text_lower.startswith(prefix):
                 return CommandType.HELP
+        
+        # NOUVELLE LOGIQUE: Reconnaissance native des commandes
+        first_word = text.split()[0].lower() if text.split() else ""
+        if self._is_native_system_command(first_word, text):
+            return CommandType.SYSTEM_COMMAND
         
         # Par défaut, considérer comme chat IA
         return CommandType.AI_CHAT
@@ -97,3 +102,69 @@ class TextInterpreter:
         """Vérifie si le texte est une demande de chat IA"""
         command_type, _ = self.interpret(text)
         return command_type == CommandType.AI_CHAT
+    
+    def _is_native_system_command(self, first_word, full_text):
+        """Vérifie si c'est une vraie commande système native"""
+        if not first_word:
+            return False
+        
+        # Commandes communes cross-platform
+        common_commands = {
+            'ls', 'dir', 'cd', 'pwd', 'mkdir', 'rmdir', 'rm', 'del',
+            'cp', 'copy', 'mv', 'move', 'cat', 'type', 'grep', 'find',
+            'ps', 'tasklist', 'kill', 'taskkill', 'top', 'ping',
+            'curl', 'wget', 'git', 'npm', 'pip', 'python', 'node',
+            'sudo', 'chmod', 'chown', 'tar', 'zip', 'unzip'
+        }
+        
+        # Commandes spécifiques par OS
+        if self.os_type == 'windows':
+            windows_commands = {
+                'systeminfo', 'ipconfig', 'netstat', 'nslookup',
+                'tracert', 'ren', 'tree', 'attrib', 'fc', 'xcopy',
+                'robocopy', 'sfc', 'dism', 'powershell', 'cmd'
+            }
+            common_commands.update(windows_commands)
+        
+        elif self.os_type == 'darwin':  # macOS
+            mac_commands = {
+                'brew', 'say', 'open', 'screencapture', 'pbcopy',
+                'pbpaste', 'launchctl', 'sw_vers', 'system_profiler',
+                'diskutil', 'hdiutil', 'ditto', 'plutil'
+            }
+            common_commands.update(mac_commands)
+        
+        else:  # Linux
+            linux_commands = {
+                'apt', 'yum', 'dnf', 'pacman', 'systemctl', 'service',
+                'mount', 'umount', 'df', 'du', 'free', 'uname',
+                'lsof', 'netstat', 'ss', 'iptables', 'crontab'
+            }
+            common_commands.update(linux_commands)
+        
+        # Vérifier si le premier mot est une commande reconnue
+        if first_word in common_commands:
+            # Vérifications additionnelles pour éviter les faux positifs
+            return self._validate_command_context(full_text)
+        
+        return False
+    
+    def _validate_command_context(self, text):
+        """Valide le contexte pour éviter les faux positifs"""
+        # Éviter les questions qui contiennent des mots de commandes
+        question_indicators = [
+            'comment', 'pourquoi', 'qu\'est-ce', 'que fait', 'how to',
+            'what is', 'why does', 'can you', 'peux-tu', 'pouvez-vous',
+            '?', 'help me', 'aide-moi'
+        ]
+        
+        text_lower = text.lower()
+        for indicator in question_indicators:
+            if indicator in text_lower:
+                return False
+        
+        # Si le texte est très long (>50 chars), probablement une conversation
+        if len(text) > 50 and not any(char in text for char in ['|', '>', '<', '&']):
+            return False
+        
+        return True

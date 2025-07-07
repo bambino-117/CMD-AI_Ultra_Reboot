@@ -9,6 +9,7 @@ from core.conversation_manager import ConversationManager
 from core.offline_manager import OfflineManager
 from core.theme_manager import ThemeManager
 from core.system_integration import SystemIntegration
+from core.auto_repair import initialize_auto_repair, get_auto_repair_manager, auto_repair_decorator
 from core.logger import app_logger
 
 class Dispatcher:
@@ -45,6 +46,10 @@ class Dispatcher:
         self.system_integration = SystemIntegration()
         app_logger.debug("Intégration système créée", "DISPATCHER")
         
+        # Initialiser le système de réparation automatique
+        self.auto_repair = initialize_auto_repair(config)
+        app_logger.debug("Système de réparation automatique initialisé", "DISPATCHER")
+        
         self.awaiting_installation_response = False
         self.awaiting_update_response = False
         self.pending_update_info = None
@@ -58,18 +63,30 @@ class Dispatcher:
         self.extension_manager.load_extensions()
         app_logger.info("Dispatcher initialisé", "DISPATCHER")
 
+    @auto_repair_decorator
     def process(self, user_input):
-        # Gestion des états d'installation
-        if self.awaiting_installation_response:
-            return self._handle_installation_response(user_input)
-        elif self.awaiting_model_selection:
-            return self._handle_model_selection(user_input)
-        elif self.awaiting_api_key:
-            return self._handle_api_key_input(user_input)
-        elif self.awaiting_elevation_confirm:
-            return self._handle_elevation_confirmation(user_input)
-        elif self.awaiting_update_response:
-            return self._handle_update_response(user_input)
+        try:
+            # Gestion des états d'installation
+            if self.awaiting_installation_response:
+                return self._handle_installation_response(user_input)
+            elif self.awaiting_model_selection:
+                return self._handle_model_selection(user_input)
+            elif self.awaiting_api_key:
+                return self._handle_api_key_input(user_input)
+            elif self.awaiting_elevation_confirm:
+                return self._handle_elevation_confirmation(user_input)
+            elif self.awaiting_update_response:
+                return self._handle_update_response(user_input)
+        except Exception as e:
+            # Auto-repair tentera de réparer automatiquement
+            app_logger.error(f"Erreur dans process(): {e}", "DISPATCHER")
+            if self.auto_repair and self.auto_repair.enabled:
+                # Détecter et programmer une réparation
+                error_type = type(e).__name__
+                error_details = {'error': str(e), 'context': 'dispatcher_process'}
+                if self.auto_repair.detect_and_repair(error_type, error_details):
+                    return f"🔧 Erreur détectée, réparation automatique en cours...\n⚠️ Erreur: {e}"
+            raise
         
         command_type, processed_text = self.interpreter.interpret(user_input)
         
@@ -86,6 +103,8 @@ class Dispatcher:
             return self._handle_theme_command(user_input[6:])
         elif user_input.startswith("system "):
             return self._handle_system_integration_command(user_input[7:])
+        elif user_input.startswith("repair "):
+            return self._handle_repair_command(user_input[7:])
         elif user_input.startswith("install "):
             return self._handle_install_command(user_input[8:])
         elif user_input.startswith("dismiss "):
@@ -179,6 +198,7 @@ Nouvelles commandes:
 • cache status/clear - Cache hors-ligne
 • theme set/toggle - Thèmes interface
 • system notify/startup - Intégration OS
+• repair status/history - Réparation automatique
 
 Exemples:
 • ext AIchat setup - Configurer l'IA
@@ -317,3 +337,117 @@ Exemples:
             return f"🖥️ Système: {info.get('system', 'N/A')} - CPU: {info.get('cpu_count', 'N/A')} cœurs"
         else:
             return "Commandes: system notify [titre] [message], system info"
+    
+    def _handle_repair_command(self, command):
+        """Gère les commandes de réparation automatique"""
+        parts = command.split(' ', 2)
+        action = parts[0] if parts else ""
+        
+        if action == "status":
+            return self._get_repair_status()
+        elif action == "history":
+            return self._get_repair_history()
+        elif action == "manual" and len(parts) > 1:
+            repair_type = parts[1]
+            kwargs = {}
+            if len(parts) > 2:
+                # Parse arguments simples
+                args_str = parts[2]
+                if '=' in args_str:
+                    for arg in args_str.split(','):
+                        if '=' in arg:
+                            key, value = arg.split('=', 1)
+                            kwargs[key.strip()] = value.strip()
+            return self.auto_repair.manual_repair(repair_type, **kwargs)
+        elif action == "enable":
+            self.auto_repair.enabled = True
+            return "✅ Réparation automatique activée"
+        elif action == "disable":
+            self.auto_repair.enabled = False
+            return "⏸️ Réparation automatique désactivée"
+        else:
+            return """🔧 COMMANDES RÉPARATION AUTOMATIQUE
+
+• repair status - Statut du système
+• repair history - Historique des réparations
+• repair manual [type] - Réparation manuelle
+• repair enable/disable - Activer/désactiver
+
+Types de réparation manuelle:
+• dependency_fix packages=nom1,nom2
+• import_fix module=nom_module
+• file_repair filepath=chemin
+• config_reset config_file=fichier
+• cache_clean
+
+Exemples:
+• repair manual dependency_fix packages=requests,numpy
+• repair manual cache_clean"""
+    
+    def _get_repair_status(self):
+        """Retourne le statut du système de réparation"""
+        if not self.auto_repair:
+            return "❌ Système de réparation non initialisé"
+        
+        status = "🔧 STATUT RÉPARATION AUTOMATIQUE\n\n"
+        status += f"État: {'✅ Activé' if self.auto_repair.enabled else '⏸️ Désactivé'}\n"
+        status += f"Worker: {'🔄 Actif' if self.auto_repair.worker.active else '⏹️ Arrêté'}\n"
+        
+        # Statistiques de la file d'attente
+        queue_size = self.auto_repair.worker.task_queue.qsize()
+        status += f"File d'attente: {queue_size} tâche(s)\n"
+        
+        # Historique récent
+        history = self.auto_repair.get_repair_history()
+        recent_repairs = len([r for r in history if r['result']['success']])
+        failed_repairs = len([r for r in history if not r['result']['success']])
+        
+        status += f"Réparations réussies: {recent_repairs}\n"
+        status += f"Réparations échouées: {failed_repairs}\n\n"
+        
+        if history:
+            last_repair = history[-1]
+            status += f"Dernière réparation:\n"
+            status += f"  📅 {last_repair['timestamp'][:19]}\n"
+            status += f"  🔧 {last_repair['task']['description']}\n"
+            status += f"  {'✅' if last_repair['result']['success'] else '❌'} {last_repair['result'].get('message', 'N/A')}\n"
+        
+        return status
+    
+    def _get_repair_history(self):
+        """Retourne l'historique des réparations"""
+        if not self.auto_repair:
+            return "❌ Système de réparation non initialisé"
+        
+        history = self.auto_repair.get_repair_history()
+        
+        if not history:
+            return "📋 Aucune réparation effectuée"
+        
+        result = "📋 HISTORIQUE DES RÉPARATIONS\n\n"
+        
+        # Afficher les 10 dernières réparations
+        for repair in history[-10:]:
+            timestamp = repair['timestamp'][:19].replace('T', ' ')
+            task_desc = repair['task']['description']
+            success = repair['result']['success']
+            duration = repair['duration']
+            
+            status_icon = "✅" if success else "❌"
+            result += f"{status_icon} {timestamp}\n"
+            result += f"   🔧 {task_desc}\n"
+            result += f"   ⏱️ {duration:.2f}s\n"
+            
+            if success:
+                message = repair['result'].get('message', 'Réparation réussie')
+                result += f"   💬 {message}\n"
+            else:
+                error = repair['result'].get('error', 'Erreur inconnue')
+                result += f"   ❌ {error}\n"
+            
+            result += "\n"
+        
+        if len(history) > 10:
+            result += f"... et {len(history) - 10} réparations plus anciennes\n"
+        
+        return result

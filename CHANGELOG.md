@@ -1,177 +1,118 @@
 # 📋 Changelog - CMD-AI Ultra Reboot
 
-## [2.0.0] - 2025-01-07
+## [2.0.0] - 2024-01-07
 
-### 🎉 **Version Majeure - Ultra Reboot**
+### 🚀 **Nouvelles Fonctionnalités Majeures**
 
-### ✨ **Nouvelles Fonctionnalités**
+#### **🔧 Système Auto-Repair**
+- **Réparation automatique** : Détection et correction automatique des erreurs
+- **Worker background** : Réparations silencieuses sans interruption
+- **5 types de réparations** : Dependencies, imports, fichiers, config, cache
+- **Interface monitoring** : Statut, historique, réparations manuelles
+- **Notifications** : Système de notifications intégré
 
-#### 🔌 **Marketplace d'Extensions**
-- **Interface style Empire** : Tuiles cliquables inspirées Star Wars
-- **9 extensions** : FileManager, NetworkTools, SystemMonitor, TextTools, Weather...
-- **Installation 1-clic** : Boutons d'action intégrés (Installer/Utiliser/README)
-- **Gestion dynamique** : Installation/désinstallation en temps réel
-- **Documentation** : README complet pour chaque extension
+#### **💾 USB Manager 2.0 - Toolkit Complet**
+- **Bootable Creator** : Création clés USB bootables (ISO → USB)
+- **Firmware Flasher** : Flash BIOS/firmware avec flashrom
+- **MBR Manager** : Sauvegarde/restauration Master Boot Record
+- **Validation ISO** : Checksum MD5/SHA256 et vérifications
+- **Interface guidée** : Assistant pas-à-pas pour chaque fonction
 
-#### 🎨 **Interface Utilisateur Avancée**
-- **4 thèmes** : Clair, Sombre, Bleu, Vert avec application instantanée
-- **Raccourcis clavier** : 7 raccourcis pour navigation rapide
-- **Coloration syntaxique** : Code coloré dans les réponses IA
-- **Capture d'écran** : Intégration native avec vignettes
-- **Menu marketplace** : Accès direct entre Fichier et Aide
+#### **🛡️ Security Toolkit - Conteneur Sécurisé**
+- **KillRAM** : Saturation mémoire (désactivé par sécurité)
+- **BadUSB Creator** : Émulation clavier avec codes intégrés
+- **USBKiller Designer** : Schémas circuits destructeurs
+- **Décharges responsabilité** : Protection juridique complète
+- **Interface unifiée** : Menu contextuel avec 3 outils
 
-#### 💬 **Gestion des Conversations**
-- **Sauvegarde** : Conversations persistantes avec métadonnées
-- **Export multi-format** : PDF et HTML avec mise en forme
-- **Chargement** : Reprise de conversations antérieures
-- **Organisation** : Liste chronologique avec statistiques
+#### **🔍 OSINT Toolkit - Investigation Légale**
+- **8 outils OSINT** : Email, réseaux sociaux, WHOIS, archives, téléphone, IP
+- **Assistant guidé** : Interface interactive avec choix numérotés
+- **Décharge légale** : Conformité RGPD et usage éthique
+- **Simulation éducative** : Démonstrations sécurisées
+- **Rapports** : Export PDF/HTML/JSON
 
-#### 🌐 **Mode Hors-ligne Intelligent**
-- **Cache IA** : Réponses mises en cache automatiquement
-- **Patterns** : Réponses pré-définies pour questions courantes
-- **Basculement** : Détection automatique online/offline
-- **Statistiques** : Monitoring du cache et performances
+### 🔧 **Améliorations Core**
 
-#### ⚙️ **Intégration Système Poussée**
-- **Notifications natives** : Windows/macOS/Linux
-- **Démarrage automatique** : Registre/LaunchAgent/Autostart
-- **Menu contextuel** : Clic droit sur fichiers (Windows)
-- **Monitoring** : CPU, RAM, processus, températures
+#### **🧠 Reconnaissance Commandes Native**
+- **50+ commandes** : Reconnaissance cross-platform (Windows/Linux/macOS)
+- **Validation contextuelle** : Évite les faux positifs
+- **Questions détectées** : "comment", "pourquoi", "peux-tu"
+- **Longueur intelligente** : Conversations longues → Chat IA
 
-### 🔧 **Extensions Intégrées**
+#### **🎨 Interface et UX**
+- **Marketplace organisé** : Tuiles conteneurs et catégories
+- **12 extensions** : Portfolio complet d'outils
+- **Thèmes** : 4 thèmes avec application instantanée
+- **Notifications** : Système natif cross-platform
 
-#### 📁 **FileManager v1.0.0**
-- Recherche de fichiers par pattern
-- Organisation automatique par type
-- Détection de doublons par hash MD5
-- Nettoyage fichiers temporaires
+### 📦 **Extensions Disponibles**
 
-#### 🌐 **NetworkTools v1.2.0**
-- Test de connectivité (ping)
-- Scan de ports réseau
-- Test de vitesse internet
-- Géolocalisation d'adresses IP
-- Scan des réseaux WiFi
+1. **🤖 AIchat** - Chat IA multimodal
+2. **💾 USBManager** - Toolkit USB complet
+3. **🛡️ SecurityToolkit** - Outils de sécurité
+4. **🔍 OSINT** - Investigation données publiques
+5. **🌤️ Weather** - Météo et géolocalisation
+6. **📁 FileManager** - Gestion fichiers avancée
+7. **🌐 NetworkTools** - Outils réseau complets
+8. **🖥️ SystemMonitor** - Monitoring système
+9. **🔤 TextTools** - Traitement de texte
+10. **📷 Screenshot** - Capture d'écran
+11. **🌍 Translator** - Traduction multilingue
+12. **🧮 Calculator** - Calculatrice graphique
 
-#### 🖥️ **SystemMonitor v1.1.0**
-- Statut système complet
-- Top des processus consommateurs
-- Usage des disques avec barres
-- Statistiques réseau détaillées
-- Températures système (si supporté)
+### 🔒 **Sécurité et Conformité**
 
-#### 🔤 **TextTools v1.0.0**
-- Recherche/remplacement regex
-- Génération hash (MD5, SHA256, SHA512)
-- Encodage/décodage (Base64, Hex, URL)
-- Formatage de texte avancé
-- Analyse et comptage de texte
+#### **⚖️ Décharges de Responsabilité**
+- **SecurityToolkit** : Protection juridique complète
+- **OSINT** : Conformité RGPD et usage éthique
+- **Firmware Flasher** : Avertissements matériels
+- **Auto-Repair** : Responsabilité utilisateur
 
-#### 🌤️ **Weather v1.0.0**
-- Météo actuelle par ville
-- Prévisions 3 jours
-- Géolocalisation automatique
-- Données météo détaillées
+#### **🛡️ Protections Intégrées**
+- **KillRAM isolé** : Extension désactivée par sécurité
+- **Authentification** : Mots de passe admin requis
+- **Confirmations** : Validations multiples pour actions critiques
+- **Sauvegardes** : Backup automatique avant modifications
 
-### 🎯 **Améliorations**
+### 🔧 **Améliorations Techniques**
 
-#### 🤖 **IA et Modèles**
-- **6 modèles supportés** : OpenAI, Gemini, Ollama, Hugging Face, API, Simple
-- **Chat multimodal** : Support texte + images
-- **Configuration simplifiée** : Assistant de setup intégré
-- **Gestion d'erreurs** : Fallback et messages explicites
+#### **📊 Logging et Monitoring**
+- **Auto-repair logs** : Historique détaillé des réparations
+- **Notifications** : Système de notifications temps réel
+- **Statut système** : Monitoring complet des composants
+- **Rapports** : Export et analyse des données
 
-#### 🎨 **Interface**
-- **Paramètres simplifiés** : Switches pour extensions/notifications
-- **Thèmes persistants** : Sauvegarde automatique des préférences
-- **Responsive** : Adaptation à différentes tailles d'écran
-- **Accessibilité** : Contrastes et tailles de police optimisés
+#### **🎯 Performance**
+- **Worker background** : Traitement non-bloquant
+- **Cache intelligent** : Optimisation des réponses
+- **Reconnaissance native** : Détection commandes optimisée
+- **Memory management** : Gestion mémoire améliorée
 
-#### 🔧 **Architecture**
-- **Modularité** : Système BaseExtension standardisé
-- **Extensibilité** : Ajout facile de nouvelles extensions
-- **Performance** : Cache et optimisations mémoire
-- **Stabilité** : Gestion d'erreurs et mode dégradé
+### 🐛 **Corrections de Bugs**
 
-### 🐛 **Corrections**
+- **Import errors** : Gestion automatique des dépendances manquantes
+- **File corruption** : Système de sauvegarde et restauration
+- **Configuration** : Reset automatique en cas de corruption
+- **Cache issues** : Nettoyage automatique des caches
 
-#### 🔨 **Bugs Majeurs**
-- **Indentation** : Correction de 200+ erreurs d'indentation
-- **Imports** : Résolution des dépendances manquantes
-- **Syntaxe** : Correction des erreurs de syntaxe Python
-- **Encodage** : Support UTF-8 complet
+### 📚 **Documentation**
 
-#### 🛠️ **Stabilité**
-- **Mode dégradé** : Application démarre même avec modules manquants
-- **Fallbacks** : Composants de remplacement si imports échouent
-- **Logs** : Système de logging complet pour debug
-- **Tests** : Scripts de validation automatique
-
-### 📦 **Distribution**
-
-#### 🚀 **Compilation**
-- **PyInstaller** : Script de build automatique
-- **Exécutable** : Version standalone sans Python
-- **Installateur** : Script d'installation Linux/macOS
-- **Archive** : Distribution .tar.gz complète
-
-#### 📋 **Documentation**
-- **README** : Guide complet avec exemples
-- **Requirements** : Dépendances détaillées
-- **Setup.py** : Installation via pip
-- **Changelog** : Historique des versions
-
-### 🔄 **Migration depuis v1.x**
-
-#### ⚠️ **Changements Incompatibles**
-- **Structure** : Réorganisation des dossiers
-- **Configuration** : Nouveaux fichiers de config
-- **Extensions** : Nouveau système de plugins
-
-#### 🔧 **Migration**
-1. **Sauvegarde** : Exporter conversations v1.x
-2. **Installation** : Nouvelle installation v2.0.0
-3. **Configuration** : Reconfigurer modèles IA
-4. **Extensions** : Installer depuis marketplace
+- **README complet** : Guide d'installation et utilisation
+- **Aide intégrée** : Documentation contextuelle
+- **Exemples** : Cas d'usage pour chaque extension
+- **Sécurité** : Guides de bonnes pratiques
 
 ---
 
-## [1.0.0] - 2024-12-15
+## [1.0.0] - 2023-12-01
 
 ### 🎉 **Version Initiale**
-
-#### ✨ **Fonctionnalités de Base**
-- Chat IA avec modèles multiples
-- Interface graphique Tkinter
+- Interface de base
+- Chat IA simple
 - Extensions basiques
-- Configuration manuelle
-
-#### 🤖 **Modèles IA**
-- OpenAI GPT
-- Google Gemini
-- Support API basique
-
-#### 🔧 **Extensions**
-- AIchat (principal)
-- Screenshot (capture)
-- Exemple (démonstration)
+- Système de plugins
 
 ---
 
-## 📅 **Roadmap Future**
-
-### [2.1.0] - Prévue Q1 2025
-- **Plugins communautaires** : Marketplace ouvert
-- **Thèmes personnalisés** : Éditeur de thèmes
-- **Synchronisation cloud** : Sauvegarde en ligne
-- **API REST** : Contrôle externe
-
-### [2.2.0] - Prévue Q2 2025
-- **Mode collaboratif** : Chat multi-utilisateurs
-- **Intégration IDE** : Plugins VSCode/IntelliJ
-- **Automatisation** : Scripts et workflows
-- **Analytics** : Statistiques d'usage
-
----
-
-**🚀 CMD-AI Ultra Reboot - L'évolution continue !**
+**🚀 CMD-AI Ultra Reboot 2.0 - L'IA modulaire et auto-réparante !**
