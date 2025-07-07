@@ -118,3 +118,9 @@ setup.py
 
 # Empty Utils Directory
 utils/
+
+# Executable Files
+*.exe
+*.app
+*.deb
+*.rpm
