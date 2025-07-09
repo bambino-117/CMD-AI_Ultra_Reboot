@@ -11,5 +11,8 @@
     "python_version": "3.13.3"
   },
   "system_detected": true,
-  "selected_llm": "1"
+  "selected_llm": "1",
+  "api_keys": {
+    "gemini": "je veux utiliser OSINT"
+  }
 }

@@ -47,6 +47,30 @@
           "model": "IA Simple"
         }
       ]
+    },
+    {
+      "id": "20250708_163050",
+      "timestamp": "2025-07-08T16:30:50.793066",
+      "messages": [
+        {
+          "timestamp": "2025-07-08T16:31:02.135785",
+          "user": "gimp",
+          "ai": "Ça mérite réflexion.",
+          "model": "IA Simple"
+        }
+      ]
+    },
+    {
+      "id": "20250709_072724",
+      "timestamp": "2025-07-09T07:27:24.431784",
+      "messages": [
+        {
+          "timestamp": "2025-07-09T07:27:46.602276",
+          "user": "[IMAGE] aie j'ai oublié le balai",
+          "ai": "[ANALYSE IMAGE] user/screenshots/screenshot_20250709_072734.png\n\nJe vois une image, mais l'analyse d'image n'est pas encore implémentée pour ce modèle.\n\nVotre question: aie j'ai oublié le balai\n\n🚧 Fonctionnalité en développement - Prochaine mise à jour !",
+          "model": "IA Simple"
+        }
+      ]
     }
   ]
 }

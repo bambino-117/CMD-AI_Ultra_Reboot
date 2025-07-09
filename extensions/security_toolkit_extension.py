@@ -113,41 +113,49 @@ ext SecurityToolkit menu - Menu principal des outils
 Ces outils peuvent causer des dommages irréversibles !"""
     
     def show_main_menu(self):
-        """Affiche le menu principal"""
+        """Affiche le menu conteneur principal"""
         if not self.disclaimer_accepted:
             return "❌ Vous devez d'abord accepter la décharge de responsabilité\nUtilisez: ext SecurityToolkit disclaimer"
         
-        return """🛡️ SECURITY TOOLKIT - Menu Principal
+        return """🛡️ SECURITY TOOLKIT - CONTENEUR D'OUTILS
 
 ╔══════════════════════════════════════════════════════════════╗
-║                    SÉLECTIONNEZ UN OUTIL                    ║
+║                    OUTILS SÉPARÉS DISPONIBLES               ║
 ╚══════════════════════════════════════════════════════════════╝
 
-1. 💀 KillRAM (DÉSACTIVÉ)
-   └─ Saturation mémoire système
-   └─ ⚠️ Actuellement désactivé pour sécurité
-   └─ Impact : Crash système probable
+🔧 ACCÈS DIRECT AUX OUTILS :
 
-2. ⚡ BadUSB Creator
-   └─ Émulation clavier/souris malveillant
-   └─ ✅ Codes intégrés depuis votre collection
-   └─ Impact : Exécution de commandes
+1️⃣ ⚠️💀⚠️ KILLRAM ⚠️💀⚠️
+   ├─ Commande : ext SecurityToolkit killram
+   ├─ Statut : DÉSACTIVÉ PAR DÉFAUT
+   ├─ Fonction : Saturation mémoire système
+   ├─ Impact : ⚠️ CRASH SYSTÈME PROBABLE ⚠️
+   └─ Avertissement : DANGER MACHINE CRITIQUE
 
-3. 🔥 USBKiller Designer
-   └─ Schémas circuits destructeurs
-   └─ ⚠️ Destruction matérielle définitive
-   └─ Impact : Dommages matériels irréversibles
+2️⃣ ⚡ BADUSB CREATOR
+   ├─ Commande : ext SecurityToolkit badusb
+   ├─ Statut : ✅ Actif avec sécurités
+   ├─ Fonction : Émulation clavier malveillant
+   ├─ Impact : Exécution commandes système
+   └─ Codes : Collection intégrée
 
-4. 📚 Documentation & Exemples
-   └─ Guides techniques détaillés
-   └─ Codes sources et schémas
-   └─ Précautions de sécurité
+3️⃣ 🔥 USBKILLER DESIGNER
+   ├─ Commande : ext SecurityToolkit usbkiller
+   ├─ Statut : ✅ Schémas disponibles
+   ├─ Fonction : Circuits destructeurs
+   ├─ Impact : ⚠️ DESTRUCTION MATÉRIELLE ⚠️
+   └─ Documentation : Électronique complète
 
-5. ❌ Quitter Security Toolkit
+═══════════════════════════════════════════════════════════════
 
-⚠️ RAPPEL : Usage professionnel et éthique uniquement !
+📋 NAVIGATION CONTENEUR :
+• Tapez 1, 2 ou 3 pour accès direct
+• Ou utilisez les commandes complètes ci-dessus
+• ext SecurityToolkit help - Aide générale
 
-Tapez le numéro de votre choix (1-5) :"""
+⚠️ CHAQUE OUTIL A SON INTERFACE SÉPARÉE ⚠️
+
+Sélectionnez un outil (1-3) :"""
     
     def handle_menu_choice(self, choice):
         """Gère les choix du menu principal"""
@@ -168,33 +176,58 @@ Tapez le numéro de votre choix (1-5) :"""
             return "❌ Choix invalide. Tapez un numéro entre 1 et 5."
     
     def killram_tool(self, args):
-        """Interface KillRAM (désactivé)"""
-        return """💀 KILLRAM - OUTIL DÉSACTIVÉ
+        """Interface KillRAM avec avertissements de danger"""
+        return """⚠️💀⚠️💀⚠️💀⚠️💀⚠️💀⚠️💀⚠️💀⚠️💀⚠️💀⚠️💀⚠️
 
-🔒 STATUT : DÉSACTIVÉ POUR SÉCURITÉ
+                    💀 KILLRAM - OUTIL CRITIQUE 💀
 
-Cette fonctionnalité a été désactivée pour protéger votre système.
+⚠️💀⚠️💀⚠️💀⚠️💀⚠️💀⚠️💀⚠️💀⚠️💀⚠️💀⚠️💀⚠️
 
-⚠️ FONCTIONNALITÉ ORIGINALE :
-• Saturation mémoire RAM du système
-• 10 niveaux d'intensité (1=léger, 10=critique)
-• Threads multiples pour saturation rapide
-• Impact : Crash système probable
+🚨 AVERTISSEMENT DANGER MACHINE 🚨
+
+╔══════════════════════════════════════════════════════════════╗
+║  ⚠️ CET OUTIL PEUT DÉTRUIRE VOTRE SYSTÈME COMPLÈTEMENT ⚠️   ║
+╚══════════════════════════════════════════════════════════════╝
+
+🔒 STATUT : DÉSACTIVÉ PAR DÉFAUT POUR VOTRE SÉCURITÉ
+
+💀 FONCTIONNALITÉS DESTRUCTRICES :
+• Saturation mémoire RAM complète du système
+• 10 niveaux d'intensité (1=léger, 10=DESTRUCTION)
+• Threads multiples pour crash rapide
+• Impact : CRASH SYSTÈME GARANTI
+• Conséquences : PERTE DE DONNÉES POSSIBLE
 
 🔒 PROTECTION ACTIVE :
 L'extension KillRAM est isolée dans un fichier sécurisé
-et ne peut pas être exécutée accidentellement.
+et ne peut PAS être exécutée accidentellement.
 
-💡 POUR RÉACTIVER (DÉCONSEILLÉ) :
+⚠️💀 ACTIVATION MANUELLE REQUISE 💀⚠️
+
+🔓 PROCÉDURE D'ACTIVATION (TRÈS DANGEREUX) :
 1. Localiser : extensions/killram_extension_SECURE_BACKUP.py
 2. Renommer en : killram_extension.py
-3. Redémarrer l'application
+3. Redémarrer CMD-AI Ultra Reboot
+4. Accepter NOUVELLE décharge de responsabilité
+5. ⚠️ UTILISER UNIQUEMENT SUR MACHINES DE TEST ⚠️
 
-⚠️ AVERTISSEMENT :
-La réactivation peut endommager votre système.
-Utilisez uniquement sur des machines de test.
+🚨 AVERTISSEMENTS CRITIQUES :
+• VOTRE MACHINE PEUT NE PLUS REDÉMARRER
+• PERTE DE TRAVAIL NON SAUVEGARDÉ GARANTIE
+• CORRUPTION POSSIBLE DU SYSTÈME D'EXPLOITATION
+• DOMMAGES MATÉRIELS POSSIBLES (SSD/HDD)
 
-🔙 Retour au menu : ext SecurityToolkit menu"""
+💡 ALTERNATIVES SÉCURISÉES :
+• Utilisez une machine virtuelle
+• Tests sur ordinateur dédié uniquement
+• Sauvegardez TOUT avant activation
+
+⚠️💀⚠️💀⚠️💀⚠️💀⚠️💀⚠️💀⚠️💀⚠️💀⚠️💀⚠️
+
+🔙 Retour conteneur : ext SecurityToolkit menu
+🔙 Sortir complètement : ext SecurityToolkit help
+
+⚠️💀⚠️💀⚠️💀⚠️💀⚠️💀⚠️💀⚠️💀⚠️💀⚠️💀⚠️"""
     
     def badusb_tool(self, args):
         """Interface BadUSB avec codes intégrés"""

@@ -11,6 +11,7 @@ from core.theme_manager import ThemeManager
 from core.system_integration import SystemIntegration
 from core.auto_repair import initialize_auto_repair, get_auto_repair_manager, auto_repair_decorator
 from core.logger import app_logger
+from core.smart_ux import SmartUX
 
 class Dispatcher:
     def __init__(self, config):
@@ -55,8 +56,15 @@ class Dispatcher:
         self.pending_update_info = None
         self.awaiting_model_selection = False
         self.awaiting_api_key = False
+        self.awaiting_token_help = False
+        self.selected_model_info = None
         self.awaiting_elevation_confirm = False
         self.pending_elevated_command = None
+        
+        # Système UX intelligent
+        self.smart_ux = SmartUX()
+        self.awaiting_menu_choice = False
+        self.current_menu_category = None
         
         # Charger les extensions
         app_logger.info("Chargement des extensions", "DISPATCHER")
@@ -66,6 +74,10 @@ class Dispatcher:
     @auto_repair_decorator
     def process(self, user_input):
         try:
+            # Gestion des menus contextuels UX
+            if self.awaiting_menu_choice:
+                return self._handle_menu_choice(user_input)
+            
             # Gestion des états d'installation
             if self.awaiting_installation_response:
                 return self._handle_installation_response(user_input)
@@ -73,10 +85,17 @@ class Dispatcher:
                 return self._handle_model_selection(user_input)
             elif self.awaiting_api_key:
                 return self._handle_api_key_input(user_input)
+            elif self.awaiting_token_help:
+                return self._handle_token_help_choice(user_input)
             elif self.awaiting_elevation_confirm:
                 return self._handle_elevation_confirmation(user_input)
             elif self.awaiting_update_response:
                 return self._handle_update_response(user_input)
+            
+            # Détection d'intention intelligente
+            intent_result = self._check_smart_intent(user_input)
+            if intent_result:
+                return intent_result
         except Exception as e:
             # Auto-repair tentera de réparer automatiquement
             app_logger.error(f"Erreur dans process(): {e}", "DISPATCHER")
@@ -113,6 +132,10 @@ class Dispatcher:
             return self._handle_never_command(user_input[6:])
         elif user_input.startswith("ext "):
             return self._handle_extension_command(user_input[4:])
+        elif user_input.startswith("gimp ") or user_input.startswith("design "):
+            return self._handle_gimp_clone_command(user_input)
+        elif user_input.lower() in ["designer", "interface designer", "gimp clone"]:
+            return self._handle_gimp_clone_command("gimp launch")
         
         # Commandes génériques
         if command_type == CommandType.SYSTEM_COMMAND:
@@ -200,10 +223,23 @@ Nouvelles commandes:
 • system notify/startup - Intégration OS
 • repair status/history - Réparation automatique
 
+🎨 DESIGN D'INTERFACE:
+• gimp launch - Lance GIMP Clone Studio
+• designer - Raccourci interface designer
+• gimp help - Aide du designer
+
 Exemples:
 • ext AIchat setup - Configurer l'IA
 • plugin list - Voir plugins disponibles
-• theme toggle - Changer thème"""
+• theme toggle - Changer thème
+• gimp launch - Créer une interface
+
+🤖 ASSISTANT INTELLIGENT:
+• "scanner mon système" - Analyse sécurité
+• "analyser un fichier" - Vérification fichier
+• "créer une clé USB" - Outils BadUSB
+• "tester ma connexion" - Analyse réseau
+• "rechercher des infos" - OSINT"""
     
     # Méthodes de gestion simplifiées
     def _handle_installation_response(self, response):
@@ -219,9 +255,137 @@ Exemples:
     def _handle_model_selection(self, model_number):
         self.awaiting_model_selection = False
         response = self.extension_manager.execute_extension_command("AIchat", "select", model_number)
+        
+        # Si une clé API est requise, proposer le menu d'aide
         if "requise" in response:
-            self.awaiting_api_key = True
+            self.awaiting_token_help = True
+            self.selected_model_info = self._get_model_info(model_number)
+            return self._show_token_help_menu()
+        
         return response
+    
+    def _get_model_info(self, model_number):
+        """Retourne les informations du modèle sélectionné"""
+        models = {
+            "1": {"name": "OpenAI GPT", "url": "https://platform.openai.com/api-keys", "guide": "openai"},
+            "2": {"name": "Google Gemini", "url": "https://makersuite.google.com/app/apikey", "guide": "gemini"},
+            "4": {"name": "Hugging Face", "url": "https://huggingface.co/settings/tokens", "guide": "huggingface"}
+        }
+        return models.get(model_number, {"name": "Modèle", "url": "", "guide": "general"})
+    
+    def _show_token_help_menu(self):
+        """Affiche le menu d'aide pour obtenir le token API"""
+        model_name = self.selected_model_info.get("name", "ce modèle") if self.selected_model_info else "ce modèle"
+        
+        return f"""🔑 **CONFIGURATION {model_name.upper()}**
+
+Une clé API est requise pour utiliser {model_name}.
+
+Comment souhaitez-vous procéder ?
+
+[1] 📝 J'ai déjà ma clé API (la saisir directement)
+[2] 🎯 Me guider pour créer ma clé API  
+[3] 🌐 Ouvrir la page de création de clé
+[4] ❌ Choisir un autre modèle
+
+Tapez le numéro de votre choix :"""
+    
+    def _handle_token_help_choice(self, choice):
+        """Gère le choix dans le menu d'aide token"""
+        self.awaiting_token_help = False
+        
+        if choice == "1":
+            self.awaiting_api_key = True
+            return f"🔑 Parfait ! Collez votre clé API {self.selected_model_info.get('name', '') if self.selected_model_info else ''} ici :"
+        
+        elif choice == "2":
+            return self._get_token_creation_guide()
+        
+        elif choice == "3":
+            url = self.selected_model_info.get("url", "") if self.selected_model_info else ""
+            if url:
+                import webbrowser
+                try:
+                    webbrowser.open(url)
+                    self.awaiting_api_key = True
+                    return f"🌐 Page ouverte dans votre navigateur !\n\n📋 Une fois votre clé créée, collez-la ici :"
+                except:
+                    self.awaiting_api_key = True
+                    return f"🌐 Ouvrez cette URL : {url}\n\n📋 Une fois votre clé créée, collez-la ici :"
+            else:
+                self.awaiting_api_key = True
+                return "📋 Collez votre clé API ici une fois créée :"
+        
+        elif choice == "4":
+            self.awaiting_model_selection = True
+            return self.extension_manager.execute_extension_command("AIchat", "setup")
+        
+        else:
+            self.awaiting_token_help = True
+            return "❌ Choix non reconnu. Tapez 1, 2, 3 ou 4 :"
+    
+    def _get_token_creation_guide(self):
+        """Retourne un guide détaillé pour créer le token"""
+        model_name = self.selected_model_info.get("name", "") if self.selected_model_info else ""
+        guide_type = self.selected_model_info.get("guide", "general") if self.selected_model_info else "general"
+        url = self.selected_model_info.get("url", "") if self.selected_model_info else ""
+        
+        guides = {
+            "openai": f"""🎯 **GUIDE CRÉATION CLÉ OPENAI**
+
+📋 **Étapes détaillées :**
+1. 🌐 Allez sur : {url}
+2. 🔐 Connectez-vous à votre compte OpenAI
+3. ➕ Cliquez sur "Create new secret key"
+4. 📝 Donnez un nom à votre clé (ex: "CMD-AI")
+5. 📋 Copiez la clé (elle ne sera plus visible !)
+6. 💰 Vérifiez vos crédits sur platform.openai.com/usage
+
+⚠️ **Important :** Gardez votre clé secrète !
+
+📋 Une fois créée, collez votre clé ici :""",
+            
+            "gemini": f"""🎯 **GUIDE CRÉATION CLÉ GEMINI**
+
+📋 **Étapes détaillées :**
+1. 🌐 Allez sur : {url}
+2. 🔐 Connectez-vous avec votre compte Google
+3. ➕ Cliquez sur "Create API Key"
+4. 📝 Choisissez un projet ou créez-en un
+5. 📋 Copiez la clé générée
+6. 🆓 Gemini a un quota gratuit généreux !
+
+⚠️ **Important :** Gardez votre clé secrète !
+
+📋 Une fois créée, collez votre clé ici :""",
+            
+            "huggingface": f"""🎯 **GUIDE CRÉATION TOKEN HUGGING FACE**
+
+📋 **Étapes détaillées :**
+1. 🌐 Allez sur : {url}
+2. 🔐 Connectez-vous à votre compte Hugging Face
+3. ➕ Cliquez sur "New token"
+4. 📝 Nom: "CMD-AI" | Type: "Read"
+5. 📋 Copiez le token généré
+6. 🆓 Accès gratuit à de nombreux modèles !
+
+⚠️ **Important :** Gardez votre token secret !
+
+📋 Une fois créé, collez votre token ici :"""
+        }
+        
+        guide = guides.get(guide_type, f"""🎯 **GUIDE CRÉATION CLÉ API**
+
+📋 **Étapes générales :**
+1. 🌐 Allez sur le site du fournisseur
+2. 🔐 Connectez-vous à votre compte
+3. ➕ Créez une nouvelle clé API
+4. 📋 Copiez la clé générée
+
+📋 Une fois créée, collez votre clé ici :""")
+        
+        self.awaiting_api_key = True
+        return guide
     
     def _handle_api_key_input(self, api_key):
         self.awaiting_api_key = False
@@ -414,6 +578,40 @@ Exemples:
         
         return status
     
+    def _check_smart_intent(self, user_input):
+        """Vérifie si l'utilisateur exprime une intention reconnue"""
+        intent = self.smart_ux.detect_intent(user_input)
+        if intent:
+            category, action = intent
+            menu = self.smart_ux.create_contextual_menu(category)
+            self.awaiting_menu_choice = True
+            self.current_menu_category = category
+            return menu
+        return None
+    
+    def _handle_menu_choice(self, user_input):
+        """Gère les choix dans les menus contextuels"""
+        if user_input.lower() in ['annuler', 'cancel', 'exit', 'quit']:
+            self.awaiting_menu_choice = False
+            self.current_menu_category = None
+            return "❌ Opération annulée. Que puis-je faire pour vous ?"
+        
+        if user_input.lower() == 'menu':
+            if self.current_menu_category:
+                return self.smart_ux.create_contextual_menu(self.current_menu_category)
+            else:
+                self.awaiting_menu_choice = False
+                return "Quel type d'action souhaitez-vous effectuer ?"
+        
+        # Traiter le choix du menu
+        if self.current_menu_category and user_input.isdigit():
+            response = self.smart_ux.start_guided_workflow(self.current_menu_category, user_input)
+            self.awaiting_menu_choice = False
+            self.current_menu_category = None
+            return response
+        
+        return "❌ Choix non reconnu. Tapez un numéro (1-4) ou 'annuler'"
+    
     def _get_repair_history(self):
         """Retourne l'historique des réparations"""
         if not self.auto_repair:
@@ -451,3 +649,109 @@ Exemples:
             result += f"... et {len(history) - 10} réparations plus anciennes\n"
         
         return result
+    
+    def _handle_gimp_clone_command(self, command):
+        """Gère les commandes GIMP Clone Studio"""
+        import subprocess
+        import sys
+        from pathlib import Path
+        
+        parts = command.lower().split()
+        action = parts[1] if len(parts) > 1 else "launch"
+        
+        if action in ["launch", "start", "run"]:
+            try:
+                # Chemin vers GIMP Clone Studio
+                gimp_path = Path(__file__).parent.parent / "gimp_clone_studio.py"
+                
+                if not gimp_path.exists():
+                    return """❌ GIMP Clone Studio non trouvé
+
+🔧 Pour l'installer:
+• Assurez-vous que gimp_clone_studio.py existe
+• Ou tapez 'gimp install' pour le créer
+
+💡 GIMP Clone Studio permet de:
+• Créer des interfaces visuellement
+• Générer du code automatiquement
+• Éditer en mode WYSIWYG
+• Exporter en Tkinter, PyQt, HTML/CSS"""
+                
+                # Lancer GIMP Clone Studio
+                subprocess.Popen([sys.executable, str(gimp_path)])
+                
+                return """🎨 GIMP Clone Studio lancé!
+
+✨ FONCTIONNALITÉS:
+• 🛠️ Outils de dessin style GIMP
+• 📚 Système de calques
+• 🎨 Palette de couleurs
+• 💻 Génération de code automatique
+• 👁️ Prévisualisation en temps réel
+• 💾 Export vers différents formats
+
+🚀 L'interface s'ouvre dans une nouvelle fenêtre.
+Créez votre interface visuellement et le code sera généré automatiquement!"""
+                
+            except Exception as e:
+                return f"""❌ Erreur lors du lancement: {e}
+
+🔧 Solutions:
+• Vérifiez que Python fonctionne
+• Redémarrez l'application
+• Tapez 'gimp install' pour réinstaller"""
+                
+        elif action == "install":
+            return """🔧 Installation de GIMP Clone Studio
+
+GIMP Clone Studio est déjà intégré à CMD-AI!
+
+📁 Fichiers disponibles:
+• gimp_clone_studio.py - Interface principale
+• launch_gimp_clone.py - Lanceur
+
+🚀 Pour lancer: tapez 'gimp launch' ou 'designer'"""
+
+        elif action == "help":
+            return """🎨 GIMP CLONE STUDIO - AIDE
+
+🚀 COMMANDES:
+• gimp launch - Lance l'interface
+• gimp help - Cette aide
+• designer - Raccourci de lancement
+
+🛠️ OUTILS DISPONIBLES:
+• Rectangle, Ellipse, Texte
+• Boutons, Champs de saisie
+• Cadres, Onglets, Listes
+• Barres de progression
+
+🎨 FONCTIONNALITÉS:
+• Système de calques comme GIMP
+• Palette de couleurs
+• Propriétés en temps réel
+• Génération de code automatique
+
+💻 LANGAGES SUPPORTÉS:
+• Tkinter (Python)
+• PyQt5 (Python) 
+• HTML/CSS
+• Flutter (en développement)
+
+💡 WORKFLOW:
+1. Dessinez votre interface visuellement
+2. Le code est généré automatiquement
+3. Prévisualisez le résultat
+4. Exportez vers votre projet
+
+📖 Plus d'infos: Lancez l'interface et explorez les menus!"""
+
+        else:
+            return """🎨 GIMP CLONE STUDIO
+
+COMMANDES:
+• gimp launch - Lance l'interface de design
+• gimp help - Aide détaillée
+• designer - Raccourci
+
+💡 Créez des interfaces visuellement avec génération de code automatique!"""

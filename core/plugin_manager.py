@@ -171,6 +171,45 @@ class PluginManager:
                     "tags": ["🔍 osint", "recherche", "investigation", "données publiques", "sécurité"]
                 },
                 {
+                    "id": "scriptmoica",
+                    "name": "Script moi ça, Chien!",
+                    "version": "1.0.0",
+                    "description": "🎨 Générateur d'interfaces automatique - Plugins GIMP/Krita/Photoshop",
+                    "author": "CMD-AI Team",
+                    "category": "Development",
+                    "download_url": "local://ui_plugin_manager.py",
+                    "size": "45KB",
+                    "rating": 4.9,
+                    "downloads": 2500,
+                    "tags": ["🎨 interface", "gimp", "krita", "photoshop", "génération", "code"]
+                },
+                {
+                    "id": "dataanalyzer",
+                    "name": "DataAnalyzer",
+                    "version": "1.0.0",
+                    "description": "🤖 Analyseur de données avec IA - Interprétation intelligente des résultats",
+                    "author": "CMD-AI Team",
+                    "category": "Analysis",
+                    "download_url": "local://data_analyzer_extension.py",
+                    "size": "28KB",
+                    "rating": 4.8,
+                    "downloads": 1800,
+                    "tags": ["🤖 ia", "analyse", "données", "interprétation", "patterns"]
+                },
+                {
+                    "id": "crashreporter",
+                    "name": "CrashReporter",
+                    "version": "1.0.0",
+                    "description": "📋 Gestionnaire de rapports de crash pour testeurs",
+                    "author": "CMD-AI Team",
+                    "category": "Development",
+                    "download_url": "local://crash_reporter_extension.py",
+                    "size": "15KB",
+                    "rating": 4.7,
+                    "downloads": 950,
+                    "tags": ["📋 crash", "rapport", "testeurs", "debug", "développement"]
+                },
+                {
                     "id": "calculator",
                     "name": "Calculator",
                     "version": "1.1.0",

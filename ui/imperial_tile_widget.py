@@ -166,18 +166,40 @@ class ImperialTile(tk.Frame):
         )
         status_label.pack(pady=2)
         
-        # Description courte
-        desc_text = self.plugin['description'][:35] + "..." if len(self.plugin['description']) > 35 else self.plugin['description']
-        desc_label = tk.Label(
-            content_frame,
-            text=desc_text,
-            font=('Arial', 7),
-            fg=self.text_color,
-            bg=self.bg_color,
-            wraplength=180,
-            justify='center'
-        )
-        desc_label.pack(pady=5)
+        # Description spéciale pour SecurityToolkit
+        if self.plugin['id'] == 'securitytoolkit':
+            # Afficher les 3 outils séparés
+            tools_frame = tk.Frame(content_frame, bg=self.bg_color)
+            tools_frame.pack(pady=5)
+            
+            tools = [
+                "⚠️💀 KillRAM (DÉSACTIVÉ)",
+                "⚡ BadUSB Creator", 
+                "🔥 USBKiller Designer"
+            ]
+            
+            for tool in tools:
+                tool_label = tk.Label(
+                    tools_frame,
+                    text=tool,
+                    font=('Arial', 6, 'bold'),
+                    fg=self.text_color,
+                    bg=self.bg_color
+                )
+                tool_label.pack(pady=1)
+        else:
+            # Description normale pour les autres
+            desc_text = self.plugin['description'][:35] + "..." if len(self.plugin['description']) > 35 else self.plugin['description']
+            desc_label = tk.Label(
+                content_frame,
+                text=desc_text,
+                font=('Arial', 7),
+                fg=self.text_color,
+                bg=self.bg_color,
+                wraplength=180,
+                justify='center'
+            )
+            desc_label.pack(pady=5)
         
         # Rating et downloads (en bas)
         stats_label = tk.Label(
@@ -192,8 +214,11 @@ class ImperialTile(tk.Frame):
         # Placer le frame de contenu sur le canvas
         self.canvas.create_window(120, 90, window=content_frame)
         
-        # Stocker les widgets pour les événements
-        self.content_widgets = [content_frame, name_label, version_label, status_label, desc_label, stats_label]
+        # Stocker les widgets pour les événements (gérer desc_label optionnel)
+        widgets_list = [content_frame, name_label, version_label, status_label, stats_label]
+        if 'desc_label' in locals():
+            widgets_list.append(desc_label)
+        self.content_widgets = widgets_list
     
     def bind_events(self):
         """Configure les événements de clic et hover"""

@@ -99,18 +99,28 @@ class SettingsPanel:
             ttk.Label(screenshot_frame, text="Non installée", foreground='orange').pack(side='left', padx=10)
             create_button(screenshot_frame, "Installer", self.install_screenshot, width=8, symbol="📥").pack(side='right')
         
-        # 4. Dossier utilisateur
-        folder_frame = ttk.LabelFrame(self.frame, text="📁 Dossier", padding="5")
-        folder_frame.pack(fill='x', pady=10)
+        # 4. Fichiers et dossiers
+        file_frame = ttk.LabelFrame(self.frame, text="📁 Fichiers", padding="5")
+        file_frame.pack(fill='x', pady=10)
         
-        folder_btn_frame = ttk.Frame(folder_frame)
-        folder_btn_frame.pack(fill='x')
+        # Première ligne - Dossiers
+        folder_btn_frame = ttk.Frame(file_frame)
+        folder_btn_frame.pack(fill='x', pady=2)
         
-        create_button(folder_btn_frame, "Dossier", self.open_user_folder, width=8, symbol="📁").pack(side='left')
-        create_button(folder_btn_frame, "Rapport", self.generate_report, width=8, symbol="📄").pack(side='left', padx=(10,0))
-        create_button(folder_btn_frame, "Effacer", self.clear_history, width=8, symbol="🗑️").pack(side='left', padx=(10,0))
+        create_button(folder_btn_frame, "Dossier User", self.open_user_folder, width=10, symbol="📁").pack(side='left')
+        create_button(folder_btn_frame, "Logs", self.open_logs_folder, width=8, symbol="📋").pack(side='left', padx=(5,0))
+        create_button(folder_btn_frame, "Config", self.open_config_folder, width=8, symbol="⚙️").pack(side='left', padx=(5,0))
+        
+        # Deuxième ligne - Actions
+        action_btn_frame = ttk.Frame(file_frame)
+        action_btn_frame.pack(fill='x', pady=2)
+        
+        create_button(action_btn_frame, "Rapport Système", self.generate_report, width=12, symbol="📄").pack(side='left')
+        create_button(action_btn_frame, "Erreurs", self.view_error_reports, width=8, symbol="🚨").pack(side='left', padx=(5,0))
+        create_button(action_btn_frame, "Effacer Tout", self.clear_history, width=10, symbol="🗑️").pack(side='left', padx=(5,0))
     
     def open_user_folder(self):
+        """Ouvre le dossier user contenant les données utilisateur"""
         user_path = os.path.abspath("user")
         os.makedirs(user_path, exist_ok=True)
         
@@ -121,8 +131,91 @@ class SettingsPanel:
                 subprocess.run(["open", user_path])
             else:  # Linux
                 subprocess.run(["xdg-open", user_path])
+            messagebox.showinfo("📁", f"Dossier user ouvert !\n\nContient :\n• Configurations\n• Conversations\n• Rapports d'erreurs\n• Screenshots\n• Cache")
         except Exception as e:
             messagebox.showerror("❌", f"Erreur ouverture dossier: {e}")
+    
+    def open_logs_folder(self):
+        """Ouvre le dossier des logs"""
+        logs_path = os.path.abspath("logs")
+        os.makedirs(logs_path, exist_ok=True)
+        
+        try:
+            if platform.system() == "Windows":
+                os.startfile(logs_path)
+            elif platform.system() == "Darwin":  # macOS
+                subprocess.run(["open", logs_path])
+            else:  # Linux
+                subprocess.run(["xdg-open", logs_path])
+        except Exception as e:
+            messagebox.showerror("❌", f"Erreur ouverture logs: {e}")
+    
+    def open_config_folder(self):
+        """Ouvre le dossier racine de l'application"""
+        config_path = os.path.abspath(".")
+        
+        try:
+            if platform.system() == "Windows":
+                os.startfile(config_path)
+            elif platform.system() == "Darwin":  # macOS
+                subprocess.run(["open", config_path])
+            else:  # Linux
+                subprocess.run(["xdg-open", config_path])
+        except Exception as e:
+            messagebox.showerror("❌", f"Erreur ouverture config: {e}")
+    
+    def view_error_reports(self):
+        """Affiche les rapports d'erreurs"""
+        error_file = "user/error_reports.txt"
+        
+        if not os.path.exists(error_file):
+            messagebox.showinfo("✅", "Aucun rapport d'erreur trouvé !\n\nL'application fonctionne correctement.")
+            return
+        
+        try:
+            # Créer une fenêtre pour afficher les erreurs
+            error_window = tk.Toplevel(self.parent)
+            error_window.title("🚨 Rapports d'Erreurs")
+            error_window.geometry("600x400")
+            
+            # Zone de texte avec scrollbar
+            text_frame = ttk.Frame(error_window)
+            text_frame.pack(fill='both', expand=True, padx=10, pady=10)
+            
+            text_widget = tk.Text(text_frame, wrap='word')
+            scrollbar = ttk.Scrollbar(text_frame, orient='vertical', command=text_widget.yview)
+            text_widget.configure(yscrollcommand=scrollbar.set)
+            
+            # Lire et afficher les erreurs
+            with open(error_file, 'r', encoding='utf-8') as f:
+                content = f.read()
+                text_widget.insert('1.0', content)
+            
+            text_widget.pack(side='left', fill='both', expand=True)
+            scrollbar.pack(side='right', fill='y')
+            
+            # Boutons
+            btn_frame = ttk.Frame(error_window)
+            btn_frame.pack(fill='x', padx=10, pady=5)
+            
+            create_button(btn_frame, "Effacer Erreurs", lambda: self.clear_error_reports(error_window), symbol="🗑️").pack(side='left')
+            create_button(btn_frame, "Fermer", error_window.destroy, symbol="❌").pack(side='right')
+            
+        except Exception as e:
+            messagebox.showerror("❌", f"Erreur lecture rapports: {e}")
+    
+    def clear_error_reports(self, window=None):
+        """Efface les rapports d'erreurs"""
+        error_file = "user/error_reports.txt"
+        
+        try:
+            if os.path.exists(error_file):
+                os.remove(error_file)
+            messagebox.showinfo("✅", "Rapports d'erreurs effacés !")
+            if window:
+                window.destroy()
+        except Exception as e:
+            messagebox.showerror("❌", f"Erreur effacement: {e}")
     
     def generate_report(self):
         try:
@@ -174,7 +267,7 @@ class SettingsPanel:
                         os.makedirs(dir_path, exist_ok=True)
                         deleted_count += 1
                 
-                messagebox.showinfo("✅", f"Historique effacé !\n{deleted_count} éléments supprimés.\n\nRedémarrez l'application.")
+                messagebox.showinfo("✅", f"Historique effacé !\n{deleted_count} éléments supprimés.\n\n⚠️ Redémarrez l'application pour appliquer les changements.")
                 
             except Exception as e:
                 messagebox.showerror("❌", f"Erreur lors de l'effacement: {e}")

@@ -17,6 +17,18 @@
       "name": "FileManager",
       "version": "1.0.0",
       "installed_at": "2025-07-07T21:01:41.407989"
+    },
+    {
+      "id": "osint",
+      "name": "OSINT",
+      "version": "1.0.0",
+      "installed_at": "2025-07-08T09:34:22.678846"
+    },
+    {
+      "id": "scriptmoica",
+      "name": "Script moi ça, Chien!",
+      "version": "1.0.0",
+      "installed_at": "2025-07-09T07:45:22.846524"
     }
   ],
   "last_update": null

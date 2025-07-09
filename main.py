@@ -4,6 +4,14 @@ from core.logger import app_logger
 from core.user_manager import UserManager
 from core.system_detector import SystemDetector
 
+# Installer le gestionnaire de traceback dès le début
+try:
+    from core.traceback_reporter import install_traceback_handler
+    install_traceback_handler()
+    app_logger.info("Gestionnaire de traceback installé", "MAIN")
+except ImportError:
+    app_logger.warning("Gestionnaire de traceback non disponible", "MAIN")
+
 # Patch de compatibilité 32-bit
 try:
     import compatibility_patch

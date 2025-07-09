@@ -269,16 +269,88 @@ EXEMPLES:
 • Vérifier qu'aucun fichier n'est en cours d'écriture
 • Sauvegarder les données importantes""",
 
-            'securitytoolkit': """🛡️ SECURITY TOOLKIT - BOÎTE À OUTILS
+            'scriptmoica': """🎨 SCRIPT MOI ÇA, CHIEN!
+
+GÉNÉRATEUR D'INTERFACES AUTOMATIQUE
+Analyse vos designs et génère du code Python !
+
+FONCTIONNALITÉS:
+• Plugins pour GIMP, Krita, Photoshop
+• Analyse automatique d'images d'interface
+• Détection intelligente : boutons, champs, labels
+• Génération multi-format : Tkinter, PyQt5, HTML/CSS
+• Renvoi automatique vers CMD-AI
+• Interface intégrée dans les éditeurs
+
+COMMANDES:
+• ext UIPluginManager install - Installer plugins
+• ext UIPluginManager status - Vérifier logiciels
+• ext UIPluginManager uninstall - Désinstaller
+• ext UIPluginManager help - Aide complète
+
+WORKFLOW:
+1. Installez les plugins avec 'install'
+2. Ouvrez GIMP/Krita/Photoshop
+3. Créez/ouvrez une image d'interface
+4. Utilisez le plugin 'UI Generator'
+5. Obtenez le code Python automatiquement
+6. Code sauvé dans user/generated_interfaces/
+
+LOGICIELS SUPPORTÉS:
+• GIMP (toutes versions) - Plugin Python-Fu
+• Krita (4.0+) - Docker PyQt5 intégré
+• Photoshop (2022+) - Extension CEP
+
+FORMATS DE SORTIE:
+• Tkinter - Interface Python native
+• PyQt5 - Interface moderne Qt
+• HTML/CSS - Pages web responsives
+
+DÉTECTION INTELLIGENTE:
+• Rectangles → Boutons/Champs/Frames
+• Texte → Labels et titres
+• Formes → Widgets spécialisés
+• Couleurs → Thèmes automatiques
+• Positions → Placement précis
+
+AVANTAGES:
+• Plus besoin de coder l'interface manuellement
+• Gain de temps considérable
+• Code propre et optimisé
+• Intégration directe dans les éditeurs pros
+• Remplacement de l'ancien GIMP Clone Studio
+
+EXEMPLES D'USAGE:
+• Mockup → Code Tkinter en 30 secondes
+• Design Figma → Interface PyQt5 fonctionnelle
+• Wireframe → Page HTML responsive
+
+🎯 RÉVOLUTIONNEZ VOTRE WORKFLOW DE DÉVELOPPEMENT!""",
+
+            'securitytoolkit': """🛡️ SECURITY TOOLKIT - CONTENEUR D'OUTILS
 
 ⚠️ CONTENEUR D'OUTILS DE SÉCURITÉ :
 Regroupe 3 outils puissants pour tests de sécurité.
 Utilisation strictement limitée aux fins légitimes !
 
-OUTILS INCLUS :
-• 💀 KillRAM - Saturation mémoire (désactivé)
-• ⚡ BadUSB Creator - Émulation clavier malveillant
-• 🔥 USBKiller Designer - Circuits destructeurs
+🔧 INTERFACE CONTENEUR :
+Menu interactif avec accès séparé à chaque outil :
+
+1️⃣ ⚠️💀⚠️ KILLRAM ⚠️💀⚠️
+   • Saturation mémoire système
+   • DÉSACTIVÉ PAR DÉFAUT
+   • Entouré de symboles de danger
+   • Avertissement machine critique
+   
+2️⃣ ⚡ BADUSB CREATOR
+   • Émulation clavier malveillant
+   • Payloads HID intégrés
+   • Tests de sécurité USB
+   
+3️⃣ 🔥 USBKILLER DESIGNER
+   • Schémas circuits destructeurs
+   • Documentation électronique
+   • Composants et précautions
 
 FONCTIONNALITÉS :
 • Menu interactif avec choix numérotés
@@ -288,23 +360,32 @@ FONCTIONNALITÉS :
 • Documentation technique complète
 
 COMMANDES :
-• ext SecurityToolkit disclaimer - Voir avertissements
-• ext SecurityToolkit accept - Accepter les risques
-• ext SecurityToolkit menu - Menu principal
-• ext SecurityToolkit killram - KillRAM (désactivé)
-• ext SecurityToolkit badusb - BadUSB Creator
-• ext SecurityToolkit usbkiller - USBKiller Designer
+• ext SecurityToolkit menu - Menu conteneur principal
+• ext SecurityToolkit killram - ⚠️💀 KillRAM (DANGER)
+• ext SecurityToolkit badusb - ⚡ BadUSB Creator
+• ext SecurityToolkit usbkiller - 🔥 USBKiller Designer
+• ext SecurityToolkit disclaimer - Avertissements
+• ext SecurityToolkit help - Aide complète
 
 EXEMPLES :
 • ext SecurityToolkit disclaimer
 • ext SecurityToolkit menu
 • ext SecurityToolkit badusb
 
-KILLRAM (DÉSACTIVÉ) :
+⚠️💀⚠️ KILLRAM - OUTIL CRITIQUE ⚠️💀⚠️
 • Saturation mémoire RAM du système
 • 10 niveaux d'intensité (1=léger, 10=critique)
-• Actuellement désactivé pour sécurité
+• DÉSACTIVÉ PAR DÉFAUT pour sécurité
 • Fichier isolé : killram_extension_SECURE_BACKUP.py
+• AVERTISSEMENT MACHINE : Risque de crash total
+• ACTIVATION MANUELLE REQUISE après téléchargement
+
+🔓 ACTIVATION KILLRAM :
+1. Localiser : extensions/killram_extension_SECURE_BACKUP.py
+2. Renommer en : killram_extension.py
+3. Redémarrer CMD-AI Ultra Reboot
+4. Accepter décharge de responsabilité
+5. ⚠️ UTILISER UNIQUEMENT SUR MACHINES DE TEST ⚠️
 
 BADUSB CREATOR :
 • Émulation clavier/souris malveillant
@@ -339,6 +420,139 @@ matériels, logiciels ou légaux. Utilisateur seul responsable.
 🛡️ INTERFACE UNIFIÉE :
 Menu interactif en zone de texte avec navigation
 par choix numérotés et accès direct aux outils.""",
+
+            'dataanalyzer': """🤖 DATA ANALYZER - ANALYSEUR IA
+
+ANALYSE INTELLIGENTE DES DONNÉES
+Interprétation automatique des résultats complexes !
+
+FONCTIONNALITÉS :
+• Analyse multi-sources (OSINT, réseau, système)
+• Détection automatique d'anomalies
+• Corrélation de données intelligente
+• Génération de rapports IA
+• Visualisations graphiques
+• Recommandations contextuelles
+
+COMMANDES :
+• ext DataAnalyzer analyze [source] - Analyser données
+• ext DataAnalyzer interpret [type] - Interpréter résultats
+• ext DataAnalyzer visualize [type] - Créer graphiques
+• ext DataAnalyzer report [type] - Rapports IA
+• ext DataAnalyzer patterns [source] - Détecter patterns
+• ext DataAnalyzer help - Aide complète
+
+SOURCES SUPPORTÉES :
+• OSINT - Résultats de recherche renseignement
+• Network - Données réseau et connexions
+• System - Monitoring système et performance
+• Logs - Fichiers de logs et événements
+• Custom - Fichiers de données personnalisés
+
+ANALYSE IA AVANCÉE :
+• Détection patterns temporels
+• Identification anomalies comportementales
+• Scoring automatique des risques
+• Prédiction de tendances
+• Corrélations cachées
+
+VISUALISATIONS :
+• Timelines interactives des événements
+• Graphiques de corrélation
+• Cartes de réseau et connexions
+• Matrices de risques
+• Tableaux de bord dynamiques
+
+RAPPORTS GÉNÉRÉS :
+• Rapport sécurité complet avec scoring
+• Analyse performance avec recommandations
+• Synthèse OSINT avec corrélations
+• Résumé exécutif pour management
+
+EXEMPLES D'USAGE :
+• Analyser résultats scan OSINT complexe
+• Interpréter données monitoring réseau
+• Détecter patterns suspects dans logs
+• Générer rapport sécurité automatique
+• Visualiser évolution performance système
+
+INTÉGRATION :
+• Compatible avec toutes les extensions CMD-AI
+• Import/export formats standards
+• API pour intégration personnalisée
+• Sauvegarde automatique des analyses
+
+🤖 TRANSFORMEZ VOS DONNÉES EN INSIGHTS ACTIONABLES !""",
+
+            'crashreporter': """📋 CRASH REPORTER - GESTIONNAIRE TESTEURS
+
+SYSTÈME DE RAPPORT AUTOMATIQUE
+Aide les développeurs à corriger les bugs rapidement !
+
+FONCTIONNALITÉS :
+• Capture automatique des erreurs
+• Rapports manuels pour testeurs
+• Envoi sécurisé aux développeurs
+• Gestion locale des rapports
+• Nettoyage automatique
+• Anonymisation des données
+
+COMMANDES :
+• ext CrashReporter list - Lister rapports
+• ext CrashReporter report "description" - Rapport manuel
+• ext CrashReporter send - Envoyer rapports
+• ext CrashReporter clean - Nettoyer anciens
+• ext CrashReporter help - Aide complète
+
+CAPTURE AUTOMATIQUE :
+• Tracebacks Python complets
+• Informations système contextuelles
+• Logs récents inclus
+• Horodatage précis
+• Environnement d'exécution
+
+RAPPORTS MANUELS :
+• Problèmes de performance
+• Comportements étranges
+• Suggestions d'amélioration
+• Bugs difficiles à reproduire
+• Retours d'expérience
+
+ENVOI SÉCURISÉ :
+• Chiffrement des communications
+• Anonymisation automatique
+• Pas de données personnelles
+• Envoi volontaire uniquement
+• Confirmation utilisateur
+
+CONFIDENTIALITÉ :
+• Stockage local sécurisé
+• Suppression automatique (30 jours)
+• Aucune collecte de données privées
+• Respect RGPD complet
+• Transparence totale
+
+POUR LES TESTEURS :
+• Contribution précieuse au développement
+• Correction rapide des bugs signalés
+• Amélioration continue de l'app
+• Reconnaissance de la communauté
+• Accès aux versions bêta
+
+EXEMPLES D'USAGE :
+• Signaler crash au démarrage
+• Rapporter lenteur interface
+• Suggerer nouvelle fonctionnalité
+• Documenter bug reproductible
+• Partager retour d'expérience
+
+INTÉGRATION POWERSHELL/CMD :
+• Scripts d'envoi automatique Windows
+• Commandes curl pour Linux/macOS
+• Webhooks configurés
+• Notifications de confirmation
+
+📋 AIDEZ-NOUS À AMÉLIORER CMD-AI POUR TOUS !""",
 
             'killram_old': """🔒 KILLRAM - EXTENSION DÉSACTIVÉE
 

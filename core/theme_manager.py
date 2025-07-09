@@ -31,13 +31,17 @@ class ThemeManager:
                 "accent_color": "#0078D4"
             },
             "blue": {
-                "name": "Bleu",
-                "bg_color": "#1E3A8A",
-                "text_color": "#FFFFFF",
-                "input_bg": "#1E40AF",
-                "button_bg": "#3B82F6",
+                "name": "Bleu Amélioré",
+                "bg_color": "rgba(10, 25, 50, 0.95)",
+                "text_color": "#E0F2FE",
+                "input_bg": "rgba(15, 35, 70, 0.9)",
+                "button_bg": "rgba(30, 60, 120, 0.8)",
                 "button_fg": "#FFFFFF",
-                "accent_color": "#60A5FA"
+                "accent_color": "#00D4FF",
+                "border_color": "#0EA5E9",
+                "border_width": 3,
+                "corner_radius": 8,
+                "transparency": True
             },
             "green": {
                 "name": "Vert",
@@ -47,6 +51,19 @@ class ThemeManager:
                 "button_bg": "#059669",
                 "button_fg": "#FFFFFF",
                 "accent_color": "#34D399"
+            },
+            "neon": {
+                "name": "Néon Bleu",
+                "bg_color": "#0A0A0A",
+                "text_color": "#00BFFF",
+                "input_bg": "#1A1A1A",
+                "button_bg": "#001122",
+                "button_fg": "#00BFFF",
+                "accent_color": "#00FFFF",
+                "border_color": "#00BFFF",
+                "glow_effect": True,
+                "corner_radius": 0,
+                "border_width": 1
             }
         }
         
@@ -70,7 +87,7 @@ class ThemeManager:
         except Exception as e:
             app_logger.error(f"Erreur chargement thème actuel: {e}", "THEME_MANAGER")
         
-        return "light"
+        return "light"  # Thème par défaut : clair
     
     def _save_current_theme(self):
         """Sauvegarde le thème actuel"""
@@ -96,7 +113,36 @@ class ThemeManager:
         self.current_theme = theme_name
         self._save_current_theme()
         
-        return f"✅ Thème changé: {self.themes[theme_name]['name']}\n💡 Redémarrez l'application pour appliquer"
+        # Appliquer le thème immédiatement si possible
+        self._apply_theme_to_interface()
+        
+        return f"✅ Thème changé: {self.themes[theme_name]['name']}\n🎨 Application en cours..."
+    
+    def _apply_theme_to_interface(self):
+        """Applique le thème à l'interface en temps réel"""
+        try:
+            from core.theme_applier import apply_theme_to_interface
+            theme_data = self.get_theme()
+            
+            # Appliquer directement le thème
+            success = apply_theme_to_interface(theme_data)
+            
+            if success:
+                app_logger.info(f"Thème {self.current_theme} appliqué avec succès", "THEME_MANAGER")
+            else:
+                # Fallback: créer un signal pour l'interface
+                signal_file = "user/theme_update_signal.json"
+                os.makedirs("user", exist_ok=True)
+                with open(signal_file, 'w') as f:
+                    json.dump({
+                        "theme": self.current_theme,
+                        "data": theme_data,
+                        "timestamp": __import__('time').time()
+                    }, f)
+                app_logger.debug("Signal de thème créé", "THEME_MANAGER")
+                
+        except Exception as e:
+            app_logger.error(f"Erreur application thème: {e}", "THEME_MANAGER")
     
     def list_themes(self):
         """Liste les thèmes disponibles"""
@@ -107,6 +153,11 @@ class ThemeManager:
             result += f"🎨 {theme_data['name']}{current}\n"
             result += f"   ID: {theme_id}\n"
             result += f"   💡 Appliquer: theme set {theme_id}\n\n"
+        
+        result += "\n🎨 Commandes:\n"
+        result += "• theme set [nom] - Changer de thème\n"
+        result += "• theme toggle - Basculer clair/sombre\n"
+        result += "• theme neon - Activer le thème Néon\n"
         
         return result
     

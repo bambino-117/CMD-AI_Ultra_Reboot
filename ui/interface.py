@@ -57,6 +57,9 @@ class AppUI:
         # Affichage marketplace avec tuiles
         from ui.marketplace_tiles import MarketplaceTiles
         self.marketplace_tiles = MarketplaceTiles(self, self.dispatcher)
+        
+        # Système de thèmes
+        self._setup_theme_system()
     
     def set_icon(self):
         """Configure l'icône de l'application"""
@@ -102,6 +105,49 @@ class AppUI:
         
         # Dernier recours: titre avec emoji
         self.root.title("🤖 CMD-AI Ultra Reboot")
+        
+        # Import pour la surveillance des thèmes
+        import json
+        import os
+    
+    def _setup_theme_system(self):
+        """Configure le système de thèmes"""
+        try:
+            from core.theme_applier import get_theme_applier
+            self.theme_applier = get_theme_applier(self.root)
+            
+            # Surveiller les changements de thème
+            self._monitor_theme_changes()
+            
+            app_logger.debug("Système de thèmes configuré", "UI")
+        except Exception as e:
+            app_logger.debug(f"Système de thèmes non configuré: {e}", "UI")
+    
+    def _monitor_theme_changes(self):
+        """Surveille les changements de thème"""
+        def check_theme_signal():
+            signal_file = "user/theme_update_signal.json"
+            try:
+                if os.path.exists(signal_file):
+                    with open(signal_file, 'r') as f:
+                        data = json.load(f)
+                    
+                    # Appliquer le thème
+                    if self.theme_applier:
+                        self.theme_applier.apply_theme_immediately(data['data'])
+                    
+                    # Supprimer le signal
+                    os.remove(signal_file)
+                    app_logger.info(f"Thème {data['theme']} appliqué", "UI")
+                    
+            except Exception as e:
+                pass
+            
+            # Vérifier à nouveau dans 1 seconde
+            self.root.after(1000, check_theme_signal)
+        
+        # Démarrer la surveillance
+        check_theme_signal()
     
     def setup_ui(self):
         """Configure l'interface utilisateur"""
@@ -377,6 +423,8 @@ class AppUI:
 • theme list - Lister thèmes
 • theme set [nom] - Changer thème
 • theme toggle - Basculer clair/sombre
+• theme neon - Activer thème Néon
+• theme neon - Activer thème Néon (coins coupés)
 
 💾 CACHE & HORS-LIGNE:
 • cache status - Statut connexion
