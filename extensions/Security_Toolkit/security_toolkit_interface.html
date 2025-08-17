@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Toolkit - Interface Web</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0D1117 0%, #1E1E1E 100%);
+            color: #E2E8F0;
+        }
+        .danger-glow { box-shadow: 0 0 20px rgba(239, 68, 68, 0.5); }
+        .warning-glow { box-shadow: 0 0 15px rgba(245, 158, 11, 0.4); }
+        .success-glow { box-shadow: 0 0 15px rgba(34, 197, 94, 0.4); }
+    </style>
+</head>
+<body class="min-h-screen p-4">
+
+    <div class="max-w-6xl mx-auto">
+        <!-- Header -->
+        <div class="bg-gray-900 rounded-2xl p-6 mb-6 border border-red-500 danger-glow">
+            <h1 class="text-4xl font-bold text-white flex items-center mb-4">
+                <span class="text-red-500 mr-3">🛡️</span>
+                Security Toolkit
+                <span class="text-red-500 ml-3">⚠️</span>
+            </h1>
+            <p class="text-red-300 text-lg">
+                Boîte à outils de sécurité pour tests de pénétration, recherche en cybersécurité et formation éthique
+            </p>
+            <div class="mt-4 p-4 bg-red-900/30 rounded-lg border border-red-500">
+                <p class="text-red-200 font-semibold">⚠️ AVERTISSEMENT : Ces outils peuvent causer des dommages irréversibles</p>
+            </div>
+        </div>
+
+        <!-- Disclaimer Section -->
+        <div id="disclaimer-section" class="bg-gray-900 rounded-2xl p-6 mb-6 border border-yellow-500 warning-glow">
+            <h2 class="text-2xl font-bold text-yellow-400 mb-4">📋 Décharge de Responsabilité</h2>
+            <div class="bg-yellow-900/20 p-4 rounded-lg mb-4">
+                <p class="text-yellow-200 mb-2">Vous devez accepter les conditions avant d'utiliser ces outils :</p>
+                <ul class="text-yellow-300 text-sm space-y-1 ml-4">
+                    <li>• Usage strictement éducatif et autorisé uniquement</li>
+                    <li>• Responsabilité complète des conséquences</li>
+                    <li>• Aucune garantie fournie par le développeur</li>
+                    <li>• Risques de dommages matériels et légaux</li>
+                </ul>
+            </div>
+            <div class="flex space-x-4">
+                <button onclick="showFullDisclaimer()" class="bg-yellow-600 text-black px-6 py-2 rounded-lg hover:bg-yellow-500 transition-colors">
+                    Lire la décharge complète
+                </button>
+                <button onclick="acceptDisclaimer()" class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-500 transition-colors">
+                    J'accepte les risques
+                </button>
+            </div>
+        </div>
+
+        <!-- Tools Section (Hidden by default) -->
+        <div id="tools-section" class="hidden">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                
+                <!-- KillRAM Tool -->
+                <div class="bg-gray-900 rounded-2xl p-6 border border-red-600 danger-glow">
+                    <h3 class="text-xl font-bold text-red-400 mb-3 flex items-center">
+                        💀 KillRAM
+                        <span class="ml-2 text-xs bg-red-600 text-white px-2 py-1 rounded">DÉSACTIVÉ</span>
+                    </h3>
+                    <p class="text-gray-300 text-sm mb-4">Saturation mémoire système - CRASH GARANTI</p>
+                    <div class="bg-red-900/30 p-3 rounded-lg mb-4">
+                        <p class="text-red-200 text-xs">⚠️ Peut détruire votre système complètement</p>
+                    </div>
+                    <button onclick="accessKillRAM()" class="w-full bg-red-600 text-white py-2 rounded-lg hover:bg-red-500 transition-colors">
+                        Accéder (Désactivé)
+                    </button>
+                </div>
+
+                <!-- BadUSB Tool -->
+                <div class="bg-gray-900 rounded-2xl p-6 border border-orange-500 warning-glow">
+                    <h3 class="text-xl font-bold text-orange-400 mb-3 flex items-center">
+                        ⚡ BadUSB Creator
+                        <span class="ml-2 text-xs bg-green-600 text-white px-2 py-1 rounded">ACTIF</span>
+                    </h3>
+                    <p class="text-gray-300 text-sm mb-4">Émulation clavier malveillant avec codes intégrés</p>
+                    <div class="bg-orange-900/30 p-3 rounded-lg mb-4">
+                        <p class="text-orange-200 text-xs">Exécution automatique de commandes système</p>
+                    </div>
+                    <button onclick="accessBadUSB()" class="w-full bg-orange-600 text-white py-2 rounded-lg hover:bg-orange-500 transition-colors">
+                        Accéder aux Payloads
+                    </button>
+                </div>
+
+                <!-- USBKiller Tool -->
+                <div class="bg-gray-900 rounded-2xl p-6 border border-red-500 danger-glow">
+                    <h3 class="text-xl font-bold text-red-400 mb-3 flex items-center">
+                        🔥 USBKiller Designer
+                        <span class="ml-2 text-xs bg-green-600 text-white px-2 py-1 rounded">SCHÉMAS</span>
+                    </h3>
+                    <p class="text-gray-300 text-sm mb-4">Circuits destructeurs matériels par surtension</p>
+                    <div class="bg-red-900/30 p-3 rounded-lg mb-4">
+                        <p class="text-red-200 text-xs">⚠️ DESTRUCTION MATÉRIELLE IRRÉVERSIBLE</p>
+                    </div>
+                    <button onclick="accessUSBKiller()" class="w-full bg-red-600 text-white py-2 rounded-lg hover:bg-red-500 transition-colors">
+                        Voir les Schémas
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tool Interface Area -->
+            <div id="tool-interface" class="bg-gray-900 rounded-2xl p-6 border border-gray-600">
+                <h3 class="text-xl font-bold text-white mb-4">Interface Outil</h3>
+                <div id="tool-content" class="text-gray-300">
+                    Sélectionnez un outil ci-dessus pour commencer
+                </div>
+            </div>
+        </div>
+
+        <!-- Log Section -->
+        <div class="mt-6 bg-gray-900 rounded-2xl p-6 border border-gray-600">
+            <h3 class="text-xl font-bold text-white mb-4">📋 Journal de Sécurité</h3>
+            <div id="security-log" class="bg-black p-4 rounded-lg h-32 overflow-y-auto text-green-400 font-mono text-sm">
+                [INIT] Security Toolkit chargé - Acceptation requise
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Full Disclaimer -->
+    <div id="disclaimer-modal" class="fixed inset-0 bg-black bg-opacity-75 hidden items-center justify-center p-4 z-50">
+        <div class="bg-gray-900 rounded-2xl p-8 max-w-4xl max-h-[80vh] overflow-y-auto border border-red-500">
+            <h2 class="text-2xl font-bold text-red-400 mb-4">⚠️ DÉCHARGE DE RESPONSABILITÉ COMPLÈTE</h2>
+            <div class="text-gray-300 space-y-4 text-sm">
+                <div class="bg-red-900/30 p-4 rounded-lg">
+                    <h3 class="font-bold text-red-300 mb-2">🚨 AVERTISSEMENT CRITIQUE</h3>
+                    <p>Cette boîte à outils contient des outils dangereux qui peuvent causer des dommages irréversibles.</p>
+                </div>
+                <div class="bg-yellow-900/30 p-4 rounded-lg">
+                    <h3 class="font-bold text-yellow-300 mb-2">📋 OUTILS INCLUS</h3>
+                    <ul class="space-y-1">
+                        <li>• 💀 KillRAM - Saturation mémoire (crash système)</li>
+                        <li>• ⚡ BadUSB - Émulation clavier malveillant</li>
+                        <li>• 🔥 USBKiller - Destructeur matériel (surtension)</li>
+                    </ul>
+                </div>
+                <div class="bg-gray-800 p-4 rounded-lg">
+                    <h3 class="font-bold text-gray-300 mb-2">⚖️ RESPONSABILITÉ LÉGALE</h3>
+                    <p>En utilisant ces outils, vous reconnaissez que le développeur décline toute responsabilité pour les dommages directs, indirects, matériels ou logiciels.</p>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-4 mt-6">
+                <button onclick="closeDisclaimer()" class="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-500 transition-colors">
+                    Fermer
+                </button>
+                <button onclick="acceptFromModal()" class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-500 transition-colors">
+                    J'accepte tous les risques
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let disclaimerAccepted = false;
+
+        function logMessage(message, type = 'info') {
+            const log = document.getElementById('security-log');
+            const timestamp = new Date().toLocaleTimeString();
+            const colors = {
+                'info': 'text-green-400',
+                'warning': 'text-yellow-400',
+                'error': 'text-red-400',
+                'success': 'text-blue-400'
+            };
+            const color = colors[type] || 'text-green-400';
+            log.innerHTML += `<div class="${color}">[${timestamp}] ${message}</div>`;
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function showFullDisclaimer() {
+            document.getElementById('disclaimer-modal').style.display = 'flex';
+        }
+
+        function closeDisclaimer() {
+            document.getElementById('disclaimer-modal').style.display = 'none';
+        }
+
+        function acceptDisclaimer() {
+            disclaimerAccepted = true;
+            document.getElementById('disclaimer-section').classList.add('hidden');
+            document.getElementById('tools-section').classList.remove('hidden');
+            logMessage('Décharge de responsabilité acceptée - Outils activés', 'warning');
+            logMessage('ATTENTION: Vous assumez tous les risques', 'error');
+        }
+
+        function acceptFromModal() {
+            closeDisclaimer();
+            acceptDisclaimer();
+        }
+
+        function accessKillRAM() {
+            if (!disclaimerAccepted) return;
+            
+            document.getElementById('tool-content').innerHTML = `
+                <div class="border border-red-500 p-6 rounded-lg bg-red-900/20">
+                    <h4 class="text-xl font-bold text-red-400 mb-4">💀 KillRAM - OUTIL CRITIQUE</h4>
+                    <div class="bg-red-900/50 p-4 rounded-lg mb-4">
+                        <p class="text-red-200 font-bold">🚨 STATUT : DÉSACTIVÉ PAR DÉFAUT POUR VOTRE SÉCURITÉ</p>
+                    </div>
+                    <div class="space-y-3 text-sm">
+                        <p class="text-gray-300">Cet outil peut détruire votre système complètement :</p>
+                        <ul class="text-red-300 space-y-1 ml-4">
+                            <li>• Saturation mémoire RAM complète du système</li>
+                            <li>• 10 niveaux d'intensité (1=léger, 10=DESTRUCTION)</li>
+                            <li>• Impact : CRASH SYSTÈME GARANTI</li>
+                            <li>• Conséquences : PERTE DE DONNÉES POSSIBLE</li>
+                        </ul>
+                        <div class="bg-yellow-900/30 p-3 rounded mt-4">
+                            <p class="text-yellow-200 text-xs">Pour activer : Renommer killram_extension_SECURE_BACKUP.py</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            logMessage('Accès KillRAM - Outil désactivé par sécurité', 'warning');
+        }
+
+        function accessBadUSB() {
+            if (!disclaimerAccepted) return;
+            
+            document.getElementById('tool-content').innerHTML = `
+                <div class="border border-orange-500 p-6 rounded-lg bg-orange-900/20">
+                    <h4 class="text-xl font-bold text-orange-400 mb-4">⚡ BadUSB Creator - Payloads</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-gray-800 p-4 rounded-lg">
+                            <h5 class="font-bold text-white mb-2">📁 Commandes Système</h5>
+                            <ul class="text-sm text-gray-300 space-y-1">
+                                <li>• ls -l (Liste fichiers)</li>
+                                <li>• ping 8.8.8.8 (Test réseau)</li>
+                                <li>• echo 'Formation' (Message)</li>
+                            </ul>
+                            <button onclick="simulateBadUSB('basic')" class="mt-3 bg-orange-600 text-white px-4 py-1 rounded text-sm hover:bg-orange-500">
+                                Simuler
+                            </button>
+                        </div>
+                        <div class="bg-gray-800 p-4 rounded-lg">
+                            <h5 class="font-bold text-white mb-2">🔧 Payloads Avancés</h5>
+                            <ul class="text-sm text-gray-300 space-y-1">
+                                <li>• Émulateur HID complet</li>
+                                <li>• Délai configurable</li>
+                                <li>• Arrêt d'urgence intégré</li>
+                            </ul>
+                            <button onclick="simulateBadUSB('advanced')" class="mt-3 bg-orange-600 text-white px-4 py-1 rounded text-sm hover:bg-orange-500">
+                                Configurer
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            logMessage('Interface BadUSB chargée - Payloads disponibles', 'info');
+        }
+
+        function accessUSBKiller() {
+            if (!disclaimerAccepted) return;
+            
+            document.getElementById('tool-content').innerHTML = `
+                <div class="border border-red-500 p-6 rounded-lg bg-red-900/20">
+                    <h4 class="text-xl font-bold text-red-400 mb-4">🔥 USBKiller Designer - Schémas</h4>
+                    <div class="bg-red-900/50 p-4 rounded-lg mb-4">
+                        <p class="text-red-200 font-bold">⚠️ CES CIRCUITS DÉTRUISENT LE MATÉRIEL !</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-gray-800 p-4 rounded-lg">
+                            <h5 class="font-bold text-white mb-2">⚡ Surtension Simple</h5>
+                            <p class="text-sm text-gray-300 mb-2">5V → 220V via condensateurs</p>
+                            <p class="text-xs text-red-300">Impact : Port USB détruit</p>
+                        </div>
+                        <div class="bg-gray-800 p-4 rounded-lg">
+                            <h5 class="font-bold text-white mb-2">🔥 Surtension Amplifiée</h5>
+                            <p class="text-sm text-gray-300 mb-2">Multiplication tension x10</p>
+                            <p class="text-xs text-red-300">Impact : Carte mère détruite</p>
+                        </div>
+                        <div class="bg-gray-800 p-4 rounded-lg">
+                            <h5 class="font-bold text-white mb-2">💥 Destruction Totale</h5>
+                            <p class="text-sm text-gray-300 mb-2">Surtension + court-circuit</p>
+                            <p class="text-xs text-red-300">Impact : Alimentation détruite</p>
+                        </div>
+                        <div class="bg-gray-800 p-4 rounded-lg">
+                            <h5 class="font-bold text-white mb-2">📚 Documentation</h5>
+                            <p class="text-sm text-gray-300 mb-2">Schémas électroniques détaillés</p>
+                            <button onclick="showSchematic()" class="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-500">
+                                Voir Schémas
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            logMessage('USBKiller Designer chargé - Schémas destructeurs', 'error');
+        }
+
+        function simulateBadUSB(type) {
+            if (type === 'basic') {
+                logMessage('SIMULATION: Exécution payload basique', 'info');
+                logMessage('SIMULATION: Commande "ls -l" exécutée', 'success');
+            } else {
+                logMessage('SIMULATION: Configuration payload avancé', 'info');
+                logMessage('SIMULATION: Émulateur HID configuré', 'success');
+            }
+        }
+
+        function showSchematic() {
+            logMessage('Affichage schémas électroniques USBKiller', 'warning');
+            logMessage('ATTENTION: Schémas à des fins éducatives uniquement', 'error');
+        }
+
+        // Initialize
+        logMessage('Security Toolkit initialisé', 'info');
+        logMessage('Acceptation de la décharge requise', 'warning');
+    </script>
+</body>
+</html>

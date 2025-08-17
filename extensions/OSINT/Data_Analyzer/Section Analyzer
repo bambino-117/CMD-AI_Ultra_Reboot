@@ -1,0 +1,13 @@
+<section id="analyze-section" class="content-section">
+  <h2>🤖 ANALYSEUR DE DONNÉES IA</h2>
+  <div class="analyze-options">
+    <button class="analyze-btn" data-source="osint">🕵️ Analyse OSINT</button>
+    <button class="analyze-btn" data-source="network">🌐 Analyse Réseau</button>
+    <button class="analyze-btn" data-source="system">🖥️ Analyse Système</button>
+    <button class="analyze-btn" data-source="logs">📝 Analyse de Logs</button>
+    <input type="text" placeholder="Nom du fichier personnalisé">
+    <button class="analyze-btn" data-source="custom">Fichier personnalisé</button>
+  </div>
+  <div id="analyze-results" class="results-box">
+    </div>
+</section>

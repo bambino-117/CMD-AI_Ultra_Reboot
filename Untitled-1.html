@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Browser App</title>
+    <!-- Utilisation de la police Inter de Google Fonts -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap">
+    <!-- Utilisation de Tailwind CSS pour un style moderne et réactif -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0D1117;
+            color: #E2E8F0;
+        }
+
+        .scroll-container {
+            position: relative;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+
+        /* Style de la barre de défilement personnalisée */
+        .scroll-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        .scroll-container::-webkit-scrollbar-track {
+            background: #1E1E1E;
+        }
+        .scroll-container::-webkit-scrollbar-thumb {
+            background-color: #4CAF50;
+            border-radius: 9999px;
+            border: 2px solid #1E1E1E;
+        }
+        .scroll-container::-webkit-scrollbar-corner {
+            background: transparent;
+        }
+
+        /* Classes pour les couleurs de l'application */
+        .text-info { color: #00BFFF; }
+        .text-error { color: #FF4500; }
+        .text-success { color: #32CD32; }
+        .text-warning { color: #FFD700; }
+    </style>
+</head>
+<body class="p-4 md:p-8 flex flex-col items-center justify-center min-h-screen">
+
+    <div class="browser-container bg-[#1E1E1E] w-full max-w-6xl h-[calc(100vh-64px)] md:h-[calc(100vh-128px)] rounded-xl shadow-2xl flex flex-col border border-[#2D2D2D] overflow-hidden">
+
+        <!-- Header du navigateur avec barre d'URL et boutons de navigation -->
+        <header class="bg-[#2D2D2D] p-3 flex items-center justify-between shadow-lg">
+            <div class="flex items-center space-x-2">
+                <button class="w-6 h-6 rounded-full bg-gray-500 hover:bg-gray-600 transition-colors duration-200"></button>
+                <button class="w-6 h-6 rounded-full bg-gray-500 hover:bg-gray-600 transition-colors duration-200"></button>
+            </div>
+            <div class="flex-1 mx-4">
+                <input type="text" id="url-bar" class="w-full bg-[#1E1E1E] text-white rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-success" value="about:home" readonly>
+            </div>
+            <button id="search-button" class="px-4 py-2 bg-success text-black font-medium rounded-full hover:bg-green-600 transition-colors duration-200">Go</button>
+        </header>
+
+        <!-- NOUVEAU: Conteneur des onglets et bouton d'ajout -->
+        <div class="flex bg-[#1E1E1E] border-b border-[#2D2D2D]">
+            <div id="tabs-container" class="flex flex-1 overflow-x-auto">
+                <!-- Les onglets sont ajoutés ici par JS -->
+            </div>
+            <button id="add-tab-btn" class="py-2 px-4 text-sm font-medium text-gray-400 hover:bg-[#2D2D2D] transition-colors duration-200 border-l border-[#2D2D2D] flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+            </button>
+        </div>
+
+        <!-- Conteneur principal: zone de contenu + barre latérale -->
+        <div class="flex-1 flex overflow-hidden">
+            
+            <!-- Zone de contenu principale (simule une page web) -->
+            <main id="main-content" class="flex-1 p-6 scroll-container text-gray-300 relative flex flex-col">
+                <!-- Le contenu des pages est ajouté ici par JS -->
+            </main>
+
+            <!-- Barre latérale pour les outils -->
+            <aside id="sidebar" class="w-64 bg-[#2D2D2D] p-4 flex flex-col items-center shadow-2xl relative transition-transform duration-300 ease-in-out">
+                <h2 class="text-lg font-bold text-white mb-4">Mes Outils</h2>
+                <div class="flex flex-col space-y-4 w-full">
+                    <!-- Bouton pour l'outil de question -->
+                    <button id="ask-button" class="w-full py-3 px-4 bg-[#555] rounded-lg text-white text-sm font-medium hover:bg-[#339933] transition-colors duration-200 flex items-center justify-start space-x-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17.93c-3.6-1.55-6-5.18-6-9.93 0-.74.1-1.46.29-2.15l-1.39-1.39C3.1 9.9 2.15 11.45 2.07 13h2.08c.15 0 .28-.05.41-.14L5.67 11.7l-1.46-1.46-1.47 1.47a.78.78 0 01-.1.14l-.06-.06a.78.78 0 01-.14-.41l1.46-1.46 1.47-1.47 1.46 1.46a.78.78 0 01.14.41l-.06.06a.78.78 0 01-.14.1l-1.46 1.46-1.47-1.47-1.47 1.47zm.58-13.88c.84-.71 1.8-1.29 2.85-1.74l-1.39-1.39C14.1 4.1 12.55 2.15 11 2.07v2.08c0 .15.05.28.14.41l1.46 1.46 1.47-1.47 1.47 1.47zm1.46 1.46c.84.71 1.54 1.52 2.1 2.45l-1.39 1.39c-1.55 3.6-5.18 6-9.93 6H4.07c.15 0 .28-.05.41-.14l1.46-1.46 1.47 1.47 1.47-1.47a.78.78 0 01-.14.41l-.06.06a.78.78 0 01-.14.1l-1.46 1.46-1.47-1.47 1.47-1.47zm1.46 1.46z"/>
+                        </svg>
+                        <span>Poser une question</span>
+                    </button>
+                    <!-- Bouton pour l'outil de planification -->
+                    <button id="plan-button" class="w-full py-3 px-4 bg-[#555] rounded-lg text-white text-sm font-medium hover:bg-[#339933] transition-colors duration-200 flex items-center justify-start space-x-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M16 10H8v2h8v-2zm0 4H8v2h8v-2zm2-10h-1V2h-2v2h-8V2H7v2H6c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zM6 20V6h12v14H6z"/>
+                        </svg>
+                        <span>Générer un plan</span>
+                    </button>
+                    <!-- Bouton pour l'outil de synthèse vocale -->
+                    <button id="speak-button" class="w-full py-3 px-4 bg-[#555] rounded-lg text-white text-sm font-medium hover:bg-[#339933] transition-colors duration-200 flex items-center justify-start space-x-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM7 16V8h2.05l.95-.95V7h-4v2h2V16H7zm9-8h-2v8h2V8zm-1.5-3.5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5 1.5-.67 1.5-1.5-.67-1.5-1.5-1.5z"/>
+                        </svg>
+                        <span>Synthèse vocale</span>
+                    </button>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Éléments du DOM
+            const tabsContainer = document.getElementById('tabs-container');
+            const addTabButton = document.getElementById('add-tab-btn');
+            const mainContent = document.getElementById('main-content');
+            const urlBar = document.getElementById('url-bar');
+            
+            // Éléments pour les outils
+            const askButton = document.getElementById('ask-button');
+            const planButton = document.getElementById('plan-button');
+            const speakButton = document.getElementById('speak-button');
+            const sidebar = document.getElementById('sidebar');
+
+            // État de l'application
+            let tabCounter = 0;
+            let activeTabId = null;
+            let lastOutputText = "";
+            let toolOutputRefs = {};
+
+            // Modèles de pages
+            const pages = {
+                'home': `
+                    <div class="flex flex-col justify-center items-center text-center h-full">
+                        <h1 class="text-3xl md:text-5xl font-bold text-white mb-4">Bienvenue sur votre Espace de Travail</h1>
+                        <p class="mb-4 text-sm md:text-base max-w-lg">Naviguez entre les onglets ci-dessus pour accéder à l'interface principale et aux outils de l'application.</p>
+                    </div>
+                `,
+                'tools': (tabId) => `
+                    <div id="page-tools-${tabId}" class="page-content flex-1 flex flex-col">
+                        <h1 class="text-3xl font-bold text-white mb-4">Interface des Outils</h1>
+                        <p class="mb-4">Utilisez le champ de saisie ci-dessous ou la barre latérale pour interagir avec les différents outils.</p>
+                        
+                        <div id="results-area-${tabId}" class="bg-[#1E1E1E] p-6 rounded-lg shadow-inner overflow-y-auto max-h-full flex-1 scroll-container">
+                            <p class="text-info font-bold mb-2">Résultats des outils :</p>
+                            <div id="tool-output-${tabId}">
+                                <p class="text-gray-400">Aucun résultat pour le moment.</p>
+                            </div>
+                        </div>
+
+                        <div id="loading-spinner-${tabId}" class="hidden absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                            <svg class="animate-spin h-8 w-8 text-success" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </div>
+                        
+                        <div class="input-container p-4 flex items-center space-x-4 bg-[#1E1E1E] border-t border-[#2D2D2D] mt-4 rounded-lg">
+                            <input type="text" id="input-field-${tabId}" class="flex-1 bg-transparent text-white outline-none placeholder-gray-500 py-2 focus:ring-0" placeholder="Entrez une commande (ex: ask Qu'est-ce que l'IA?)...">
+                            <button id="send-button-${tabId}" class="px-4 py-2 bg-success text-black font-medium rounded-lg hover:bg-green-600 transition-colors duration-200">Envoyer</button>
+                        </div>
+                    </div>
+                `
+            };
+
+            // --- Fonctions d'assistance pour l'API Gemini ---
+
+            async function geminiApiCall(payload, modelName) {
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+                
+                let attempt = 0;
+                const maxAttempts = 5;
+
+                while (attempt < maxAttempts) {
+                    try {
+                        const response = await fetch(apiUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+
+                        if (response.ok) {
+                            return await response.json();
+                        } else if (response.status === 429) {
+                            const delay = Math.pow(2, attempt) * 1000 + Math.random() * 1000;
+                            await new Promise(res => setTimeout(res, delay));
+                            attempt++;
+                        } else {
+                            throw new Error(`API call failed with status: ${response.status}`);
+                        }
+                    } catch (error) {
+                        if (attempt === maxAttempts - 1) {
+                            console.error("Gemini API call failed after multiple retries:", error);
+                            return null;
+                        }
+                        attempt++;
+                    }
+                }
+            }
+
+            function base64ToArrayBuffer(base64) {
+                const binaryString = atob(base64);
+                const len = binaryString.length;
+                const bytes = new Uint8Array(len);
+                for (let i = 0; i < len; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                return bytes.buffer;
+            }
+
+            function pcmToWav(pcm16, sampleRate) {
+                const numChannels = 1;
+                const sampleBits = 16;
+                const byteRate = numChannels * sampleRate * (sampleBits / 8);
+                const blockAlign = numChannels * (sampleBits / 8);
+
+                const wavHeader = new ArrayBuffer(44);
+                const view = new DataView(wavHeader);
+                view.setUint32(0, 0x52494646, false);
+                view.setUint32(4, 36 + pcm16.length * 2, true);
+                view.setUint32(8, 0x57415645, false);
+                view.setUint32(12, 0x666d7420, false);
+                view.setUint32(16, 16, true);
+                view.setUint16(20, 1, true);
+                view.setUint16(22, numChannels, true);
+                view.setUint32(24, sampleRate, true);
+                view.setUint32(28, byteRate, true);
+                view.setUint16(32, blockAlign, true);
+                view.setUint16(34, sampleBits, true);
+                view.setUint32(36, 0x64617461, false);
+                view.setUint32(40, pcm16.length * 2, true);
+
+                const output = new Blob([wavHeader, pcm16], { type: 'audio/wav' });
+                return output;
+            }
+
+            // --- Fonctions des outils (modifiées pour les onglets) ---
+
+            const showLoading = () => {
+                const spinner = document.getElementById(`loading-spinner-${activeTabId}`);
+                if (spinner) spinner.classList.remove('hidden');
+                const output = document.getElementById(`tool-output-${activeTabId}`);
+                if (output) output.innerHTML = '';
+            };
+
+            const hideLoading = () => {
+                const spinner = document.getElementById(`loading-spinner-${activeTabId}`);
+                if (spinner) spinner.classList.add('hidden');
+            };
+
+            const appendText = (text, tag) => {
+                const output = document.getElementById(`tool-output-${activeTabId}`);
+                const resultsArea = document.getElementById(`results-area-${activeTabId}`);
+                if (!output || !resultsArea) return;
+                
+                const line = document.createElement('div');
+                line.textContent = text;
+                line.classList.add('whitespace-pre-wrap');
+                if (tag) {
+                    line.classList.add(`text-${tag}`);
+                }
+                output.appendChild(line);
+                resultsArea.scrollTop = resultsArea.scrollHeight;
+                toolOutputRefs[activeTabId].lastOutputText = text;
+            };
+
+            const appendJson = (json) => {
+                const output = document.getElementById(`tool-output-${activeTabId}`);
+                const resultsArea = document.getElementById(`results-area-${activeTabId}`);
+                 if (!output || !resultsArea) return;
+
+                output.innerHTML = '';
+                json.forEach(item => {
+                    const titleEl = document.createElement('h3');
+                    titleEl.classList.add('text-lg', 'font-bold', 'text-warning', 'mt-4');
+                    titleEl.textContent = item.title;
+                    output.appendChild(titleEl);
+
+                    const stepsList = document.createElement('ul');
+                    stepsList.classList.add('list-disc', 'pl-5', 'text-info');
+                    item.steps.forEach(step => {
+                        const stepEl = document.createElement('li');
+                        stepEl.textContent = step;
+                        stepsList.appendChild(stepEl);
+                    });
+                    output.appendChild(stepsList);
+                });
+                resultsArea.scrollTop = resultsArea.scrollHeight;
+                toolOutputRefs[activeTabId].lastOutputText = JSON.stringify(json, null, 2);
+            };
+            
+            async function handleAskCommand(prompt) {
+                showLoading();
+                
+                const chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
+                const payload = { contents: chatHistory };
+                const result = await geminiApiCall(payload, "gemini-2.5-flash-preview-05-20");
+
+                hideLoading();
+                if (result && result.candidates && result.candidates[0] && result.candidates[0].content) {
+                    const text = result.candidates[0].content.parts[0].text;
+                    appendText(text, "success");
+                } else {
+                    appendText("Erreur lors de la génération de la réponse.", "error");
+                }
+            }
+
+            async function handlePlanCommand(prompt) {
+                showLoading();
+
+                const chatHistory = [{ role: "user", parts: [{ text: `Generate a detailed plan for a "${prompt}". The plan should be a JSON array of objects. Each object should have a 'title' and an array of 'steps'.` }] }];
+                const payload = {
+                    contents: chatHistory,
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        responseSchema: {
+                            type: "ARRAY",
+                            items: {
+                                type: "OBJECT",
+                                properties: {
+                                    "title": { "type": "STRING" },
+                                    "steps": { "type": "ARRAY", "items": { "type": "STRING" } }
+                                },
+                                "propertyOrdering": ["title", "steps"]
+                            }
+                        }
+                    }
+                };
+                const result = await geminiApiCall(payload, "gemini-2.5-flash-preview-05-20");
+                
+                hideLoading();
+                if (result && result.candidates && result.candidates[0] && result.candidates[0].content) {
+                    try {
+                        const json = JSON.parse(result.candidates[0].content.parts[0].text);
+                        appendJson(json);
+                    } catch (e) {
+                        appendText("Erreur: Réponse JSON non valide. " + result.candidates[0].content.parts[0].text, "error");
+                    }
+                } else {
+                    appendText("Erreur lors de la génération du plan.", "error");
+                }
+            }
+
+            async function handleSpeakCommand() {
+                 const currentOutputText = toolOutputRefs[activeTabId] ? toolOutputRefs[activeTabId].lastOutputText : '';
+                 if (!currentOutputText) {
+                    appendText("Rien à dire. Générez d'abord une sortie.", "warning");
+                    return;
+                }
+                
+                showLoading();
+
+                const payload = {
+                    contents: [{
+                        parts: [{ text: currentOutputText }]
+                    }],
+                    generationConfig: {
+                        responseModalities: ["AUDIO"],
+                        speechConfig: {
+                            voiceConfig: {
+                                prebuiltVoiceConfig: { voiceName: "Puck" }
+                            }
+                        }
+                    },
+                    model: "gemini-2.5-flash-preview-tts"
+                };
+
+                const result = await geminiApiCall(payload, "gemini-2.5-flash-preview-tts");
+                
+                hideLoading();
+
+                if (result && result.candidates && result.candidates[0] && result.candidates[0].content) {
+                    const audioData = result.candidates[0].content.parts[0].inlineData.data;
+                    const pcmData = base64ToArrayBuffer(audioData);
+                    const pcm16 = new Int16Array(pcmData);
+                    const wavBlob = pcmToWav(pcm16, 16000);
+
+                    const audioUrl = URL.createObjectURL(wavBlob);
+                    const audio = new Audio(audioUrl);
+                    audio.play();
+                } else {
+                    appendText("Erreur lors de la synthèse vocale.", "error");
+                }
+            }
+
+            // --- Logique de la nouvelle interface de saisie ---
+
+            const executeCommand = (command) => {
+                if (activeTabId && !activeTabId.startsWith('tools')) {
+                    appendText("Veuillez sélectionner un onglet 'Outils' pour exécuter des commandes.", 'warning');
+                    return;
+                }
+
+                const parts = command.trim().split(/\s+/);
+                const cmd = parts[0].toLowerCase();
+                const args = parts.slice(1).join(' ');
+
+                if (cmd === 'ask') {
+                    handleAskCommand(args);
+                } else if (cmd === 'plan') {
+                    handlePlanCommand(args);
+                } else if (cmd === 'speak') {
+                    handleSpeakCommand();
+                } else {
+                    appendText(`Commande non reconnue : "${cmd}"`, 'error');
+                }
+            };
+            
+            // --- Logique de gestion des onglets ---
+            function createTab(name, type) {
+                const tabId = type + '-' + tabCounter++;
+                
+                const tabButton = document.createElement('button');
+                tabButton.id = `tab-${tabId}`;
+                tabButton.classList.add('py-2', 'px-6', 'text-sm', 'font-medium', 'border-r', 'border-[#2D2D2D]', 'text-gray-400', 'hover:bg-[#2D2D2D]', 'transition-colors', 'duration-200', 'flex', 'items-center');
+                tabButton.innerHTML = `<span class="flex-1">${name}</span>`;
+
+                if (type !== 'home') {
+                     const closeButton = document.createElement('button');
+                     closeButton.classList.add('ml-2', 'h-4', 'w-4', 'text-gray-400', 'hover:text-white');
+                     closeButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>`;
+                     closeButton.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        closeTab(tabId);
+                     });
+                     tabButton.appendChild(closeButton);
+                }
+                
+                tabButton.addEventListener('click', () => activateTab(tabId, type));
+                tabsContainer.appendChild(tabButton);
+                
+                const page = document.createElement('div');
+                page.id = `page-${tabId}`;
+                page.classList.add('page-content', 'hidden', 'flex-1', 'flex', 'flex-col');
+                mainContent.appendChild(page);
+
+                if (type === 'tools') {
+                    page.innerHTML = pages.tools(tabId);
+                    toolOutputRefs[tabId] = { lastOutputText: '' };
+                } else if (type === 'home') {
+                    page.innerHTML = pages.home;
+                }
+
+                return tabId;
+            }
+
+            function closeTab(tabId) {
+                const tabButton = document.getElementById(`tab-${tabId}`);
+                const page = document.getElementById(`page-${tabId}`);
+                
+                if (tabButton && page) {
+                    const wasActive = tabButton.classList.contains('bg-[#2D2D2D]');
+                    
+                    tabsContainer.removeChild(tabButton);
+                    mainContent.removeChild(page);
+                    
+                    if (wasActive) {
+                        const remainingTabs = Array.from(tabsContainer.children);
+                        if (remainingTabs.length > 0) {
+                            remainingTabs[remainingTabs.length - 1].click();
+                        } else {
+                            activeTabId = null;
+                            urlBar.value = "about:blank";
+                        }
+                    }
+                }
+            }
+
+            function activateTab(tabId, type) {
+                // Désactiver tous les onglets
+                document.querySelectorAll('#tabs-container button').forEach(tab => {
+                    tab.classList.remove('bg-[#2D2D2D]', 'text-white');
+                    tab.classList.add('text-gray-400', 'hover:bg-[#2D2D2D]');
+                });
+
+                // Cacher toutes les pages
+                document.querySelectorAll('.page-content').forEach(page => {
+                    page.classList.add('hidden');
+                });
+                
+                // Activer l'onglet sélectionné
+                const selectedTab = document.getElementById(`tab-${tabId}`);
+                const selectedPage = document.getElementById(`page-${tabId}`);
+                if (selectedTab && selectedPage) {
+                    selectedTab.classList.add('bg-[#2D2D2D]', 'text-white');
+                    selectedTab.classList.remove('text-gray-400', 'hover:bg-[#2D2D2D]');
+                    selectedPage.classList.remove('hidden');
+                    urlBar.value = `about:${type}`;
+                    activeTabId = tabId;
+
+                    // Re-lier les événements pour la page 'tools'
+                    if (type === 'tools') {
+                        setupToolEventListeners(tabId);
+                        sidebar.classList.remove('hidden');
+                    } else {
+                        sidebar.classList.add('hidden');
+                    }
+                }
+            }
+
+            function setupToolEventListeners(tabId) {
+                const inputField = document.getElementById(`input-field-${tabId}`);
+                const sendButton = document.getElementById(`send-button-${tabId}`);
+
+                // Nettoyer les anciens écouteurs pour éviter les doublons
+                if (inputField && sendButton) {
+                    const newInputField = inputField.cloneNode(true);
+                    const newSendButton = sendButton.cloneNode(true);
+                    inputField.parentNode.replaceChild(newInputField, inputField);
+                    sendButton.parentNode.replaceChild(newSendButton, sendButton);
+                    
+                    // Ré-attacher les écouteurs d'événements
+                    newSendButton.addEventListener('click', () => {
+                        const command = newInputField.value.trim();
+                        if (command) {
+                            executeCommand(command);
+                            newInputField.value = '';
+                        }
+                    });
+
+                    newInputField.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            const command = newInputField.value.trim();
+                            if (command) {
+                                executeCommand(command);
+                                newInputField.value = '';
+                            }
+                        }
+                    });
+                    
+                    // Raccourcis de la barre latérale
+                    askButton.onclick = () => { newInputField.value = "ask Quelle est la capitale de la France?"; newInputField.focus(); };
+                    planButton.onclick = () => { newInputField.value = "plan un programme d'entraînement pour débutants"; newInputField.focus(); };
+                    speakButton.onclick = () => { handleSpeakCommand(); };
+
+                    newInputField.focus();
+                }
+            }
+
+            // Événements globaux
+            addTabButton.addEventListener('click', () => {
+                const newTabId = createTab(`Outils ${tabCounter}`, 'tools');
+                activateTab(newTabId, 'tools');
+            });
+            
+            // Créer les onglets initiaux
+            const homeTabId = createTab('Accueil', 'home');
+            const toolsTabId = createTab('Outils', 'tools');
+            
+            // Définir l'onglet initial comme actif
+            activateTab(homeTabId, 'home');
+        });
+    </script>
+</body>
+</html>

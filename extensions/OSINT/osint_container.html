@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OSINT Toolkit - Conteneur</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1e3a8a 0%, #312e81 100%);
+            color: #E2E8F0;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4">
+
+    <div class="max-w-6xl mx-auto">
+        <!-- Header -->
+        <div class="bg-blue-900/50 backdrop-blur rounded-2xl p-6 mb-6 border border-blue-500">
+            <h1 class="text-4xl font-bold text-white flex items-center mb-4">
+                <span class="text-blue-400 mr-3">🔍</span>
+                OSINT Toolkit
+                <span class="text-blue-400 ml-3">🕵️</span>
+            </h1>
+            <p class="text-blue-200 text-lg">
+                Suite complète d'outils d'intelligence en sources ouvertes
+            </p>
+        </div>
+
+        <!-- Tools Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            <!-- OSINT Research -->
+            <div class="bg-blue-900/50 backdrop-blur rounded-xl p-6 border border-blue-500 hover:border-blue-400 transition-colors cursor-pointer" onclick="openOSINTResearch()">
+                <div class="text-center">
+                    <div class="text-6xl mb-4">🔎</div>
+                    <h3 class="text-xl font-bold text-blue-200 mb-3">OSINT Research</h3>
+                    <p class="text-blue-300 text-sm mb-4">Recherche et analyse de données publiques</p>
+                    <div class="space-y-2 text-xs text-blue-400">
+                        <div>• Recherche email, domaine, IP</div>
+                        <div>• Détection automatique de type</div>
+                        <div>• Outils web intégrés</div>
+                        <div>• Vérification fuites de données</div>
+                    </div>
+                    <button class="mt-4 w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-500 transition-colors">
+                        🚀 Lancer Research
+                    </button>
+                </div>
+            </div>
+
+            <!-- Incogni-Me -->
+            <div class="bg-purple-900/50 backdrop-blur rounded-xl p-6 border border-purple-500 hover:border-purple-400 transition-colors cursor-pointer" onclick="openIncogniMe()">
+                <div class="text-center">
+                    <div class="text-6xl mb-4">🕵️</div>
+                    <h3 class="text-xl font-bold text-purple-200 mb-3">Incogni-Me</h3>
+                    <p class="text-purple-300 text-sm mb-4">Gestion empreinte numérique et anonymisation</p>
+                    <div class="space-y-2 text-xs text-purple-400">
+                        <div>• Recherche traces personnelles</div>
+                        <div>• Demandes de suppression</div>
+                        <div>• API FastAPI complète</div>
+                        <div>• Base de données intégrée</div>
+                    </div>
+                    <button class="mt-4 w-full bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-500 transition-colors">
+                        🔒 Lancer Incogni-Me
+                    </button>
+                </div>
+            </div>
+
+            <!-- Data Analyzer -->
+            <div class="bg-green-900/50 backdrop-blur rounded-xl p-6 border border-green-500 hover:border-green-400 transition-colors cursor-pointer" onclick="openDataAnalyzer()">
+                <div class="text-center">
+                    <div class="text-6xl mb-4">📊</div>
+                    <h3 class="text-xl font-bold text-green-200 mb-3">Data Analyzer</h3>
+                    <p class="text-green-300 text-sm mb-4">Analyse et visualisation de données OSINT</p>
+                    <div class="space-y-2 text-xs text-green-400">
+                        <div>• Analyse de patterns</div>
+                        <div>• Visualisation graphique</div>
+                        <div>• Génération de rapports</div>
+                        <div>• Export des résultats</div>
+                    </div>
+                    <button class="mt-4 w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-500 transition-colors">
+                        📈 Lancer Analyzer
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="mt-8 bg-gray-900/50 backdrop-blur rounded-xl p-6 border border-gray-600">
+            <h3 class="text-xl font-bold text-white mb-4">🚀 Actions Rapides</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-gray-800 p-4 rounded-lg">
+                    <h4 class="font-bold text-white mb-2">🔍 Recherche Express</h4>
+                    <div class="flex gap-2">
+                        <input type="text" id="quick-search" class="flex-1 bg-gray-700 text-white rounded px-3 py-2 text-sm" placeholder="Email, domaine, IP...">
+                        <button onclick="quickSearch()" class="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-500">Go</button>
+                    </div>
+                </div>
+                <div class="bg-gray-800 p-4 rounded-lg">
+                    <h4 class="font-bold text-white mb-2">📋 Outils Externes</h4>
+                    <div class="flex gap-2">
+                        <button onclick="openTool('whois')" class="bg-purple-600 text-white px-3 py-1 rounded text-sm hover:bg-purple-500">WHOIS</button>
+                        <button onclick="openTool('haveibeenpwned')" class="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-500">HIBP</button>
+                        <button onclick="openTool('shodan')" class="bg-orange-600 text-white px-3 py-1 rounded text-sm hover:bg-orange-500">Shodan</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status -->
+        <div class="mt-6 bg-black/50 rounded-lg p-4">
+            <h4 class="text-white font-bold mb-2">📊 Statut OSINT Toolkit</h4>
+            <div id="osint-status" class="text-green-400 font-mono text-sm">
+                [READY] OSINT Toolkit - Tous les outils disponibles
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openOSINTResearch() {
+            window.parent.postMessage({
+                type: 'openTab',
+                tabName: '🔍 OSINT Research',
+                tabType: 'osint-research'
+            }, '*');
+        }
+
+        function openIncogniMe() {
+            window.parent.postMessage({
+                type: 'openTab',
+                tabName: '🕵️ Incogni-Me',
+                tabType: 'incogni-me'
+            }, '*');
+        }
+
+        function openDataAnalyzer() {
+            window.parent.postMessage({
+                type: 'openTab',
+                tabName: '📊 Data Analyzer',
+                tabType: 'data-analyzer'
+            }, '*');
+        }
+
+        function quickSearch() {
+            const query = document.getElementById('quick-search').value.trim();
+            if (query) {
+                const url = `./osint_research_interface.html?q=${encodeURIComponent(query)}`;
+                window.open(url, '_blank');
+            }
+        }
+
+        function openTool(tool) {
+            const urls = {
+                'whois': 'https://whois.net',
+                'haveibeenpwned': 'https://haveibeenpwned.com',
+                'shodan': 'https://shodan.io'
+            };
+            if (urls[tool]) {
+                window.open(urls[tool], '_blank');
+            }
+        }
+
+        // Initialize
+        document.getElementById('osint-status').innerHTML += '<br>[INFO] Conteneur OSINT chargé avec succès';
+    </script>
+</body>
+</html>

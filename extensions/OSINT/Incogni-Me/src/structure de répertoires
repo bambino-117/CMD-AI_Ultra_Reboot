@@ -1,0 +1,29 @@
+digital_cleanse/
+├── app/
+│   ├── main.py                # Point d'entrée de l'application FastAPI
+│   ├── database.py            # Configuration de la base de données et session
+│   ├── models.py              # Définition des modèles de données (SQLAlchemy)
+│   ├── schemas.py             # Schémas de données (Pydantic pour FastAPI)
+│   ├── crud.py                # Opérations CRUD (Create, Read, Update, Delete)
+│   ├── services/
+│   │   ├── __init__.py
+│   │   ├── user_service.py    # Logique métier pour les utilisateurs
+│   │   ├── footprint_service.py # Logique métier pour les scans et items
+│   │   ├── scraping/
+│   │   │   ├── __init__.py
+│   │   │   ├── base_scraper.py # Interface/Classe de base pour les scrapers
+│   │   │   ├── google_scraper.py # Exemple de scraper Google
+│   │   │   └── facebook_scraper.py # Exemple de scraper Facebook
+│   ├── api/
+│   │   ├── __init__.py
+│   │   ├── endpoints/
+│   │   │   ├── __init__.py
+│   │   │   ├── users.py       # API pour la gestion des utilisateurs
+│   │   │   └── footprint.py   # API pour les scans et items
+│   └── core/
+│       ├── __init__.py
+│       ├── config.py          # Variables d'environnement, configurations
+│       └── security.py        # Hachage des mots de passe, JWT
+├── requirements.txt         # Dépendances Python
+├── .env                     # Variables d'environnement (non versionné)
+└── README.md

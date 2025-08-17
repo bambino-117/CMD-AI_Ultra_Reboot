@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestionnaire USB – Interface Web</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'bg-primary': '#0D1117',
+                        'bg-secondary': '#1E1E1E',
+                        'bg-tertiary': '#2D2D2D',
+                        'success': '#4CAF50',
+                        'error': '#F44336',
+                        'warning': '#FF9800'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0D1117;
+            color: #E2E8F0;
+        }
+    </style>
+</head>
+<body class="bg-bg-primary text-white min-h-screen p-4">
+
+    <!-- Conteneur principal de l'application -->
+    <div class="bg-bg-secondary rounded-2xl shadow-xl overflow-hidden w-full max-w-4xl p-8">
+
+        <!-- En-tête de l'application -->
+        <div class="flex items-center justify-between mb-8 pb-4 border-b border-bg-tertiary">
+            <h1 class="text-3xl font-bold text-white flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mr-3 text-success" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M18.79 11.21L12.59 5H6.21L6 7.21V19L11.79 19.14L18.79 12.35L20.21 13.78L22 12L18.79 11.21ZM12 17.5V13.5L14.79 15L12 17.5Z"/>
+                </svg>
+                <span>🔌 Gestionnaire USB</span>
+            </h1>
+            <button onclick="refreshAllDevices()" class="bg-success hover:bg-green-600 text-black font-medium py-2 px-6 rounded-full transition duration-300">
+                Rafraîchir les périphériques
+            </button>
+        </div>
+
+        <!-- Section pour afficher les périphériques USB -->
+        <div id="usb-devices-section" class="mb-8">
+            <h2 class="text-2xl font-semibold text-white mb-4">Périphériques connectés</h2>
+            <div id="device-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Les cartes de périphériques seront insérées ici par JavaScript -->
+            </div>
+            <!-- Message par défaut si aucun périphérique n'est affiché -->
+            <p id="no-devices-message" class="text-gray-400 text-center py-12">Cliquez sur "Rafraîchir" pour détecter les périphériques.</p>
+        </div>
+
+        <!-- Section pour les logs de l'application -->
+        <div class="bg-bg-tertiary rounded-lg p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold text-white">Journal des opérations</h2>
+                <button onclick="readLogAloud()" class="bg-success text-black font-medium py-1 px-4 rounded-full text-sm hover:bg-green-600 transition-colors flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M9.383 3.03c.532-.734 1.48-.734 2.012 0l4.312 5.945c.44.607.44 1.428 0 2.035l-4.312 5.945c-.532.734-1.48.734-2.012 0L5.07 11.01c-.44-.607-.44-1.428 0-2.035l4.312-5.945zM12 9a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
+                    </svg>
+                    Lire le journal ✨
+                </button>
+            </div>
+            <div id="app-log" class="bg-bg-primary p-4 rounded-md text-sm text-gray-300 overflow-y-auto h-48">
+                <!-- Les messages de log seront ajoutés ici par JavaScript -->
+                <p class="text-gray-400">Journal d'activité de l'application...</p>
+            </div>
+        </div>
+
+        <!-- Section pour les fonctionnalités de l'IA de Gemini -->
+        <div class="mt-8 pt-8 border-t border-bg-tertiary">
+            <h2 class="text-2xl font-semibold text-white mb-4">Assistant AI Gemini ✨</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+                <!-- Carte du Générateur de documentation -->
+                <div class="bg-bg-tertiary border border-gray-600 rounded-xl p-6">
+                    <h3 class="text-lg font-semibold text-white flex items-center mb-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m-5 3h4M4 16h-.583A2 2 0 011.5 14.417V5.583A2 2 0 013.417 4H10l2 2h7.583A2 2 0 0122 8.417v9.833A2 2 0 0120.417 20H4.5a2.5 2.5 0 010-5H4a2.5 2.5 0 010-5H4z" />
+                        </svg>
+                        Générateur de documentation
+                    </h3>
+                    <p class="text-gray-300 text-sm mb-4">Générer un rapport de sécurité, des procédures d'urgence et des recommandations pour un périphérique sélectionné.</p>
+                    <div class="flex items-center space-x-2">
+                        <select id="doc-device-select" class="flex-1 rounded-full border border-gray-600 bg-bg-primary text-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-success">
+                            <option value="">Sélectionner un périphérique</option>
+                        </select>
+                        <button onclick="generateDocumentation()" class="bg-success text-black font-medium py-2 px-4 rounded-full text-sm hover:bg-green-600 transition-colors">
+                            Générer ✨
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Carte de l'Assistant de dépannage -->
+                <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-md">
+                    <h3 class="text-lg font-semibold text-gray-900 flex items-center mb-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-teal-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.54 0 1.055.208 1.455.597.514.513.793 1.18.793 1.873 0 .693-.279 1.36-.793 1.873-.4.389-.915.597-1.455.597a2 2 0 01-2-2c0-.528.211-1.037.586-1.411a2.022 2.022 0 011.414-.589zM18 10c.54 0 1.055.208 1.455.597.514.513.793 1.18.793 1.873 0 .693-.279 1.36-.793 1.873-.4.389-.915.597-1.455.597a2 2 0 01-2-2c0-.528.211-1.037.586-1.411a2.022 2.022 0 011.414-.589z" />
+                        </svg>
+                        Assistant de dépannage
+                    </h3>
+                    <p class="text-gray-600 text-sm mb-4">Obtenez des conseils de dépannage basés sur l'IA pour tout problème lié aux périphériques USB.</p>
+                    <button onclick="openTroubleshootingAssistant()" class="bg-teal-600 text-white font-medium py-2 px-4 rounded-full text-sm hover:bg-teal-700 transition-colors">
+                        Demander à l'IA ✨
+                    </button>
+                </div>
+                
+                <!-- Nouvelle carte pour la recherche de firmware -->
+                <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-md">
+                    <h3 class="text-lg font-semibold text-gray-900 flex items-center mb-2">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-500 mr-2" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2.5a.5.5 0 01.5.5v5.035a.5.5 0 01-1 0V3a.5.5 0 01.5-.5zM12 11a1 1 0 100 2 1 1 0 000-2z"/>
+                            <path fill-rule="evenodd" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM4 12c0 2.21.89 4.21 2.34 5.66L5.343 18.66A9.952 9.952 0 0112 22c5.523 0 10-4.477 10-10S17.523 2 12 2c-1.897 0-3.664.53-5.163 1.442L7.34 4.84A8.001 8.001 0 0012 20a8 8 0 100-16c-2.21 0-4.21.89-5.66 2.34L5.343 5.34A9.952 9.952 0 0112 2z" clip-rule="evenodd"/>
+                        </svg>
+                        Recherche de Firmware
+                    </h3>
+                    <p class="text-gray-600 text-sm mb-4">Recherchez les dernières versions de firmware et les outils de flashage pour le périphérique sélectionné.</p>
+                    <div class="flex items-center space-x-2">
+                        <select id="firmware-device-select" class="flex-1 rounded-full border border-gray-300 px-4 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="">Sélectionner un périphérique</option>
+                        </select>
+                        <button onclick="searchFirmware()" class="bg-orange-600 text-white font-medium py-2 px-4 rounded-full text-sm hover:bg-orange-700 transition-colors">
+                            Rechercher ✨
+                        </button>
+                    </div>
+                </div>
+
+                 <!-- Nouvelle carte pour le Créateur de clé BIOS -->
+                <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-md">
+                    <h3 class="text-lg font-semibold text-gray-900 flex items-center mb-2">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-fuchsia-500 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2.5a.5.5 0 0 1 .5.5v5.035a.5.5 0 0 1-1 0V3a.5.5 0 0 1 .5-.5zM12 11a1 1 0 1 0 0 2 1 1 0 0 0 0-2z" />
+                            <path fill-rule="evenodd" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM4 12c0 2.21.89 4.21 2.34 5.66L5.343 18.66A9.952 9.952 0 0 1 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2c-1.897 0-3.664.53-5.163 1.442L7.34 4.84A8.001 8.001 0 0 0 12 20a8 8 0 1 0 0-16c-2.21 0-4.21.89-5.66 2.34L5.343 5.34A9.952 9.952 0 0 1 12 2z" clip-rule="evenodd" />
+                        </svg>
+                        Créateur de Clé BIOS/UEFI
+                    </h3>
+                    <p class="text-gray-600 text-sm mb-4">Générer un plan détaillé pour créer une clé USB de réparation ou de mise à jour du BIOS.</p>
+                    <div class="flex items-center space-x-2">
+                        <select id="bios-device-select" class="flex-1 rounded-full border border-gray-300 px-4 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="">Sélectionner un périphérique</option>
+                        </select>
+                        <button onclick="generateBiosTool()" class="bg-fuchsia-600 text-white font-medium py-2 px-4 rounded-full text-sm hover:bg-fuchsia-700 transition-colors">
+                            Générer ✨
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Modale pour l'assistant de dépannage -->
+    <div id="troubleshooting-modal" class="fixed inset-0 bg-gray-600 bg-opacity-75 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl p-8 shadow-2xl w-full max-w-xl">
+            <h3 class="text-2xl font-bold text-teal-700 mb-4">Assistant de dépannage IA</h3>
+            <div id="chat-window" class="border border-gray-300 rounded-lg p-4 h-64 overflow-y-auto mb-4 bg-gray-50">
+                <p class="text-gray-500">Bonjour! Comment puis-je vous aider avec votre problème USB?</p>
+            </div>
+            <div class="flex space-x-2">
+                <input type="text" id="user-input" class="flex-1 rounded-full border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500" placeholder="Décrivez votre problème...">
+                <button onclick="sendMessage()" class="bg-teal-600 text-white font-medium py-2 px-6 rounded-full hover:bg-teal-700 transition-colors">
+                    Envoyer
+                </button>
+                <button onclick="closeTroubleshootingAssistant()" class="bg-gray-400 text-white font-medium py-2 px-4 rounded-full hover:bg-gray-500 transition-colors">
+                    Fermer
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Script JavaScript pour la logique de l'interface et les appels API -->
+    <script>
+        // Fonction pour formater la taille des fichiers de manière lisible
+        const formatSize = (bytes) => {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        };
+
+        // Fonction pour afficher un message dans le journal d'activité
+        const logMessage = (message, type = 'info') => {
+            const logElement = document.getElementById('app-log');
+            const p = document.createElement('p');
+            const timestamp = new Date().toLocaleTimeString();
+            let color = 'text-gray-300';
+            if (type === 'success') color = 'text-green-400 font-medium';
+            if (type === 'error') color = 'text-red-400 font-medium';
+            if (type === 'warning') color = 'text-yellow-400 font-medium';
+            p.className = `${color} mb-1`;
+            p.innerHTML = `<span class="text-gray-500">[${timestamp}]</span> ${message}`;
+            logElement.appendChild(p);
+            logElement.scrollTop = logElement.scrollHeight; // Fait défiler jusqu'en bas
+        };
+
+        // Fonction pour détecter les vrais périphériques USB
+        const fetchUSBDevices = async () => {
+            logMessage("Recherche de périphériques USB réels...", 'info');
+            document.getElementById('no-devices-message').classList.add('hidden');
+
+            const deviceListContainer = document.getElementById('device-list');
+            const docDeviceSelect = document.getElementById('doc-device-select');
+            const firmwareDeviceSelect = document.getElementById('firmware-device-select');
+            const biosDeviceSelect = document.getElementById('bios-device-select');
+            
+            deviceListContainer.innerHTML = '';
+            docDeviceSelect.innerHTML = '<option value="">Sélectionner un périphérique</option>';
+            firmwareDeviceSelect.innerHTML = '<option value="">Sélectionner un périphérique</option>';
+            biosDeviceSelect.innerHTML = '<option value="">Sélectionner un périphérique</option>';
+
+            let devices = [];
+
+            try {
+                // Méthode 1: Web USB API (pour les navigateurs compatibles)
+                if ('usb' in navigator) {
+                    logMessage("Utilisation de l'API Web USB...", 'info');
+                    const usbDevices = await navigator.usb.getDevices();
+                    
+                    for (const device of usbDevices) {
+                        devices.push({
+                            id: `usb_${device.vendorId}_${device.productId}`,
+                            name: `${device.productName || 'Périphérique USB'} (${device.manufacturerName || 'Fabricant inconnu'})`,
+                            type: 'usb-device',
+                            path: `USB\\VID_${device.vendorId.toString(16).toUpperCase().padStart(4, '0')}&PID_${device.productId.toString(16).toUpperCase().padStart(4, '0')}`,
+                            size: 0, // Taille non disponible via Web USB
+                            used: 0,
+                            vendorId: device.vendorId,
+                            productId: device.productId
+                        });
+                    }
+                }
+
+                // Méthode 2: Storage API pour les périphériques de stockage
+                if ('storage' in navigator && 'estimate' in navigator.storage) {
+                    try {
+                        const estimate = await navigator.storage.estimate();
+                        if (estimate.quota && estimate.usage) {
+                            devices.push({
+                                id: 'storage_main',
+                                name: 'Stockage principal du navigateur',
+                                type: 'storage',
+                                path: 'Browser Storage',
+                                size: estimate.quota,
+                                used: estimate.usage
+                            });
+                        }
+                    } catch (e) {
+                        console.log('Storage API non disponible:', e);
+                    }
+                }
+
+                // Méthode 3: File System Access API (si disponible)
+                if ('showDirectoryPicker' in window) {
+                    logMessage("API File System Access disponible pour sélection manuelle", 'info');
+                }
+
+            } catch (error) {
+                logMessage(`Erreur lors de la détection USB: ${error.message}`, 'error');
+                console.error('USB Detection Error:', error);
+            }
+
+            // Si aucun périphérique détecté, afficher le message
+            if (devices.length === 0) {
+                document.getElementById('no-devices-message').classList.remove('hidden');
+                document.getElementById('no-devices-message').innerHTML = `
+                    <div class="text-center py-12">
+                        <p class="text-gray-400 mb-4">Aucun périphérique USB détecté automatiquement.</p>
+                        <p class="text-sm text-gray-500 mb-4">Pour des raisons de sécurité, les navigateurs limitent l'accès direct aux périphériques USB.</p>
+                        <div class="space-y-2">
+                            <button onclick="requestUSBAccess()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors w-full">
+                                Ajouter des périphériques USB
+                            </button>
+                            <button onclick="detectAllDevices()" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors w-full">
+                                Détecter tous les périphériques
+                            </button>
+                        </div>
+                    </div>
+                `;
+                logMessage("Aucun périphérique USB détecté. Utilisez le bouton pour demander l'accès.", 'warning');
+                return;
+            }
+
+            // Afficher les périphériques détectés
+            devices.forEach(device => {
+                const card = document.createElement('div');
+                card.className = "bg-white border border-gray-200 rounded-xl p-6 shadow-md transform transition-transform duration-300 hover:scale-105";
+                
+                const usedPercentage = device.size > 0 ? (device.used / device.size) * 100 : 0;
+                
+                card.innerHTML = `
+                    <div class="flex items-center mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-500 mr-4" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M18 10V4H6v6H4v8h16v-8h-2zM8 6h8v4H8V6zm10 12H6v-6h12v6zm-1-7.5h-2V10h-2v.5h-2V10H9v.5H7V10H5V8h14v2h-2V10.5zM12 17a3 3 0 100-6 3 3 0 000 6z"/>
+                        </svg>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900">${device.name}</h3>
+                            <p class="text-sm text-gray-500">${device.path}</p>
+                        </div>
+                    </div>
+                    ${device.size > 0 ? `
+                    <div class="mb-4">
+                        <div class="w-full bg-gray-200 rounded-full h-2.5">
+                            <div class="bg-indigo-600 h-2.5 rounded-full" style="width: ${usedPercentage}%;"></div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2">
+                            ${formatSize(device.used)} utilisés sur ${formatSize(device.size)} (${usedPercentage.toFixed(1)}%)
+                        </p>
+                    </div>
+                    ` : '<div class="mb-4"><p class="text-xs text-gray-500">Informations de stockage non disponibles</p></div>'}
+                    <div class="flex space-x-2">
+                        <button onclick="formatDevice('${device.id}')" class="flex-1 bg-red-500 text-white font-medium py-2 px-4 rounded-full text-sm hover:bg-red-600 transition-colors">
+                            Formater
+                        </button>
+                        <button onclick="bootableWizard('${device.id}')" class="flex-1 bg-green-500 text-white font-medium py-2 px-4 rounded-full text-sm hover:bg-green-600 transition-colors">
+                            Créer Bootable
+                        </button>
+                    </div>
+                `;
+                deviceListContainer.appendChild(card);
+                
+                // Ajouter aux sélecteurs
+                [docDeviceSelect, firmwareDeviceSelect, biosDeviceSelect].forEach(select => {
+                    const option = document.createElement('option');
+                    option.value = device.id;
+                    option.textContent = device.name;
+                    select.appendChild(option);
+                });
+            });
+
+            logMessage(`Périphériques réels détectés : ${devices.length}`, 'success');
+        };
+
+        // Fonction pour demander l'accès aux périphériques USB (plusieurs à la fois)
+        const requestUSBAccess = async () => {
+            try {
+                if ('usb' in navigator) {
+                    logMessage("Demande d'accès aux périphériques USB (sélection multiple)...", 'info');
+                    
+                    let continueSelection = true;
+                    let deviceCount = 0;
+                    
+                    while (continueSelection) {
+                        try {
+                            const device = await navigator.usb.requestDevice({ filters: [] });
+                            deviceCount++;
+                            logMessage(`Périphérique ${deviceCount} ajouté: ${device.productName || 'Périphérique USB'}`, 'success');
+                            
+                            continueSelection = confirm(`Périphérique ajouté!\n\nVoulez-vous ajouter un autre périphérique USB?`);
+                            
+                        } catch (selectionError) {
+                            if (selectionError.name === 'NotFoundError') {
+                                continueSelection = false;
+                                if (deviceCount === 0) {
+                                    logMessage("Aucun périphérique sélectionné.", 'warning');
+                                }
+                            } else {
+                                throw selectionError;
+                            }
+                        }
+                    }
+                    
+                    if (deviceCount > 0) {
+                        logMessage(`Total: ${deviceCount} périphérique(s) autorisé(s)`, 'success');
+                        fetchUSBDevices();
+                    }
+                    
+                } else {
+                    logMessage("L'API Web USB n'est pas supportée par ce navigateur.", 'error');
+                }
+            } catch (error) {
+                logMessage(`Erreur d'accès USB: ${error.message}`, 'error');
+            }
+        };
+        
+        const detectAllDevices = async () => {
+            logMessage("Détection de tous les périphériques disponibles...", 'info');
+            await fetchUSBDevices();
+        };
+        
+        const refreshAllDevices = async () => {
+            logMessage("Vidage de la liste et recherche de nouveaux périphériques...", 'info');
+            
+            // Vider complètement la liste
+            const deviceListContainer = document.getElementById('device-list');
+            const docDeviceSelect = document.getElementById('doc-device-select');
+            const firmwareDeviceSelect = document.getElementById('firmware-device-select');
+            const biosDeviceSelect = document.getElementById('bios-device-select');
+            
+            deviceListContainer.innerHTML = '';
+            docDeviceSelect.innerHTML = '<option value="">Sélectionner un périphérique</option>';
+            firmwareDeviceSelect.innerHTML = '<option value="">Sélectionner un périphérique</option>';
+            biosDeviceSelect.innerHTML = '<option value="">Sélectionner un périphérique</option>';
+            
+            document.getElementById('no-devices-message').classList.remove('hidden');
+            
+            // Relancer la détection complète
+            await fetchUSBDevices();
+        };
+
+        // --- Fonctionnalités AI Gemini ---
+
+        // Génération de documentation
+        const generateDocumentation = async () => {
+            const deviceId = document.getElementById('doc-device-select').value;
+            if (!deviceId) {
+                logMessage("Veuillez sélectionner un périphérique pour générer la documentation.", 'error');
+                return;
+            }
+
+            logMessage(`Génération de la documentation pour le périphérique...`, 'info');
+            logMessage("...veuillez patienter, cela peut prendre quelques instants.", 'warning');
+
+            const prompt = `Générer un rapport de sécurité, des procédures d'urgence et des recommandations légales pour un appareil USB de type '${deviceId}'. Le rapport doit être au format Markdown, avec des titres pour les sections et des listes à puces.`;
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+            };
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`API call failed with status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                const generatedText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+                
+                if (generatedText) {
+                    logMessage("Documentation générée avec succès.", 'success');
+                    logMessage(`Voici le rapport : \n\n${generatedText}`, 'info');
+                } else {
+                    logMessage("Échec de la génération de documentation. Réponse API inattendue.", 'error');
+                }
+            } catch (error) {
+                logMessage(`Erreur lors de l'appel à l'API : ${error.message}`, 'error');
+                console.error('API Error:', error);
+            }
+        };
+
+        // Assistant de dépannage
+        let chatHistory = [];
+        const openTroubleshootingAssistant = () => {
+            document.getElementById('troubleshooting-modal').style.display = 'flex';
+            document.getElementById('user-input').focus();
+        };
+
+        const closeTroubleshootingAssistant = () => {
+            document.getElementById('troubleshooting-modal').style.display = 'none';
+        };
+
+        const sendMessage = async () => {
+            const userInput = document.getElementById('user-input').value.trim();
+            if (!userInput) return;
+            
+            // Afficher le message de l'utilisateur dans le chat
+            const chatWindow = document.getElementById('chat-window');
+            const userMsg = document.createElement('p');
+            userMsg.className = "bg-success text-black p-2 rounded-lg my-2 self-end";
+            userMsg.textContent = "Moi: " + userInput;
+            chatWindow.appendChild(userMsg);
+
+            // Ajouter le message de l'utilisateur à l'historique
+            chatHistory.push({ role: "user", parts: [{ text: userInput }] });
+
+            // Afficher un message de chargement
+            const loadingMsg = document.createElement('p');
+            loadingMsg.id = 'loading-msg';
+            loadingMsg.className = "text-gray-500 italic p-2 rounded-lg my-2";
+            loadingMsg.textContent = "IA: en train de réfléchir...";
+            chatWindow.appendChild(loadingMsg);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+
+            document.getElementById('user-input').value = '';
+
+            const payload = {
+                contents: chatHistory,
+            };
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                const aiResponse = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+                
+                // Supprimer le message de chargement
+                const existingLoadingMsg = document.getElementById('loading-msg');
+                if (existingLoadingMsg) existingLoadingMsg.remove();
+                
+                if (aiResponse) {
+                    const aiMsg = document.createElement('p');
+                    aiMsg.className = "bg-bg-tertiary text-white p-2 rounded-lg my-2";
+                    aiMsg.textContent = "IA: " + aiResponse;
+                    chatWindow.appendChild(aiMsg);
+                    chatHistory.push({ role: "model", parts: [{ text: aiResponse }] });
+                } else {
+                    const errorMsg = document.createElement('p');
+                    errorMsg.className = "text-red-500 p-2 my-2";
+                    errorMsg.textContent = "IA: Je suis désolé, je n'ai pas pu générer de réponse pour le moment.";
+                    chatWindow.appendChild(errorMsg);
+                    console.error("API response was empty or malformed.");
+                }
+            } catch (error) {
+                const existingLoadingMsg = document.getElementById('loading-msg');
+                if (existingLoadingMsg) existingLoadingMsg.remove();
+                const errorMsg = document.createElement('p');
+                errorMsg.className = "text-red-500 p-2 my-2";
+                errorMsg.textContent = "IA: Erreur de connexion. Veuillez vérifier votre réseau.";
+                chatWindow.appendChild(errorMsg);
+                console.error('Error during API call:', error);
+            }
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        };
+        
+        // Recherche de firmware
+        const searchFirmware = async () => {
+            const deviceId = document.getElementById('firmware-device-select').value;
+            const deviceName = document.getElementById('firmware-device-select').options[document.getElementById('firmware-device-select').selectedIndex].text;
+            
+            if (!deviceId) {
+                logMessage("Veuillez sélectionner un périphérique pour rechercher le firmware.", 'error');
+                return;
+            }
+
+            logMessage(`Recherche d'informations sur le firmware pour "${deviceName}"...`, 'info');
+            logMessage("...cette opération peut prendre quelques instants.", 'warning');
+
+            const prompt = `Générer un rapport détaillé sur le firmware pour un périphérique nommé "${deviceName}" (ID: ${deviceId}). Incluez des informations sur la dernière version de firmware disponible, le journal des modifications (changelog) et les liens de téléchargement fictifs. Le rapport doit être au format Markdown.`;
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+            };
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+            
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`API call failed with status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                const generatedText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+                
+                if (generatedText) {
+                    logMessage("Recherche de firmware terminée avec succès.", 'success');
+                    logMessage(`Voici le rapport de firmware : \n\n${generatedText}`, 'info');
+                } else {
+                    logMessage("Échec de la recherche de firmware. Réponse API inattendue.", 'error');
+                }
+            } catch (error) {
+                logMessage(`Erreur lors de l'appel à l'API de recherche de firmware : ${error.message}`, 'error');
+                console.error('Firmware search API Error:', error);
+            }
+        };
+
+        // Créateur de clé BIOS
+        const generateBiosTool = async () => {
+            const deviceId = document.getElementById('bios-device-select').value;
+             if (!deviceId) {
+                logMessage("Veuillez sélectionner un périphérique pour créer la clé de réparation BIOS.", 'error');
+                return;
+            }
+            logMessage("Génération du plan pour la clé de réparation BIOS/UEFI...", 'info');
+            logMessage("...veuillez patienter, cela peut prendre quelques instants.", 'warning');
+
+            const prompt = `Générer un plan détaillé pour créer une clé USB de réparation de BIOS/UEFI. Le plan doit inclure les outils nécessaires (fictifs, comme 'Flashrom-kit' ou 'AMI-BIOS-Tool'), des instructions pas à pas, et les précautions à prendre. Le résultat doit être au format Markdown, avec des titres, des listes et des blocs de code simulés pour les commandes. Le plan est destiné au périphérique avec l'ID: ${deviceId}.`;
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+            };
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`API call failed with status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                const generatedText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+                
+                if (generatedText) {
+                    logMessage("Plan pour la clé BIOS/UEFI généré avec succès.", 'success');
+                    logMessage(`Voici le plan : \n\n${generatedText}`, 'info');
+                } else {
+                    logMessage("Échec de la génération du plan pour la clé BIOS. Réponse API inattendue.", 'error');
+                }
+            } catch (error) {
+                logMessage(`Erreur lors de l'appel à l'API : ${error.message}`, 'error');
+                console.error('BIOS Tool API Error:', error);
+            }
+        };
+
+        // Fonctionnalité de lecture audio du journal
+        const readLogAloud = async () => {
+            const logContent = document.getElementById('app-log').innerText;
+            if (!logContent || logContent.trim() === 'Journal d\'activité de l' + 'application...') {
+                logMessage("Le journal est vide. Rien à lire.", 'warning');
+                return;
+            }
+
+            logMessage("Démarrage de la lecture du journal...", 'info');
+
+            const payload = {
+                contents: [{
+                    parts: [{ text: logContent }]
+                }],
+                generationConfig: {
+                    responseModalities: ["AUDIO"],
+                    speechConfig: {
+                        voiceConfig: {
+                            prebuiltVoiceConfig: { voiceName: "Kore" }
+                        }
+                    }
+                },
+                model: "gemini-2.5-flash-preview-tts"
+            };
+
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API call failed with status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                const part = result?.candidates?.[0]?.content?.parts?.[0];
+                const audioData = part?.inlineData?.data;
+                const mimeType = part?.inlineData?.mimeType;
+
+                if (audioData && mimeType && mimeType.startsWith("audio/")) {
+                    const sampleRate = parseInt(mimeType.match(/rate=(\d+)/)[1], 10);
+                    const pcmData = base64ToArrayBuffer(audioData);
+                    const pcm16 = new Int16Array(pcmData);
+                    const wavBlob = pcmToWav(pcm16, sampleRate);
+                    const audioUrl = URL.createObjectURL(wavBlob);
+                    
+                    const audio = new Audio(audioUrl);
+                    audio.play().catch(e => {
+                        logMessage("La lecture audio a été bloquée par le navigateur. Veuillez autoriser la lecture automatique.", 'error');
+                        console.error("Audio playback error:", e);
+                    });
+                    logMessage("Lecture du journal terminée.", 'success');
+                } else {
+                    logMessage("La lecture audio a échoué. Réponse de l'API inattendue.", 'error');
+                }
+            } catch (error) {
+                logMessage(`Erreur lors de l'appel à l'API de synthèse vocale : ${error.message}`, 'error');
+                console.error('TTS API Error:', error);
+            }
+        };
+
+        // Fonctions utilitaires pour la conversion audio
+        const base64ToArrayBuffer = (base64) => {
+            const binary_string = window.atob(base64);
+            const len = binary_string.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binary_string.charCodeAt(i);
+            }
+            return bytes.buffer;
+        };
+
+        const pcmToWav = (pcmData, sampleRate) => {
+            const dataLength = pcmData.length * 2;
+            const buffer = new ArrayBuffer(44 + dataLength);
+            const view = new DataView(buffer);
+
+            // RIFF chunk descriptor
+            writeString(view, 0, 'RIFF');
+            view.setUint32(4, 36 + dataLength, true);
+            writeString(view, 8, 'WAVE');
+
+            // fmt chunk
+            writeString(view, 12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true); // PCM format
+            view.setUint16(22, 1, true); // Mono channel
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * 2, true); // byte rate
+            view.setUint16(32, 2, true); // block align
+            view.setUint16(34, 16, true); // bits per sample
+
+            // data chunk
+            writeString(view, 36, 'data');
+            view.setUint32(40, dataLength, true);
+            
+            // Write PCM data
+            for (let i = 0; i < pcmData.length; i++) {
+                view.setInt16(44 + i * 2, pcmData[i], true);
+            }
+
+            return new Blob([view], { type: 'audio/wav' });
+        };
+
+        const writeString = (view, offset, string) => {
+            for (let i = 0; i < string.length; i++) {
+                view.setUint8(offset + i, string.charCodeAt(i));
+            }
+        };
+        
+        // Fonctions de simulation pour les actions des boutons
+        const formatDevice = (deviceId) => {
+            logMessage(`Démarrage du formatage pour le périphérique : ${deviceId}...`, 'warning');
+            setTimeout(() => {
+                logMessage(`Le formatage du périphérique ${deviceId} est terminé.`, 'success');
+            }, 2000);
+        };
+
+        const bootableWizard = (deviceId) => {
+            logMessage(`Démarrage de la création de clé bootable pour le périphérique : ${deviceId}...`, 'info');
+            setTimeout(() => {
+                logMessage(`Création de la clé bootable pour ${deviceId} terminée.`, 'success');
+            }, 3000);
+        };
+
+        // Appel initial pour charger le message d'accueil
+        document.addEventListener('DOMContentLoaded', () => {
+            logMessage("Bienvenue dans le Gestionnaire USB. Cliquez sur 'Rafraîchir' pour commencer.", 'info');
+            fetchUSBDevices(); // Appel initial pour remplir la liste
+        });
+
+    </script>
+</body>
+</html>

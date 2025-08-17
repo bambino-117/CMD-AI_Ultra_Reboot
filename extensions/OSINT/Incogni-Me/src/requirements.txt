@@ -1,0 +1,12 @@
+# requirements.txt
+fastapi
+uvicorn[standard]  # Serveur ASGI pour FastAPI
+sqlalchemy
+psycopg2-binary    # Pilote PostgreSQL
+pydantic           # Pour la validation des données
+passlib[bcrypt]    # Pour le hachage des mots de passe
+python-jose[cryptography] # Pour les tokens JWT (si authentification)
+python-dotenv      # Pour gérer les variables d'environnement
+requests           # Pour les requêtes HTTP (scraping)
+beautifulsoup4     # Pour le parsing HTML (scraping)
+selenium           # Pour le scraping dynamique (si besoin)

@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Monitor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0D1117;
+            color: #E2E8F0;
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1E1E1E;
+        }
+        ::-webkit-scrollbar-thumb {
+            background-color: #4CAF50;
+            border-radius: 9999px;
+            border: 2px solid #1E1E1E;
+        }
+    </style>
+</head>
+<body class="p-4">
+    <div class="bg-[#1E1E1E] p-6 rounded-xl shadow-2xl border border-[#2D2D2D]">
+        <h1 class="text-2xl font-bold text-white mb-6">📊 Tableau de bord Système</h1>
+        
+        <div class="mb-6 flex flex-wrap gap-2">
+            <button id="btn-status" class="px-4 py-2 bg-green-600 text-white font-medium rounded-full hover:bg-green-700 transition-colors duration-200">Vue d'ensemble</button>
+            <button id="btn-system" class="px-4 py-2 bg-gray-600 text-white font-medium rounded-full hover:bg-gray-700 transition-colors duration-200">Système</button>
+            <button id="btn-cpu" class="px-4 py-2 bg-gray-600 text-white font-medium rounded-full hover:bg-gray-700 transition-colors duration-200">CPU</button>
+            <button id="btn-memory" class="px-4 py-2 bg-gray-600 text-white font-medium rounded-full hover:bg-gray-700 transition-colors duration-200">Mémoire</button>
+            <button id="btn-disk" class="px-4 py-2 bg-gray-600 text-white font-medium rounded-full hover:bg-gray-700 transition-colors duration-200">Disques</button>
+            <button id="btn-network" class="px-4 py-2 bg-gray-600 text-white font-medium rounded-full hover:bg-gray-700 transition-colors duration-200">Réseau</button>
+            <button id="btn-processes" class="px-4 py-2 bg-gray-600 text-white font-medium rounded-full hover:bg-gray-700 transition-colors duration-200">Processus</button>
+            <button id="btn-services" class="px-4 py-2 bg-gray-600 text-white font-medium rounded-full hover:bg-gray-700 transition-colors duration-200">Services</button>
+        </div>
+
+        <div id="content-container" class="text-gray-300">
+            <p>Cliquez sur un bouton pour afficher les informations.</p>
+        </div>
+    </div>
+
+    <script>
+        const contentContainer = document.getElementById('content-container');
+        const buttons = {
+            status: document.getElementById('btn-status'),
+            system: document.getElementById('btn-system'),
+            cpu: document.getElementById('btn-cpu'),
+            memory: document.getElementById('btn-memory'),
+            disk: document.getElementById('btn-disk'),
+            network: document.getElementById('btn-network'),
+            processes: document.getElementById('btn-processes'),
+            services: document.getElementById('btn-services')
+        };
+
+        function setActiveButton(activeBtn) {
+            Object.values(buttons).forEach(btn => {
+                btn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                btn.classList.add('bg-gray-600', 'hover:bg-gray-700');
+            });
+            activeBtn.classList.remove('bg-gray-600', 'hover:bg-gray-700');
+            activeBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+        }
+
+        function showLoading() {
+            contentContainer.innerHTML = '<p class="text-center text-gray-400">Chargement des données...</p>';
+        }
+
+        function showError(error) {
+            contentContainer.innerHTML = `<div class="bg-red-900 border border-red-600 text-white p-4 rounded-lg">
+                                            <p class="font-bold">Erreur de connexion au serveur</p>
+                                            <p class="text-sm">${error}. Assurez-vous que le script 'ancrage_sys_mon.py' est en cours d'exécution.</p>
+                                         </div>`;
+        }
+
+        const socket = io("http://127.0.0.1:5001");
+
+        socket.on('connect', () => {
+            console.log('Connected to server');
+        });
+
+        socket.on('disconnect', () => {
+            console.log('Disconnected from server');
+        });
+
+        socket.on('system_update', function(data) {
+            if (buttons.status.classList.contains('bg-green-600')) {
+                updateStatusView(data);
+            }
+        });
+
+        function updateStatusView(data) {
+            let html = `<div class="grid grid-cols-1 md:grid-cols-2 gap-6">`;
+            
+            html += `<div class="bg-[#2D2D2D] p-4 rounded-lg">
+                        <h3 class="font-bold text-lg text-white mb-2">Utilisation</h3>
+                        <div class="space-y-2 text-sm">
+                            <p><span class="font-semibold text-gray-400">CPU:</span> ${data.cpu_percent.toFixed(1)}%</p>
+                            <p><span class="font-semibold text-gray-400">Mémoire:</span> ${data.memory_percent.toFixed(1)}%</p>
+                        </div>
+                     </div>`;
+
+            html += `<div class="bg-[#2D2D2D] p-4 rounded-lg">
+                        <h3 class="font-bold text-lg text-white mb-2">🌡️ Températures</h3>
+                        <div class="space-y-2 text-sm">`;
+
+            if (data.temperatures.cpu && data.temperatures.cpu.length > 0) {
+                 data.temperatures.cpu.forEach(temp => {
+                    html += `<p><span class="font-semibold text-gray-400">${temp.label || 'CPU'}:</span> ${temp.current ? temp.current + '°C' : 'N/A'} ${temp.status}</p>`;
+                });
+            }
+            html += `</div></div></div>`;
+
+            contentContainer.innerHTML = html;
+        }
+
+        buttons.status.addEventListener('click', () => {
+            setActiveButton(buttons.status);
+            showLoading();
+            fetch('http://127.0.0.1:5001/api/status')
+                .then(response => response.ok ? response.json() : Promise.reject('Erreur réseau'))
+                .then(data => {
+                    updateStatusView(data);
+                })
+                .catch(error => showError(error));
+        });
+
+        buttons.system.addEventListener('click', () => {
+            setActiveButton(buttons.system);
+            showLoading();
+            fetch('http://127.0.0.1:5001/api/system')
+                .then(response => response.ok ? response.json() : Promise.reject('Erreur réseau'))
+                .then(data => {
+                    let html = `<div class="bg-[#2D2D2D] p-4 rounded-lg">
+                                    <h3 class="font-bold text-lg text-white mb-4">Informations Système</h3>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                        <p><span class="font-semibold text-gray-400">Système:</span> ${data.system}</p>
+                                        <p><span class="font-semibold text-gray-400">Nom:</span> ${data.node_name}</p>
+                                        <p><span class="font-semibold text-gray-400">Version:</span> ${data.release}</p>
+                                        <p><span class="font-semibold text-gray-400">Architecture:</span> ${data.machine}</p>
+                                        <p><span class="font-semibold text-gray-400">Processeur:</span> ${data.processor}</p>
+                                        <p><span class="font-semibold text-gray-400">Démarrage:</span> ${data.boot_time}</p>
+                                        <p><span class="font-semibold text-gray-400">Uptime:</span> ${data.uptime}</p>
+                                    </div>
+                                </div>`;
+                    contentContainer.innerHTML = html;
+                })
+                .catch(error => showError(error));
+        });
+
+        buttons.cpu.addEventListener('click', () => {
+            setActiveButton(buttons.cpu);
+            showLoading();
+            fetch('http://127.0.0.1:5001/api/cpu')
+                .then(response => response.ok ? response.json() : Promise.reject('Erreur réseau'))
+                .then(data => {
+                    let html = `<div class="bg-[#2D2D2D] p-4 rounded-lg">
+                                    <h3 class="font-bold text-lg text-white mb-4">Informations CPU</h3>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-4">
+                                        <p><span class="font-semibold text-gray-400">Cœurs physiques:</span> ${data.physical_cores}</p>
+                                        <p><span class="font-semibold text-gray-400">Cœurs logiques:</span> ${data.total_cores}</p>
+                                        <p><span class="font-semibold text-gray-400">Fréq. max:</span> ${data.max_frequency}</p>
+                                        <p><span class="font-semibold text-gray-400">Fréq. min:</span> ${data.min_frequency}</p>
+                                        <p><span class="font-semibold text-gray-400">Fréq. actuelle:</span> ${data.current_frequency}</p>
+                                    </div>
+                                    <h4 class="font-bold text-white mb-2">Utilisation par cœur:</h4>
+                                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">`;
+                    data.cpu_usage_per_core.forEach((usage, index) => {
+                        html += `<div class="bg-[#1E1E1E] p-2 rounded text-center">Cœur ${index}: ${usage}</div>`;
+                    });
+                    html += `</div></div>`;
+                    contentContainer.innerHTML = html;
+                })
+                .catch(error => showError(error));
+        });
+
+        buttons.memory.addEventListener('click', () => {
+            setActiveButton(buttons.memory);
+            showLoading();
+            fetch('http://127.0.0.1:5001/api/memory')
+                .then(response => response.ok ? response.json() : Promise.reject('Erreur réseau'))
+                .then(data => {
+                    let html = `<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div class="bg-[#2D2D2D] p-4 rounded-lg">
+                                        <h3 class="font-bold text-lg text-white mb-4">Mémoire RAM</h3>
+                                        <div class="space-y-2 text-sm">
+                                            <p><span class="font-semibold text-gray-400">Total:</span> ${data.total}</p>
+                                            <p><span class="font-semibold text-gray-400">Utilisée:</span> ${data.used}</p>
+                                            <p><span class="font-semibold text-gray-400">Disponible:</span> ${data.available}</p>
+                                            <p><span class="font-semibold text-gray-400">Pourcentage:</span> ${data.percentage}%</p>
+                                        </div>
+                                    </div>
+                                    <div class="bg-[#2D2D2D] p-4 rounded-lg">
+                                        <h3 class="font-bold text-lg text-white mb-4">Mémoire Swap</h3>
+                                        <div class="space-y-2 text-sm">
+                                            <p><span class="font-semibold text-gray-400">Total:</span> ${data.swap_total}</p>
+                                            <p><span class="font-semibold text-gray-400">Utilisée:</span> ${data.swap_used}</p>
+                                            <p><span class="font-semibold text-gray-400">Libre:</span> ${data.swap_free}</p>
+                                            <p><span class="font-semibold text-gray-400">Pourcentage:</span> ${data.swap_percentage}%</p>
+                                        </div>
+                                    </div>
+                                </div>`;
+                    contentContainer.innerHTML = html;
+                })
+                .catch(error => showError(error));
+        });
+
+        buttons.disk.addEventListener('click', () => {
+            setActiveButton(buttons.disk);
+            showLoading();
+            fetch('http://127.0.0.1:5001/api/disk')
+                .then(response => response.ok ? response.json() : Promise.reject('Erreur réseau'))
+                .then(data => {
+                    let html = `<div class="space-y-4">`;
+                    data.forEach(disk => {
+                        html += `<div class="bg-[#2D2D2D] p-4 rounded-lg">
+                                    <h4 class="font-bold text-white mb-2">${disk.device} (${disk.file_system})</h4>
+                                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                        <p><span class="font-semibold text-gray-400">Point de montage:</span> ${disk.mountpoint}</p>
+                                        <p><span class="font-semibold text-gray-400">Taille totale:</span> ${disk.total_size}</p>
+                                        <p><span class="font-semibold text-gray-400">Utilisé:</span> ${disk.used}</p>
+                                        <p><span class="font-semibold text-gray-400">Libre:</span> ${disk.free}</p>
+                                        <p><span class="font-semibold text-gray-400">Pourcentage:</span> ${disk.percentage}%</p>
+                                    </div>
+                                 </div>`;
+                    });
+                    html += `</div>`;
+                    contentContainer.innerHTML = html;
+                })
+                .catch(error => showError(error));
+        });
+
+        buttons.network.addEventListener('click', () => {
+            setActiveButton(buttons.network);
+            showLoading();
+            fetch('http://127.0.0.1:5001/api/network')
+                .then(response => response.ok ? response.json() : Promise.reject('Erreur réseau'))
+                .then(data => {
+                    let html = `<div class="space-y-4">
+                                    <div class="bg-[#2D2D2D] p-4 rounded-lg">
+                                        <h3 class="font-bold text-lg text-white mb-4">Statistiques réseau</h3>
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                            <p><span class="font-semibold text-gray-400">Données envoyées:</span> ${data.total_bytes_sent}</p>
+                                            <p><span class="font-semibold text-gray-400">Données reçues:</span> ${data.total_bytes_received}</p>
+                                        </div>
+                                    </div>
+                                    <div class="bg-[#2D2D2D] p-4 rounded-lg">
+                                        <h3 class="font-bold text-lg text-white mb-4">Interfaces réseau</h3>
+                                        <div class="space-y-2">`;
+                    data.interfaces.forEach(iface => {
+                        html += `<div class="bg-[#1E1E1E] p-3 rounded">
+                                    <p class="font-semibold text-white">${iface.interface}</p>
+                                    <p class="text-sm"><span class="text-gray-400">IP:</span> ${iface.ip}</p>
+                                    <p class="text-sm"><span class="text-gray-400">Masque:</span> ${iface.netmask}</p>
+                                 </div>`;
+                    });
+                    html += `</div></div></div>`;
+                    contentContainer.innerHTML = html;
+                })
+                .catch(error => showError(error));
+        });
+
+        buttons.processes.addEventListener('click', () => {
+            setActiveButton(buttons.processes);
+            showLoading();
+            fetch('http://127.0.0.1:5001/api/processes')
+                .then(response => response.ok ? response.json() : Promise.reject('Erreur réseau'))
+                .then(data => {
+                    let html = `<div class="bg-[#2D2D2D] p-4 rounded-lg">
+                                    <h4 class="text-xl font-bold text-white mb-4">Top 15 Processus (par utilisation CPU)</h4>
+                                    <div class="overflow-x-auto">
+                                        <table class="min-w-full">
+                                            <thead>
+                                                <tr class="border-b border-gray-600">
+                                                    <th class="px-4 py-2 text-left text-sm font-semibold text-gray-300">PID</th>
+                                                    <th class="px-4 py-2 text-left text-sm font-semibold text-gray-300">Nom</th>
+                                                    <th class="px-4 py-2 text-left text-sm font-semibold text-gray-300">Utilisateur</th>
+                                                    <th class="px-4 py-2 text-left text-sm font-semibold text-gray-300">% CPU</th>
+                                                    <th class="px-4 py-2 text-left text-sm font-semibold text-gray-300">% Mémoire</th>
+                                                    <th class="px-4 py-2 text-left text-sm font-semibold text-gray-300">Statut</th>
+                                                    <th class="px-4 py-2 text-left text-sm font-semibold text-gray-300">Démarré</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="divide-y divide-gray-600">`;
+                    data.forEach(proc => {
+                        html += `<tr class="hover:bg-[#374151]">
+                                    <td class="px-4 py-2 text-sm">${proc.pid}</td>
+                                    <td class="px-4 py-2 text-sm font-medium text-white">${proc.name}</td>
+                                    <td class="px-4 py-2 text-sm">${proc.username || 'N/A'}</td>
+                                    <td class="px-4 py-2 text-sm">${proc.cpu_percent}%</td>
+                                    <td class="px-4 py-2 text-sm">${proc.memory_percent}%</td>
+                                    <td class="px-4 py-2 text-sm">${proc.status}</td>
+                                    <td class="px-4 py-2 text-sm">${proc.create_time}</td>
+                                 </tr>`;
+                    });
+                    html += `</tbody></table></div></div>`;
+                })
+                .catch(error => showError(error));
+        });
+
+        buttons.services.addEventListener('click', () => {
+            setActiveButton(buttons.services);
+            showLoading();
+            fetch('http://127.0.0.1:5001/api/services')
+                .then(response => response.ok ? response.json() : Promise.reject('Erreur réseau'))
+                .then(data => {
+                    let html = `<div class="bg-[#2D2D2D] p-4 rounded-lg">
+                                    <h4 class="text-xl font-bold text-white mb-4">Services Windows (Top 20)</h4>
+                                    <div class="overflow-x-auto">
+                                        <table class="min-w-full">
+                                            <thead>
+                                                <tr class="border-b border-gray-600">
+                                                    <th class="px-4 py-2 text-left text-sm font-semibold text-gray-300">Nom</th>
+                                                    <th class="px-4 py-2 text-left text-sm font-semibold text-gray-300">Nom d'affichage</th>
+                                                    <th class="px-4 py-2 text-left text-sm font-semibold text-gray-300">Statut</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="divide-y divide-gray-600">`;
+                    data.forEach(service => {
+                        const statusColor = service.status === 'running' ? 'text-green-400' : 'text-red-400';
+                        html += `<tr class="hover:bg-[#374151]">
+                                    <td class="px-4 py-2 text-sm font-medium text-white">${service.name}</td>
+                                    <td class="px-4 py-2 text-sm">${service.display_name}</td>
+                                    <td class="px-4 py-2 text-sm ${statusColor}">${service.status}</td>
+                                 </tr>`;
+                    });
+                    html += `</tbody></table></div></div>`;
+                })
+                .catch(error => showError(error));
+        });
+
+        // Load status on page load
+        buttons.status.click();
+    </script>
+</body>
+</html>

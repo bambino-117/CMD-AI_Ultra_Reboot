@@ -1,0 +1,85 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f0f0f0;
+    margin: 0;
+    padding: 20px;
+}
+
+.container {
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    max-width: 700px;
+    margin: auto;
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+    font-size: 2em;
+    margin-bottom: 20px;
+}
+
+.extension-list-container {
+    height: 300px; /* Hauteur fixe pour simuler la zone scrollable */
+    overflow-y: auto; /* Active le défilement vertical */
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 10px;
+}
+
+.extension-card {
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.extension-details h3 {
+    margin: 0 0 5px 0;
+}
+
+.extension-details p {
+    margin: 0;
+    font-size: 0.9em;
+    color: #666;
+}
+
+.install-btn {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.install-btn:hover {
+    background-color: #0056b3;
+}
+
+.install-btn:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+.status-bar {
+    border-top: 1px solid #ddd;
+    padding-top: 10px;
+    margin-top: 20px;
+}
+
+#status-label {
+    font-style: italic;
+    color: #555;
+}
+
+/* Couleurs pour le statut */
+.status-success { color: green; }
+.status-error { color: red; }
+.status-info { color: blue; }

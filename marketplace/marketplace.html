@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marketplace des Extensions</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            max-width: 700px;
+            margin: auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+
+        .extension-list-container {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+        }
+
+        .extension-card {
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .extension-details h3 {
+            margin: 0 0 5px 0;
+        }
+
+        .extension-details p {
+            margin: 0;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .install-btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .install-btn:hover {
+            background-color: #0056b3;
+        }
+
+        .install-btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .status-bar {
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+            margin-top: 20px;
+        }
+
+        #status-label {
+            font-style: italic;
+            color: #555;
+        }
+
+        .status-success { color: green; }
+        .status-error { color: red; }
+        .status-info { color: blue; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Catalogue des Extensions</h1>
+        <div class="extension-list-container">
+        </div>
+        <div class="status-bar">
+            <span id="status-label">Prêt.</span>
+        </div>
+    </div>
+
+    <script>
+        const extensionCatalog = [
+            {
+                name: "Security Toolkit",
+                description: "🛡️ Boîte à outils de sécurité : KillRAM, BadUSB Creator, USBKiller Designer avec décharges légales.",
+                version: "1.0.0",
+                author: "CMD-AI Team",
+                zip_url: "../extensions/Security_Toolkit/security_toolkit_interface.html",
+                category: "security",
+                warning: true
+            },
+            {
+                name: "OSINT Tools",
+                description: "Suite d'outils pour la recherche en sources ouvertes (OSINT).",
+                version: "1.2",
+                author: "Bambino",
+                zip_url: "https://github.com/Bambino117/CMD-AI-OSINT-Extension/archive/refs/tags/v1.2.zip"
+            },
+            {
+                name: "Network Tool Kit",
+                description: "🌐 Outils réseau interactifs : Ping, Scan ports, Test vitesse, Info IP, Scan WiFi et rapports IA.",
+                version: "1.0",
+                author: "CMD-AI Team",
+                zip_url: "../extensions/Network Tool Kit.html"
+            },
+            {
+                name: "Code Formatter",
+                description: "Outil pour formater automatiquement votre code Python.",
+                version: "0.9",
+                author: "DevTeam",
+                zip_url: "https://example.com/code-formatter.zip"
+            }
+        ];
+
+        const extensionListContainer = document.querySelector('.extension-list-container');
+        const statusLabel = document.getElementById('status-label');
+
+        function updateStatus(status, message) {
+            statusLabel.textContent = message;
+            statusLabel.className = '';
+            if (status === 'success') {
+                statusLabel.classList.add('status-success');
+            } else if (status === 'error') {
+                statusLabel.classList.add('status-error');
+            } else {
+                statusLabel.classList.add('status-info');
+            }
+        }
+
+        async function installExtension(extensionData, button) {
+            button.disabled = true;
+            updateStatus('info', `Installation de "${extensionData.name}" en cours...`);
+
+            if (extensionData.name === "Security Toolkit") {
+                if (!confirm("⚠️ AVERTISSEMENT : Ce toolkit contient des outils dangereux qui peuvent causer des dommages irréversibles. Continuer ?")) {
+                    button.disabled = false;
+                    updateStatus('info', 'Installation annulée par l\'utilisateur.');
+                    return;
+                }
+                setTimeout(() => {
+                    updateStatus('success', `"${extensionData.name}" est prêt ! ATTENTION : Lisez les avertissements.`);
+                    button.textContent = "🛡️ Lancer";
+                    button.onclick = () => window.open(extensionData.zip_url, '_blank');
+                    button.disabled = false;
+                }, 1000);
+                return;
+            }
+
+            if (extensionData.name === "Network Tool Kit") {
+                setTimeout(() => {
+                    updateStatus('success', `"${extensionData.name}" est prêt à utiliser !`);
+                    button.textContent = "🚀 Lancer";
+                    button.onclick = () => window.open(extensionData.zip_url, '_blank');
+                    button.disabled = false;
+                }, 1000);
+                return;
+            }
+
+            try {
+                const response = await fetch(extensionData.zip_url);
+                if (!response.ok) {
+                    throw new Error(`Erreur lors du téléchargement : ${response.statusText}`);
+                }
+
+                setTimeout(() => {
+                    updateStatus('success', `"${extensionData.name}" a été installé avec succès !`);
+                    button.textContent = "✅ Installé";
+                }, 1500);
+                
+            } catch (error) {
+                updateStatus('error', `Erreur d'installation pour "${extensionData.name}": ${error.message}`);
+                button.disabled = false;
+                console.error(error);
+            }
+        }
+
+        function createExtensionWidget(extension) {
+            const card = document.createElement('div');
+            card.className = 'extension-card';
+            
+            if (extension.warning) {
+                card.style.borderColor = '#dc3545';
+                card.style.backgroundColor = '#fff5f5';
+            }
+
+            const details = document.createElement('div');
+            details.className = 'extension-details';
+
+            const title = document.createElement('h3');
+            const icon = extension.category === 'security' ? '🛡️' : '📦';
+            title.innerHTML = `${icon} ${extension.name}`;
+            if (extension.warning) {
+                title.innerHTML += ' <span style="color: red; font-size: 0.8em;">⚠️ DANGEREUX</span>';
+            }
+
+            const description = document.createElement('p');
+            description.textContent = extension.description;
+
+            const metadata = document.createElement('p');
+            metadata.innerHTML = `Version: ${extension.version} | Auteur: ${extension.author}`;
+
+            details.appendChild(title);
+            details.appendChild(description);
+            details.appendChild(metadata);
+
+            const installButton = document.createElement('button');
+            installButton.className = 'install-btn';
+            if (extension.warning) {
+                installButton.style.backgroundColor = '#dc3545';
+                installButton.textContent = "⚠️ Installer (Risqué)";
+            } else {
+                installButton.textContent = "⬇️ Installer";
+            }
+            installButton.onclick = () => installExtension(extension, installButton);
+
+            card.appendChild(details);
+            card.appendChild(installButton);
+
+            extensionListContainer.appendChild(card);
+        }
+
+        extensionCatalog.forEach(createExtensionWidget);
+    </script>
+</body>
+</html>

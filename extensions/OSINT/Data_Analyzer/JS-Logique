@@ -1,0 +1,31 @@
+document.addEventListener('DOMContentLoaded', () => {
+    // Affiche une section et cache les autres
+    window.showSection = (sectionId) => {
+        document.querySelectorAll('.content-section').forEach(section => {
+            section.classList.add('hidden');
+        });
+        document.getElementById(sectionId + '-section').classList.remove('hidden');
+    };
+
+    // Gère les clics sur les boutons d'analyse pour afficher les résultats
+    document.querySelectorAll('.analyze-btn').forEach(button => {
+        button.addEventListener('click', (event) => {
+            const dataSource = event.target.getAttribute('data-source');
+            let resultText = "";
+            // Simulation des retours d'analyse du script Python
+            switch(dataSource) {
+                case 'osint':
+                    resultText = "🕵️ **ANALYSE DONNÉES OSINT**\n\n... (contenu osint du script) ...";
+                    break;
+                case 'network':
+                    resultText = "🌐 **ANALYSE DONNÉES RÉSEAU**\n\n... (contenu réseau du script) ...";
+                    break;
+                // ... autres cas
+            }
+            document.getElementById('analyze-results').innerText = resultText;
+        });
+    });
+    
+    // Initialise l'affichage sur la section "analyze" au chargement
+    showSection('analyze');
+});

@@ -1,0 +1,111 @@
+// Simule le catalogue d'extensions du code Python
+const extensionCatalog = [
+    {
+        name: "OSINT Tools",
+        description: "Suite d'outils pour la recherche en sources ouvertes (OSINT).",
+        version: "1.2",
+        author: "Bambino",
+        zip_url: "https://github.com/Bambino117/CMD-AI-OSINT-Extension/archive/refs/tags/v1.2.zip"
+    },
+    {
+        name: "Network Tool Kit",
+        description: "🌐 Outils réseau interactifs : Ping, Scan ports, Test vitesse, Info IP, Scan WiFi et rapports IA.",
+        version: "1.0",
+        author: "CMD-AI Team",
+        zip_url: "../extensions/Network Tool Kit.html"
+    },
+    {
+        name: "Code Formatter",
+        description: "Outil pour formater automatiquement votre code Python.",
+        version: "0.9",
+        author: "DevTeam",
+        zip_url: "https://example.com/code-formatter.zip"
+    }
+];
+
+const extensionListContainer = document.querySelector('.extension-list-container');
+const statusLabel = document.getElementById('status-label');
+
+// Fonction pour mettre à jour le statut
+function updateStatus(status, message) {
+    statusLabel.textContent = message;
+    statusLabel.className = '';
+    if (status === 'success') {
+        statusLabel.classList.add('status-success');
+    } else if (status === 'error') {
+        statusLabel.classList.add('status-error');
+    } else {
+        statusLabel.classList.add('status-info');
+    }
+}
+
+// Fonction pour simuler l'installation
+async function installExtension(extensionData, button) {
+    button.disabled = true;
+    updateStatus('info', `Installation de "${extensionData.name}" en cours...`);
+
+    // Gestion spéciale pour Network Tool Kit (fichier local)
+    if (extensionData.name === "Network Tool Kit") {
+        setTimeout(() => {
+            updateStatus('success', `"${extensionData.name}" est prêt à utiliser !`);
+            button.textContent = "🚀 Lancer";
+            button.onclick = () => window.open(extensionData.zip_url, '_blank');
+            button.disabled = false;
+        }, 1000);
+        return;
+    }
+
+    // Simulation d'une requête réseau pour les autres extensions
+    try {
+        const response = await fetch(extensionData.zip_url);
+        if (!response.ok) {
+            throw new Error(`Erreur lors du téléchargement : ${response.statusText}`);
+        }
+
+        // Simuler une installation réussie
+        setTimeout(() => {
+            updateStatus('success', `"${extensionData.name}" a été installé avec succès !`);
+            button.textContent = "✅ Installé";
+        }, 1500); // Délai de 1.5s pour simuler le processus
+        
+    } catch (error) {
+        updateStatus('error', `Erreur d'installation pour "${extensionData.name}": ${error.message}`);
+        button.disabled = false;
+        console.error(error);
+    }
+}
+
+// Fonction pour créer une carte d'extension et l'ajouter au DOM
+function createExtensionWidget(extension) {
+    const card = document.createElement('div');
+    card.className = 'extension-card';
+
+    const details = document.createElement('div');
+    details.className = 'extension-details';
+
+    const title = document.createElement('h3');
+    title.innerHTML = `📦 ${extension.name}`;
+
+    const description = document.createElement('p');
+    description.textContent = extension.description;
+
+    const metadata = document.createElement('p');
+    metadata.innerHTML = `Version: ${extension.version} | Auteur: ${extension.author}`;
+
+    details.appendChild(title);
+    details.appendChild(description);
+    details.appendChild(metadata);
+
+    const installButton = document.createElement('button');
+    installButton.className = 'install-btn';
+    installButton.textContent = "⬇️ Installer";
+    installButton.onclick = () => installExtension(extension, installButton);
+
+    card.appendChild(details);
+    card.appendChild(installButton);
+
+    extensionListContainer.appendChild(card);
+}
+
+// Initialisation : générer les cartes d'extensions
+extensionCatalog.forEach(createExtensionWidget);

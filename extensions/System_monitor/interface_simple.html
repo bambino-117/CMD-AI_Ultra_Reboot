@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Monitor</title>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0D1117;
+            color: #E2E8F0;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background-color: #1E1E1E;
+            padding: 24px;
+            border-radius: 12px;
+            border: 1px solid #2D2D2D;
+        }
+        .btn {
+            padding: 8px 16px;
+            margin: 4px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .btn-active {
+            background-color: #16a34a;
+            color: white;
+        }
+        .btn-inactive {
+            background-color: #4b5563;
+            color: white;
+        }
+        .btn:hover {
+            opacity: 0.8;
+        }
+        .content {
+            margin-top: 20px;
+            color: #d1d5db;
+        }
+        .card {
+            background-color: #2D2D2D;
+            padding: 16px;
+            border-radius: 8px;
+            margin: 8px 0;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 16px;
+        }
+        .loading {
+            text-align: center;
+            color: #9ca3af;
+        }
+        .error {
+            background-color: #7f1d1d;
+            border: 1px solid #dc2626;
+            color: white;
+            padding: 16px;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 style="color: white; margin-bottom: 24px;">📊 System Monitor</h1>
+        
+        <div>
+            <button id="btn-status" class="btn btn-active">Vue d'ensemble</button>
+            <button id="btn-system" class="btn btn-inactive">Système</button>
+            <button id="btn-processes" class="btn btn-inactive">Processus</button>
+        </div>
+
+        <div id="content" class="content">
+            <p>Chargement...</p>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://127.0.0.1:5001/api';
+        const content = document.getElementById('content');
+        const buttons = {
+            status: document.getElementById('btn-status'),
+            system: document.getElementById('btn-system'),
+            processes: document.getElementById('btn-processes')
+        };
+
+        function setActive(activeBtn) {
+            Object.values(buttons).forEach(btn => {
+                btn.className = 'btn btn-inactive';
+            });
+            activeBtn.className = 'btn btn-active';
+        }
+
+        function showError(msg) {
+            content.innerHTML = `<div class="error"><strong>Erreur:</strong> ${msg}</div>`;
+        }
+
+        function showLoading() {
+            content.innerHTML = '<div class="loading">Chargement des données...</div>';
+        }
+
+        buttons.status.onclick = async () => {
+            setActive(buttons.status);
+            showLoading();
+            try {
+                const response = await fetch(`${API_BASE}/status`);
+                const data = await response.json();
+                content.innerHTML = `
+                    <div class="grid">
+                        <div class="card">
+                            <h3 style="color: white;">Utilisation</h3>
+                            <p>CPU: ${data.cpu_percent}%</p>
+                            <p>Mémoire: ${data.memory_percent}%</p>
+                        </div>
+                        <div class="card">
+                            <h3 style="color: white;">🌡️ Températures</h3>
+                            ${data.temperatures.cpu.map(temp => 
+                                `<p>${temp.label}: ${temp.current ? temp.current + '°C' : 'N/A'} ${temp.status}</p>`
+                            ).join('')}
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                showError('Impossible de se connecter au serveur. Vérifiez que ancrage_sys_mon.py est en cours d\'exécution.');
+            }
+        };
+
+        buttons.system.onclick = async () => {
+            setActive(buttons.system);
+            showLoading();
+            try {
+                const response = await fetch(`${API_BASE}/system`);
+                const data = await response.json();
+                content.innerHTML = `
+                    <div class="card">
+                        <h3 style="color: white;">Informations Système</h3>
+                        <p><strong>Système:</strong> ${data.system}</p>
+                        <p><strong>Nom:</strong> ${data.node_name}</p>
+                        <p><strong>Version:</strong> ${data.release}</p>
+                        <p><strong>Architecture:</strong> ${data.machine}</p>
+                        <p><strong>Démarrage:</strong> ${data.boot_time}</p>
+                        <p><strong>Uptime:</strong> ${data.uptime}</p>
+                    </div>
+                `;
+            } catch (error) {
+                showError('Impossible de récupérer les informations système.');
+            }
+        };
+
+        buttons.processes.onclick = async () => {
+            setActive(buttons.processes);
+            showLoading();
+            try {
+                const response = await fetch(`${API_BASE}/processes`);
+                const data = await response.json();
+                let html = '<div class="card"><h3 style="color: white;">Top Processus</h3><table style="width: 100%; color: white;"><tr><th>PID</th><th>Nom</th><th>CPU%</th><th>Mém%</th></tr>';
+                data.slice(0, 10).forEach(proc => {
+                    html += `<tr><td>${proc.pid}</td><td>${proc.name}</td><td>${proc.cpu_percent}%</td><td>${proc.memory_percent}%</td></tr>`;
+                });
+                html += '</table></div>';
+                content.innerHTML = html;
+            } catch (error) {
+                showError('Impossible de récupérer la liste des processus.');
+            }
+        };
+
+        // Charger la vue d'ensemble au démarrage
+        buttons.status.click();
+    </script>
+</body>
+</html>

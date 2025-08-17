@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OSINT Research - Interface</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+            color: #E2E8F0;
+        }
+        .search-glow { box-shadow: 0 0 20px rgba(59, 130, 246, 0.5); }
+        .result-card { transition: all 0.3s ease; }
+        .result-card:hover { transform: translateY(-2px); }
+    </style>
+</head>
+<body class="min-h-screen p-4">
+
+    <div class="max-w-6xl mx-auto">
+        <!-- Header -->
+        <div class="bg-blue-900/50 backdrop-blur rounded-2xl p-6 mb-6 border border-blue-500 search-glow">
+            <h1 class="text-4xl font-bold text-white flex items-center mb-4">
+                <span class="text-blue-400 mr-3">🔍</span>
+                OSINT Research
+                <span class="text-blue-400 ml-3">🔎</span>
+            </h1>
+            <p class="text-blue-200 text-lg">
+                Recherche et analyse de données publiques - Intelligence sources ouvertes
+            </p>
+        </div>
+
+        <!-- Search Section -->
+        <div class="bg-gray-900/80 backdrop-blur rounded-2xl p-6 mb-6 border border-gray-600">
+            <h2 class="text-2xl font-bold text-white mb-4">🔎 Recherche OSINT</h2>
+            <div class="flex gap-4 mb-4">
+                <input 
+                    type="text" 
+                    id="osint-query" 
+                    class="flex-1 bg-gray-800 text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                    placeholder="Email, nom, domaine, IP, nom d'utilisateur..."
+                >
+                <button 
+                    onclick="runOSINTSearch()" 
+                    class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-500 transition-colors font-medium"
+                >
+                    🔍 Rechercher
+                </button>
+            </div>
+            
+            <!-- Search Type Buttons -->
+            <div class="flex flex-wrap gap-2 mb-4">
+                <button onclick="setSearchType('email')" class="search-type-btn bg-green-700 text-white px-3 py-1 rounded text-sm hover:bg-green-600">📧 Email</button>
+                <button onclick="setSearchType('domain')" class="search-type-btn bg-purple-700 text-white px-3 py-1 rounded text-sm hover:bg-purple-600">🌐 Domaine</button>
+                <button onclick="setSearchType('ip')" class="search-type-btn bg-red-700 text-white px-3 py-1 rounded text-sm hover:bg-red-600">🖥️ IP</button>
+                <button onclick="setSearchType('username')" class="search-type-btn bg-yellow-700 text-white px-3 py-1 rounded text-sm hover:bg-yellow-600">👤 Username</button>
+                <button onclick="setSearchType('phone')" class="search-type-btn bg-indigo-700 text-white px-3 py-1 rounded text-sm hover:bg-indigo-600">📱 Téléphone</button>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div class="bg-gray-900/80 backdrop-blur rounded-2xl p-6 border border-gray-600">
+            <h3 class="text-xl font-bold text-white mb-4">📊 Résultats de recherche</h3>
+            <div id="search-results" class="space-y-4">
+                <div class="text-gray-400 text-center py-8">
+                    <p>🔍 Entrez une requête pour commencer la recherche OSINT</p>
+                    <div class="mt-4 text-sm">
+                        <p><strong>Exemples :</strong></p>
+                        <p>• john.doe@example.com (Email)</p>
+                        <p>• google.com (Domaine)</p>
+                        <p>• 8.8.8.8 (Adresse IP)</p>
+                        <p>• @username (Nom d'utilisateur)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tools Section -->
+        <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-green-900/50 p-4 rounded-lg border border-green-500">
+                <h4 class="font-bold text-green-200 mb-2">🌐 Recherche Web</h4>
+                <p class="text-green-300 text-sm mb-3">Google, Bing, DuckDuckGo</p>
+                <button onclick="webSearch()" class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-500">Rechercher</button>
+            </div>
+            <div class="bg-purple-900/50 p-4 rounded-lg border border-purple-500">
+                <h4 class="font-bold text-purple-200 mb-2">📱 Réseaux Sociaux</h4>
+                <p class="text-purple-300 text-sm mb-3">Twitter, LinkedIn, Facebook</p>
+                <button onclick="socialSearch()" class="bg-purple-600 text-white px-3 py-1 rounded text-sm hover:bg-purple-500">Analyser</button>
+            </div>
+            <div class="bg-red-900/50 p-4 rounded-lg border border-red-500">
+                <h4 class="font-bold text-red-200 mb-2">🔒 Fuites de données</h4>
+                <p class="text-red-300 text-sm mb-3">HaveIBeenPwned, DeHashed</p>
+                <button onclick="breachSearch()" class="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-500">Vérifier</button>
+            </div>
+        </div>
+
+        <!-- Log Section -->
+        <div class="mt-6 bg-black/50 rounded-lg p-4">
+            <h4 class="text-white font-bold mb-2">📋 Journal OSINT</h4>
+            <div id="osint-log" class="bg-black p-3 rounded text-green-400 font-mono text-sm h-32 overflow-y-auto">
+                [INIT] OSINT Research Interface chargée
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentSearchType = 'auto';
+
+        function logMessage(message, type = 'info') {
+            const log = document.getElementById('osint-log');
+            const timestamp = new Date().toLocaleTimeString();
+            const colors = {
+                'info': 'text-green-400',
+                'warning': 'text-yellow-400',
+                'error': 'text-red-400',
+                'success': 'text-blue-400'
+            };
+            const color = colors[type] || 'text-green-400';
+            log.innerHTML += `<div class="${color}">[${timestamp}] ${message}</div>`;
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function setSearchType(type) {
+            currentSearchType = type;
+            document.querySelectorAll('.search-type-btn').forEach(btn => {
+                btn.classList.remove('ring-2', 'ring-white');
+            });
+            event.target.classList.add('ring-2', 'ring-white');
+            logMessage(`Type de recherche sélectionné: ${type}`, 'info');
+        }
+
+        function runOSINTSearch() {
+            const query = document.getElementById('osint-query').value.trim();
+            if (!query) {
+                logMessage('Erreur: Requête vide', 'error');
+                return;
+            }
+
+            logMessage(`Recherche OSINT lancée: "${query}"`, 'info');
+            
+            // Détection automatique du type
+            let detectedType = detectQueryType(query);
+            if (currentSearchType !== 'auto') {
+                detectedType = currentSearchType;
+            }
+
+            displayResults(query, detectedType);
+        }
+
+        function detectQueryType(query) {
+            if (query.includes('@')) return 'email';
+            if (/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(query)) return 'ip';
+            if (/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(query)) return 'domain';
+            if (query.startsWith('@')) return 'username';
+            if (/^\+?\d{8,15}$/.test(query.replace(/\s/g, ''))) return 'phone';
+            return 'general';
+        }
+
+        function displayResults(query, type) {
+            const resultsDiv = document.getElementById('search-results');
+            
+            resultsDiv.innerHTML = `
+                <div class="result-card bg-gray-800 p-4 rounded-lg border border-gray-600">
+                    <h4 class="text-white font-bold mb-2">🔍 Analyse: ${query}</h4>
+                    <p class="text-gray-300 mb-3">Type détecté: <span class="text-blue-400">${type}</span></p>
+                    ${generateResultsForType(query, type)}
+                </div>
+            `;
+
+            logMessage(`Résultats générés pour: ${query} (${type})`, 'success');
+        }
+
+        function generateResultsForType(query, type) {
+            switch(type) {
+                case 'email':
+                    return `
+                        <div class="space-y-2">
+                            <div class="bg-green-900/30 p-3 rounded">
+                                <p class="text-green-300"><strong>📧 Validation Email:</strong></p>
+                                <p class="text-sm">Format: Valide ✅</p>
+                                <p class="text-sm">Domaine: ${query.split('@')[1]}</p>
+                            </div>
+                            <div class="bg-blue-900/30 p-3 rounded">
+                                <p class="text-blue-300"><strong>🔍 Sources suggérées:</strong></p>
+                                <p class="text-sm">• HaveIBeenPwned (fuites)</p>
+                                <p class="text-sm">• Hunter.io (vérification)</p>
+                                <p class="text-sm">• Sherlock (réseaux sociaux)</p>
+                            </div>
+                        </div>
+                    `;
+                case 'domain':
+                    return `
+                        <div class="space-y-2">
+                            <div class="bg-purple-900/30 p-3 rounded">
+                                <p class="text-purple-300"><strong>🌐 Informations Domaine:</strong></p>
+                                <p class="text-sm">Domaine: ${query}</p>
+                                <p class="text-sm">TLD: .${query.split('.').pop()}</p>
+                            </div>
+                            <div class="bg-blue-900/30 p-3 rounded">
+                                <p class="text-blue-300"><strong>🔍 Outils recommandés:</strong></p>
+                                <p class="text-sm">• WHOIS lookup</p>
+                                <p class="text-sm">• DNS records</p>
+                                <p class="text-sm">• Subdomain enumeration</p>
+                            </div>
+                        </div>
+                    `;
+                case 'ip':
+                    return `
+                        <div class="space-y-2">
+                            <div class="bg-red-900/30 p-3 rounded">
+                                <p class="text-red-300"><strong>🖥️ Analyse IP:</strong></p>
+                                <p class="text-sm">Adresse: ${query}</p>
+                                <p class="text-sm">Type: IPv4</p>
+                            </div>
+                            <div class="bg-blue-900/30 p-3 rounded">
+                                <p class="text-blue-300"><strong>🔍 Recherches possibles:</strong></p>
+                                <p class="text-sm">• Géolocalisation</p>
+                                <p class="text-sm">• Reverse DNS</p>
+                                <p class="text-sm">• Port scanning</p>
+                            </div>
+                        </div>
+                    `;
+                default:
+                    return `
+                        <div class="bg-gray-800/50 p-3 rounded">
+                            <p class="text-gray-300">Recherche générale pour: <strong>${query}</strong></p>
+                            <p class="text-sm text-gray-400 mt-2">Utilisez les outils ci-dessous pour approfondir la recherche.</p>
+                        </div>
+                    `;
+            }
+        }
+
+        function webSearch() {
+            const query = document.getElementById('osint-query').value.trim();
+            if (query) {
+                logMessage(`Recherche web lancée pour: ${query}`, 'info');
+                window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, '_blank');
+            }
+        }
+
+        function socialSearch() {
+            const query = document.getElementById('osint-query').value.trim();
+            if (query) {
+                logMessage(`Recherche réseaux sociaux pour: ${query}`, 'info');
+                alert('🔍 Recherche Réseaux Sociaux\n\nOutils recommandés:\n• Sherlock\n• Social Searcher\n• Pipl\n\nRecherche manuelle sur les plateformes principales.');
+            }
+        }
+
+        function breachSearch() {
+            const query = document.getElementById('osint-query').value.trim();
+            if (query) {
+                logMessage(`Vérification fuites de données pour: ${query}`, 'warning');
+                if (query.includes('@')) {
+                    window.open(`https://haveibeenpwned.com/account/${encodeURIComponent(query)}`, '_blank');
+                } else {
+                    alert('🔒 Vérification Fuites\n\nPour les emails: HaveIBeenPwned\nPour autres données: DeHashed, LeakCheck');
+                }
+            }
+        }
+
+        // Initialize
+        logMessage('Interface OSINT Research prête', 'success');
+    </script>
+</body>
+</html>

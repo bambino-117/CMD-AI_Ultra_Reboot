@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZDUK Search - Moteur de Recherche</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0D1117 0%, #1E1E1E 100%);
+            color: #E2E8F0;
+        }
+        .search-result {
+            transition: all 0.2s ease;
+        }
+        .search-result:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(76, 175, 80, 0.15);
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header avec logo -->
+        <div class="text-center mb-12">
+            <div class="tooltip">
+                <h1 class="text-6xl font-bold text-white mb-4">
+                    <span class="text-green-400">ZDUK</span> Search
+                </h1>
+                <span class="tooltiptext">J'en ai lâché une toute petite 💨</span>
+            </div>
+            <p class="text-gray-400 text-lg">Votre moteur de recherche intelligent</p>
+        </div>
+
+        <!-- Barre de recherche principale -->
+        <div class="max-w-2xl mx-auto mb-8">
+            <div class="relative">
+                <input 
+                    type="text" 
+                    id="search-input" 
+                    class="w-full bg-[#2D2D2D] text-white rounded-full px-6 py-4 text-lg focus:outline-none focus:ring-2 focus:ring-green-400 border border-gray-600"
+                    placeholder="Rechercher sur le web..."
+                    autofocus
+                >
+                <button 
+                    id="search-btn" 
+                    class="absolute right-2 top-2 bg-green-400 text-black px-6 py-2 rounded-full hover:bg-green-500 transition-colors duration-200 font-medium"
+                >
+                    Rechercher
+                </button>
+            </div>
+        </div>
+
+        <!-- Suggestions rapides -->
+        <div class="max-w-4xl mx-auto mb-8">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <button class="quick-search bg-[#2D2D2D] p-4 rounded-lg hover:bg-[#3D3D3D] transition-colors duration-200" data-query="actualités">
+                    📰 Actualités
+                </button>
+                <button class="quick-search bg-[#2D2D2D] p-4 rounded-lg hover:bg-[#3D3D3D] transition-colors duration-200" data-query="météo">
+                    🌤️ Météo
+                </button>
+                <button class="quick-search bg-[#2D2D2D] p-4 rounded-lg hover:bg-[#3D3D3D] transition-colors duration-200" data-query="images">
+                    🖼️ Images
+                </button>
+                <button class="quick-search bg-[#2D2D2D] p-4 rounded-lg hover:bg-[#3D3D3D] transition-colors duration-200" data-query="vidéos">
+                    🎥 Vidéos
+                </button>
+            </div>
+        </div>
+
+        <!-- Zone des résultats -->
+        <div id="results-container" class="max-w-4xl mx-auto hidden">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-semibold text-white">Résultats de recherche</h2>
+                <span id="results-count" class="text-gray-400"></span>
+            </div>
+            <div id="results-list" class="space-y-4">
+                <!-- Les résultats seront ajoutés ici -->
+            </div>
+        </div>
+
+        <!-- Loading spinner -->
+        <div id="loading" class="text-center hidden">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-green-400"></div>
+            <p class="text-gray-400 mt-2">Recherche en cours...</p>
+        </div>
+    </div>
+
+    <script>
+        const searchInput = document.getElementById('search-input');
+        const searchBtn = document.getElementById('search-btn');
+        const resultsContainer = document.getElementById('results-container');
+        const resultsList = document.getElementById('results-list');
+        const resultsCount = document.getElementById('results-count');
+        const loading = document.getElementById('loading');
+        const quickSearchBtns = document.querySelectorAll('.quick-search');
+
+        // Base de données de résultats simulés
+        const searchDatabase = {
+            'actualités': [
+                { title: 'Dernières actualités technologiques', url: 'https://www.lemonde.fr/technologies/', description: 'Découvrez les dernières innovations et tendances technologiques du moment.' },
+                { title: 'Actualités internationales', url: 'https://www.bbc.com/news', description: 'Suivez l\'actualité mondiale en temps réel avec nos correspondants.' },
+                { title: 'Actualités économiques', url: 'https://www.lesechos.fr/', description: 'Toute l\'actualité économique et financière française et internationale.' }
+            ],
+            'météo': [
+                { title: 'Météo France - Prévisions officielles', url: 'https://meteofrance.com/', description: 'Prévisions météorologiques officielles pour la France et l\'outre-mer.' },
+                { title: 'Weather.com - Météo mondiale', url: 'https://weather.com/', description: 'Prévisions météo détaillées pour le monde entier.' },
+                { title: 'AccuWeather - Prévisions précises', url: 'https://www.accuweather.com/', description: 'Prévisions météorologiques précises et alertes météo.' }
+            ],
+            'images': [
+                { title: 'Unsplash - Photos gratuites', url: 'https://unsplash.com/', description: 'Millions de photos gratuites et libres de droits pour vos projets.' },
+                { title: 'Pixabay - Images libres', url: 'https://pixabay.com/', description: 'Images, photos et illustrations gratuites et libres de droits.' },
+                { title: 'Pexels - Photos de qualité', url: 'https://www.pexels.com/', description: 'Photos de haute qualité gratuites pour tous vos besoins.' }
+            ],
+            'vidéos': [
+                { title: 'YouTube - Plateforme vidéo', url: 'https://www.youtube.com/', description: 'La plus grande plateforme de partage de vidéos au monde.' },
+                { title: 'Vimeo - Vidéos créatives', url: 'https://vimeo.com/', description: 'Plateforme pour les créateurs de contenu vidéo de qualité.' },
+                { title: 'Dailymotion - Vidéos françaises', url: 'https://www.dailymotion.com/', description: 'Plateforme française de partage et découverte de vidéos.' }
+            ]
+        };
+
+        // Fonction de recherche
+        function performSearch(query) {
+            if (!query.trim()) return;
+
+            loading.classList.remove('hidden');
+            resultsContainer.classList.add('hidden');
+
+            // Simulation d'un délai de recherche
+            setTimeout(() => {
+                const results = findResults(query);
+                displayResults(results, query);
+                loading.classList.add('hidden');
+            }, 800);
+        }
+
+        // Fonction pour trouver les résultats
+        function findResults(query) {
+            const lowerQuery = query.toLowerCase();
+            let allResults = [];
+
+            // Recherche dans la base de données
+            for (const [category, items] of Object.entries(searchDatabase)) {
+                if (lowerQuery.includes(category) || category.includes(lowerQuery)) {
+                    allResults = allResults.concat(items);
+                }
+            }
+
+            // Si aucun résultat spécifique, retourner des résultats génériques
+            if (allResults.length === 0) {
+                allResults = [
+                    { title: `Recherche "${query}" sur Google`, url: `https://www.google.com/search?q=${encodeURIComponent(query)}`, description: `Effectuer cette recherche sur Google pour "${query}".` },
+                    { title: `Recherche "${query}" sur Bing`, url: `https://www.bing.com/search?q=${encodeURIComponent(query)}`, description: `Effectuer cette recherche sur Bing pour "${query}".` },
+                    { title: `Recherche "${query}" sur DuckDuckGo`, url: `https://duckduckgo.com/?q=${encodeURIComponent(query)}`, description: `Recherche privée sur DuckDuckGo pour "${query}".` }
+                ];
+            }
+
+            return allResults;
+        }
+
+        // Fonction pour afficher les résultats
+        function displayResults(results, query) {
+            resultsList.innerHTML = '';
+            resultsCount.textContent = `${results.length} résultat(s) trouvé(s)`;
+
+            results.forEach(result => {
+                const resultElement = document.createElement('div');
+                resultElement.className = 'search-result bg-[#2D2D2D] p-6 rounded-lg border border-gray-600 cursor-pointer';
+                resultElement.innerHTML = `
+                    <h3 class="text-lg font-semibold text-green-400 mb-2">${result.title}</h3>
+                    <p class="text-gray-300 text-sm mb-2">${result.url}</p>
+                    <p class="text-gray-400">${result.description}</p>
+                `;
+                
+                resultElement.addEventListener('click', () => {
+                    window.open(result.url, '_blank');
+                });
+
+                resultsList.appendChild(resultElement);
+            });
+
+            resultsContainer.classList.remove('hidden');
+        }
+
+        // Événements
+        searchBtn.addEventListener('click', () => {
+            performSearch(searchInput.value);
+        });
+
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                performSearch(searchInput.value);
+            }
+        });
+
+        quickSearchBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const query = btn.dataset.query;
+                searchInput.value = query;
+                performSearch(query);
+            });
+        });
+
+        // Récupérer la requête depuis l'URL si présente
+        const urlParams = new URLSearchParams(window.location.search);
+        const queryParam = urlParams.get('q');
+        if (queryParam) {
+            searchInput.value = queryParam;
+            performSearch(queryParam);
+        }
+    </script>
+</body>
+</html>

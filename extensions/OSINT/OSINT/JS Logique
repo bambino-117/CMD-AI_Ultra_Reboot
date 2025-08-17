@@ -1,0 +1,30 @@
+document.addEventListener('DOMContentLoaded', () => {
+  // Gère la navigation entre les sections
+  window.showSection = (sectionId) => {
+    document.querySelectorAll('.content-section').forEach(section => {
+      section.classList.add('hidden');
+    });
+    document.getElementById(sectionId + '-section').classList.remove('hidden');
+  };
+
+  // Simule la recherche et affiche les résultats
+  document.getElementById('run-search-btn').addEventListener('click', () => {
+    const query = document.getElementById('osint-query-input').value;
+    const resultsOutput = document.getElementById('results-output');
+    
+    // Simuler le contenu des résultats d'osint_extension.py
+    let resultText = "Aucun résultat spécifique trouvé.";
+    if (query.includes('@')) {
+      resultText = `📧 Email détecté : ${query}\n🔍 Recherche : https://hunter.io/verify/${query}`;
+    } else if (query.includes('.')) {
+      resultText = `🏢 Domaine détecté : ${query}\n🔍 WHOIS : https://whois.net/whois/${query}`;
+    }
+    
+    resultsOutput.innerText = resultText;
+  });
+  
+  // Affiche l'écran d'accueil par défaut
+  showSection('search');
+});
+
+document.addEventListener('DOMContentLoaded', () => {

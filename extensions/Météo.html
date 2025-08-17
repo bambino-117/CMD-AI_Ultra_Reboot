@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Application Météo</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0D1117;
+            color: #ffffff;
+            min-height: 100vh;
+            padding: 1rem;
+            margin: 0;
+        }
+        .container {
+            background-color: #1E1E1E;
+            border: 1px solid #2D2D2D;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            width: 100%;
+            max-width: none;
+            margin: 0 auto;
+        }
+        @media (min-width: 768px) {
+            .container {
+                padding: 2rem;
+                max-width: 1200px;
+            }
+        }
+        @media (min-width: 1024px) {
+            body {
+                display: flex;
+                align-items: flex-start;
+                justify-content: center;
+                padding: 2rem;
+            }
+            .container {
+                max-width: 1400px;
+            }
+        }
+        .title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-align: center;
+            color: #ffffff;
+            margin-bottom: 1rem;
+        }
+        @media (min-width: 640px) {
+            .title {
+                font-size: 1.875rem;
+                margin-bottom: 1.5rem;
+            }
+        }
+        .search-container {
+            display: flex;
+            margin-bottom: 1rem;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .search-input {
+            flex: 1;
+            padding: 0.5rem 1rem;
+            background-color: #2D2D2D;
+            border: 1px solid #4CAF50;
+            color: #ffffff;
+            border-radius: 0.5rem 0 0 0.5rem;
+            outline: none;
+        }
+        .search-input::placeholder { color: #888; }
+        .search-input:focus { box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.5); }
+        .search-btn {
+            background-color: #4CAF50;
+            color: white;
+            font-weight: 600;
+            padding: 0.5rem 1.5rem;
+            border: none;
+            border-radius: 0 0.5rem 0.5rem 0;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .search-btn:hover { background-color: #45a049; }
+        .weather-card {
+            display: none;
+        }
+        .weather-card.show { display: block; }
+        .weather-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .weather-icon { font-size: 3rem; }
+        .city-name {
+            font-size: 1.875rem;
+            font-weight: bold;
+            color: #ffffff;
+        }
+        .weather-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+        @media (min-width: 640px) {
+            .weather-grid {
+                grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+                gap: 1rem;
+            }
+        }
+        @media (min-width: 1024px) {
+            .weather-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 1.25rem;
+            }
+        }
+        .weather-item {
+            background-color: #374151;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            border: 1px solid #4B5563;
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        @media (min-width: 640px) {
+            .weather-item {
+                padding: 1rem;
+                min-height: 90px;
+            }
+        }
+        .weather-label {
+            color: #9CA3AF;
+            font-size: 0.875rem;
+        }
+        .weather-value {
+            color: #ffffff;
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+        .weather-value.large { 
+            font-size: 1.75rem; 
+        }
+        .weather-value.medium { 
+            font-size: 1.25rem; 
+        }
+        @media (min-width: 640px) {
+            .weather-value.large { font-size: 2.25rem; }
+            .weather-value.medium { font-size: 1.5rem; }
+        }
+        .section-title {
+            font-size: 1.125rem;
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 0.5rem;
+            margin-top: 2rem;
+        }
+        .explanation-box {
+            background-color: #374151;
+            border: 1px solid #4B5563;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            color: #D1D5DB;
+        }
+        .buttons-container {
+            margin-top: 1.5rem;
+        }
+        .main-content {
+            display: grid;
+            gap: 1.5rem;
+        }
+        @media (min-width: 1024px) {
+            .main-content {
+                grid-template-columns: 2fr 1fr;
+                gap: 2rem;
+            }
+            .weather-section {
+                order: 1;
+            }
+            .buttons-container {
+                order: 2;
+                margin-top: 0;
+            }
+        }
+        .button-row {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        @media (min-width: 480px) {
+            .button-row {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        @media (min-width: 1024px) {
+            .button-row {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 1rem;
+            }
+        }
+        @media (min-width: 1200px) {
+            .button-row {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+        .ai-button {
+            background-color: #374151;
+            color: white;
+            font-weight: 600;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid #4B5563;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-size: 0.875rem;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        @media (min-width: 768px) {
+            .ai-button {
+                font-size: 0.9rem;
+                padding: 0.75rem 1.25rem;
+            }
+        }
+        .ai-button:hover { background-color: #4B5563; }
+        .ai-button.primary {
+            background-color: #4CAF50;
+            border: none;
+        }
+        .ai-button.primary:hover { background-color: #45a049; }
+        .message {
+            text-align: center;
+            display: none;
+        }
+        .message.show { display: block; }
+        .message.loading { color: #9CA3AF; }
+        .message.error { color: #F87171; font-weight: 600; }
+        .loader {
+            border: 4px solid #2D2D2D;
+            border-top: 4px solid #4CAF50;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        #weather-map {
+            width: 100%;
+            height: 200px;
+            border-radius: 0.75rem;
+            background-color: #1E1E1E;
+            border: 1px solid #2D2D2D;
+        }
+        @media (min-width: 640px) {
+            #weather-map {
+                height: 250px;
+            }
+        }
+        @media (min-width: 1024px) {
+            #weather-map {
+                height: 300px;
+            }
+        }
+        
+        /* Styles pour le toggle switch */
+        .toggle-switch input:checked + .slider {
+            background-color: #4CAF50;
+        }
+        .toggle-switch input:not(:checked) + .slider {
+            background-color: #6B7280;
+        }
+        .toggle-switch input:checked + .slider + .slider-dot {
+            transform: translateX(20px);
+        }
+        .toggle-switch input:not(:checked) + .slider + .slider-dot {
+            transform: translateX(0px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">
+            🌤️ Météo Actuelle
+        </h1>
+
+        <div style="display: flex; justify-content: center; margin-bottom: 1rem;">
+            <div style="display: flex; align-items: center; gap: 0.75rem; background: #374151; padding: 0.5rem 1rem; border-radius: 0.5rem; border: 1px solid #4B5563;">
+                <span style="font-size: 0.875rem; color: #D1D5DB;">Entrée = Envoyer</span>
+                <label class="toggle-switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
+                    <input type="checkbox" id="enter-to-send" checked style="opacity: 0; width: 0; height: 0;">
+                    <span class="slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #4CAF50; transition: 0.3s; border-radius: 24px;"></span>
+                    <span class="slider-dot" style="position: absolute; content: ''; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: 0.3s; border-radius: 50%;"></span>
+                </label>
+            </div>
+        </div>
+        
+        <div class="search-container">
+            <input type="text" id="city-input" placeholder="Entrez le nom d'une ville (ex: Paris)" class="search-input">
+            <button id="get-weather-btn" class="search-btn">
+                Rechercher
+            </button>
+        </div>
+        
+        <div id="weather-card" class="weather-card">
+            <div class="main-content">
+                <div class="weather-section">
+                    <div class="weather-header">
+                        <div id="weather-icon" class="weather-icon"></div>
+                        <h2 id="city-name" class="city-name"></h2>
+                    </div>
+                    
+                    <div class="weather-grid">
+                        <div class="weather-item">
+                            <p class="weather-label">Température</p>
+                            <p id="temp" class="weather-value large"></p>
+                        </div>
+                        <div class="weather-item">
+                            <p class="weather-label">Conditions</p>
+                            <p id="condition" class="weather-value medium"></p>
+                        </div>
+                        <div class="weather-item">
+                            <p class="weather-label">Vent</p>
+                            <p id="wind" class="weather-value"></p>
+                        </div>
+                        <div class="weather-item">
+                            <p class="weather-label">Humidité</p>
+                            <p id="humidity" class="weather-value"></p>
+                        </div>
+                        <div class="weather-item">
+                            <p class="weather-label">Pression</p>
+                            <p id="pressure" class="weather-value"></p>
+                        </div>
+                        <div class="weather-item">
+                            <p class="weather-label">Précipitation</p>
+                            <p id="precipitation" class="weather-value"></p>
+                        </div>
+                        <div class="weather-item">
+                            <p class="weather-label">Ressenti</p>
+                            <p id="feels-like" class="weather-value"></p>
+                        </div>
+                    </div>
+
+                    <h3 class="section-title">🌍 Carte Météo en Direct</h3>
+                    <canvas id="weather-map"></canvas>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; margin-top: 2rem;">
+                        <h3 class="section-title" style="margin: 0;">🤔 Capsules AI Auto</h3>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <label style="font-size: 0.875rem; color: #9CA3AF;">Refresh:</label>
+                            <select id="refresh-frequency" style="background: #374151; color: white; border: 1px solid #4B5563; border-radius: 0.25rem; padding: 0.25rem; font-size: 0.875rem;">
+                                <option value="1">1 min</option>
+                                <option value="2">2 min</option>
+                                <option value="5" selected>5 min</option>
+                                <option value="10">10 min</option>
+                                <option value="15">15 min</option>
+                                <option value="0">Off</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="explanation-box" class="explanation-box">
+                        Recherchez une ville pour voir les capsules AI automatiques.
+                    </div>
+                </div>
+
+                <div class="buttons-container">
+                    <div class="button-row">
+                        <button id="fact-btn" class="ai-button">
+                            ✨ Fait intéressant
+                        </button>
+                        <button id="story-btn" class="ai-button">
+                            ✨ Histoire météo
+                        </button>
+                        <button id="activity-btn" class="ai-button">
+                            ✨ Activités
+                        </button>
+                        <button id="clothing-btn" class="ai-button">
+                            ✨ Conseils tenue
+                        </button>
+                    </div>
+                    <div class="button-row">
+                        <button id="itinerary-btn" class="ai-button">
+                            ✨ Itinéraire
+                        </button>
+                        <button id="recipe-btn" class="ai-button">
+                            ✨ Recette
+                        </button>
+                        <button id="pressure-btn" class="ai-button">
+                            💨 Pression
+                        </button>
+                        <button id="air-quality-btn" class="ai-button">
+                            ✨ Qualité air
+                        </button>
+                    </div>
+                    <div class="button-row">
+                        <button id="health-btn" class="ai-button">
+                            ✨ Santé
+                        </button>
+                        <button id="gardening-btn" class="ai-button">
+                            🌱 Jardin
+                        </button>
+                        <button id="hourly-forecast-btn" class="ai-button primary">
+                            ✨ Horaire
+                        </button>
+                        <button id="daily-forecast-btn" class="ai-button primary">
+                            ✨ Quotidien
+                        </button>
+                    </div>
+                    <div class="button-row">
+                        <button id="weekly-forecast-btn" class="ai-button">
+                            ✨ Hebdomadaire
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="loading-message" class="message loading">
+            <div class="loader"></div> Recherche en cours...
+        </div>
+
+        <div id="error-message" class="message error">
+            
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // Sélection des éléments du DOM
+            const cityInput = document.getElementById('city-input');
+            const getWeatherBtn = document.getElementById('get-weather-btn');
+            const weatherCard = document.getElementById('weather-card');
+            const cityNameEl = document.getElementById('city-name');
+            const tempEl = document.getElementById('temp');
+            const conditionEl = document.getElementById('condition');
+            const windEl = document.getElementById('wind');
+            const humidityEl = document.getElementById('humidity');
+            const pressureEl = document.getElementById('pressure');
+            const precipitationEl = document.getElementById('precipitation');
+            const feelsLikeEl = document.getElementById('feels-like');
+            const explanationBox = document.getElementById('explanation-box');
+            const loadingMessage = document.getElementById('loading-message');
+            const errorMessage = document.getElementById('error-message');
+            const weatherIconEl = document.getElementById('weather-icon'); // Nouvel élément pour l'icône
+            const factBtn = document.getElementById('fact-btn');
+            const storyBtn = document.getElementById('story-btn');
+            const activityBtn = document.getElementById('activity-btn');
+            const clothingBtn = document.getElementById('clothing-btn');
+            const itineraryBtn = document.getElementById('itinerary-btn');
+            const recipeBtn = document.getElementById('recipe-btn');
+            const pressureBtn = document.getElementById('pressure-btn');
+            const airQualityBtn = document.getElementById('air-quality-btn');
+            const healthBtn = document.getElementById('health-btn');
+            const gardeningBtn = document.getElementById('gardening-btn');
+            const hourlyForecastBtn = document.getElementById('hourly-forecast-btn');
+            const dailyForecastBtn = document.getElementById('daily-forecast-btn');
+            const weeklyForecastBtn = document.getElementById('weekly-forecast-btn');
+
+            // Éléments de la carte météo
+            const mapCanvas = document.getElementById('weather-map');
+            const mapCtx = mapCanvas.getContext('2d');
+            let animationFrameId = null;
+
+            // Données météo simulées (pour la démo)
+            const simulatedWeatherData = {
+                "paris": {
+                    temperature: "22°C",
+                    feelsLike: "24°C",
+                    condition: "Partiellement nuageux",
+                    wind: "15 km/h Nord-Est",
+                    humidity: "65%",
+                    pressure: "1015 hPa",
+                    precipitation: "0 mm",
+                    hourly: [
+                        { time: "14h00", temp: "22°C", condition: "Nuageux" },
+                        { time: "15h00", temp: "21°C", condition: "Partiellement nuageux" },
+                        { time: "16h00", temp: "20°C", condition: "Ensoleillé" },
+                        { time: "17h00", temp: "20°C", condition: "Ensoleillé" },
+                        { time: "18h00", temp: "19°C", condition: "Ensoleillé" },
+                        { time: "19h00", temp: "18°C", condition: "Dégagé" },
+                    ],
+                    daily: [
+                        { day: "Lundi", tempMax: "25°C", tempMin: "15°C", condition: "Ensoleillé" },
+                        { day: "Mardi", tempMax: "23°C", tempMin: "14°C", condition: "Nuageux" },
+                        { day: "Mercredi", tempMax: "20°C", tempMin: "12°C", condition: "Pluvieux" },
+                    ],
+                    weekly: [
+                        { week: "Semaine 1", summary: "Conditions stables avec un temps majoritairement ensoleillé et des températures douces." },
+                        { week: "Semaine 2", summary: "Refroidissement notable avec des averses intermittentes et un ciel plus nuageux." },
+                        { week: "Semaine 3", summary: "Retour du soleil et des températures chaudes, idéal pour les activités de plein air." },
+                    ]
+                },
+                "london": {
+                    temperature: "18°C",
+                    feelsLike: "17°C",
+                    condition: "Pluie légère",
+                    wind: "20 km/h Sud-Ouest",
+                    humidity: "80%",
+                    pressure: "1005 hPa",
+                    precipitation: "2 mm",
+                    hourly: [
+                        { time: "14h00", temp: "18°C", condition: "Pluie légère" },
+                        { time: "15h00", temp: "17°C", condition: "Averses" },
+                        { time: "16h00", temp: "16°C", condition: "Pluie modérée" },
+                        { time: "17h00", temp: "16°C", condition: "Pluie modérée" },
+                        { time: "18h00", temp: "15°C", condition: "Pluie légère" },
+                        { time: "19h00", temp: "15°C", condition: "Brume" },
+                    ],
+                    daily: [
+                        { day: "Lundi", tempMax: "18°C", tempMin: "10°C", condition: "Pluvieux" },
+                        { day: "Mardi", tempMax: "15°C", tempMin: "8°C", condition: "Nuageux" },
+                        { day: "Mercredi", tempMax: "17°C", tempMin: "9°C", condition: "Ensoleillé" },
+                    ],
+                    weekly: [
+                        { week: "Semaine 1", summary: "Temps pluvieux et frais, avec une amélioration progressive vers le milieu de la semaine." },
+                        { week: "Semaine 2", summary: "Conditions majoritairement grises et nuageuses, avec quelques éclaircies." },
+                        { week: "Semaine 3", summary: "Semaine plus ensoleillée avec une hausse des températures." },
+                    ]
+                },
+                "new york": {
+                    temperature: "28°C",
+                    feelsLike: "30°C",
+                    condition: "Ensoleillé",
+                    wind: "10 km/h Ouest",
+                    humidity: "55%",
+                    pressure: "1020 hPa",
+                    precipitation: "0 mm",
+                    hourly: [
+                        { time: "14h00", temp: "28°C", condition: "Ensoleillé" },
+                        { time: "15h00", temp: "29°C", condition: "Ensoleillé" },
+                        { time: "16h00", temp: "28°C", condition: "Ensoleillé" },
+                        { time: "17h00", temp: "27°C", condition: "Partiellement nuageux" },
+                        { time: "18h00", temp: "26°C", condition: "Partiellement nuageux" },
+                        { time: "19h00", temp: "25°C", condition: "Dégagé" },
+                    ],
+                    daily: [
+                        { day: "Lundi", tempMax: "30°C", tempMin: "20°C", condition: "Ensoleillé et chaud" },
+                        { day: "Mardi", tempMax: "28°C", tempMin: "19°C", condition: "Orageux" },
+                        { day: "Mercredi", tempMax: "25°C", tempMin: "18°C", condition: "Averses éparses" },
+                    ],
+                    weekly: [
+                        { week: "Semaine 1", summary: "Vague de chaleur avec des conditions ensoleillées et un risque d'orages en fin de semaine." },
+                        { week: "Semaine 2", summary: "Conditions plus fraîches avec un temps instable." },
+                        { week: "Semaine 3", summary: "Retour à des températures de saison avec un ciel dégagé." },
+                    ]
+                },
+                "montreal": {
+                    temperature: "5°C",
+                    feelsLike: "1°C",
+                    condition: "Neige",
+                    wind: "25 km/h Nord",
+                    humidity: "90%",
+                    pressure: "1008 hPa",
+                    precipitation: "10 mm",
+                    hourly: [
+                        { time: "14h00", temp: "5°C", condition: "Neige" },
+                        { time: "15h00", temp: "4°C", condition: "Neige modérée" },
+                        { time: "16h00", temp: "3°C", condition: "Grésil" },
+                        { time: "17h00", temp: "2°C", condition: "Averses de neige" },
+                        { time: "18h00", temp: "1°C", condition: "Neige" },
+                        { time: "19h00", temp: "0°C", condition: "Fortes chutes de neige" },
+                    ],
+                    daily: [
+                        { day: "Lundi", tempMax: "5°C", tempMin: "-2°C", condition: "Neige" },
+                        { day: "Mardi", tempMax: "0°C", tempMin: "-8°C", condition: "Temps très froid, ensoleillé" },
+                        { day: "Mercredi", tempMax: "2°C", tempMin: "-5°C", condition: "Nuageux" },
+                    ],
+                    weekly: [
+                        { week: "Semaine 1", summary: "Chutes de neige continues en début de semaine, suivies d'une vague de froid intense." },
+                        { week: "Semaine 2", summary: "Froid sec et ensoleillé, avec des températures bien en dessous de zéro." },
+                        { week: "Semaine 3", summary: "Légère remontée des températures et ciel nuageux." },
+                    ]
+                }
+            };
+            
+            // Fonction pour masquer et afficher les messages
+            function showState(state) {
+                weatherCard.classList.remove('show');
+                loadingMessage.classList.remove('show');
+                errorMessage.classList.remove('show');
+                if (state === 'loading') {
+                    loadingMessage.classList.add('show');
+                } else if (state === 'weather') {
+                    weatherCard.classList.add('show');
+                } else if (state === 'error') {
+                    errorMessage.classList.add('show');
+                }
+            }
+
+            // Fonction pour simuler la récupération des données météo
+            async function fetchWeatherData(location) {
+                const city = location.trim().toLowerCase();
+                const data = simulatedWeatherData[city] || simulatedWeatherData["paris"];
+                
+                // Simulation d'une latence réseau
+                return new Promise(resolve => setTimeout(() => resolve(data), 1000));
+            }
+
+            // Fonction pour simuler les réponses AI (remplace Gemini temporairement)
+            function generateSimulatedContent(prompt, targetBox) {
+                targetBox.innerHTML = '<div class="loader"></div> Génération du contenu...';
+                
+                setTimeout(() => {
+                    let response = "";
+                    if (prompt.includes('Fait intéressant')) {
+                        response = "Cette ville possède une riche histoire architecturale et culturelle qui remonte à plusieurs siècles.";
+                    } else if (prompt.includes('Histoire sur la météo')) {
+                        response = "Par une journée comme celle-ci, les habitants se rassemblent dans les cafés pour observer les nuages danser dans le ciel.";
+                    } else if (prompt.includes('Suggestions d\'activités')) {
+                        response = "1. Visite des musées locaux\n2. Promenade dans les parcs\n3. Découverte de la gastronomie locale\n4. Shopping dans les boutiques artisanales";
+                    } else if (prompt.includes('Conseils vestimentaires')) {
+                        response = "Portez des vêtements confortables et adaptés à la température. Une veste légère pourrait être utile.";
+                    } else if (prompt.includes('Itinéraire')) {
+                        response = "1. Matin: Visite du centre historique\n2. Midi: Déjeuner dans un restaurant local\n3. Après-midi: Musées et galeries\n4. Soir: Promenade au coucher du soleil";
+                    } else if (prompt.includes('Recette')) {
+                        response = "Soupe réconfortante: Légumes de saison, bouillon chaud, herbes fraîches. Parfait pour ce temps !";
+                    } else if (prompt.includes('pression')) {
+                        response = "La pression atmosphérique influence directement la formation des nuages et les précipitations.";
+                    } else if (prompt.includes('qualité de l\'air')) {
+                        response = "Les conditions actuelles favorisent une bonne dispersion des polluants dans l'atmosphère.";
+                    } else if (prompt.includes('santé')) {
+                        response = "1. Hydratez-vous régulièrement\n2. Protégez-vous du soleil\n3. Adaptez vos activités à la météo";
+                    } else if (prompt.includes('jardin')) {
+                        response = "1. Arrosez tôt le matin\n2. Protégez les plantes sensibles\n3. Profitez du temps pour planter";
+                    } else if (prompt.includes('horaire')) {
+                        response = "Les prochaines heures montrent une évolution stable avec des variations de température modérées.";
+                    } else if (prompt.includes('quotidienne')) {
+                        response = "Les prochains jours présentent des conditions météorologiques variées avec des températures saisonnières.";
+                    } else if (prompt.includes('hebdomadaire')) {
+                        response = "La semaine à venir s'annonce avec des conditions météo changeantes et des températures dans la normale.";
+                    } else {
+                        response = "Les conditions météorologiques actuelles créent un microclimat particulier influencé par la géographie locale.";
+                    }
+                    targetBox.textContent = response;
+                }, 1000);
+            }
+
+            // Variables de la carte météo
+            let windParticles = [];
+            let stormCells = [];
+            let precipitationDrops = [];
+            let canvasWidth = 500;
+            let canvasHeight = 300;
+            
+            // Fonction pour ajuster la taille du canvas
+            function resizeCanvas() {
+                const canvas = document.getElementById('weather-map');
+                const rect = canvas.getBoundingClientRect();
+                canvasWidth = rect.width;
+                canvasHeight = rect.height;
+                canvas.width = canvasWidth;
+                canvas.height = canvasHeight;
+            }
+            const numWindParticles = 50;
+            const numPrecipitationDrops = 100;
+            let lastTimestamp = 0;
+            let stormPulseSpeed = 0.05;
+            let pulseScale = 1;
+
+            // Fonction pour mettre à jour l'icône météo
+            function updateWeatherIcon(condition) {
+                let icon = '';
+                if (condition.includes('Ensoleillé') || condition.includes('Dégagé')) {
+                    icon = '☀️';
+                } else if (condition.includes('Partiellement nuageux') || condition.includes('Nuageux')) {
+                    icon = '☁️';
+                } else if (condition.includes('Pluie') || condition.includes('Averses')) {
+                    icon = '🌧️';
+                } else if (condition.includes('Neige')) {
+                    icon = '❄️';
+                } else if (condition.includes('Orageux')) {
+                    icon = '⛈️';
+                } else if (condition.includes('Brume')) {
+                    icon = '🌫️';
+                }
+                weatherIconEl.textContent = icon;
+            }
+
+            function initMapParticles(condition) {
+                windParticles = [];
+                stormCells = [];
+                precipitationDrops = [];
+
+                // Créer des particules de vent
+                for (let i = 0; i < numWindParticles; i++) {
+                    windParticles.push({
+                        x: Math.random() * canvasWidth,
+                        y: Math.random() * canvasHeight,
+                        speed: (Math.random() * 2) + 1,
+                        length: (Math.random() * 10) + 5
+                    });
+                }
+
+                // Créer des particules de précipitations si nécessaire
+                if (condition.includes('Pluie') || condition.includes('Averses')) {
+                    for (let i = 0; i < numPrecipitationDrops; i++) {
+                        precipitationDrops.push({
+                            x: Math.random() * canvasWidth,
+                            y: Math.random() * canvasHeight,
+                            speed: (Math.random() * 5) + 3,
+                            size: (Math.random() * 2) + 1,
+                            color: 'rgba(52, 149, 219, ' + (Math.random() * 0.5 + 0.5) + ')'
+                        });
+                    }
+                } else if (condition.includes('Neige') || condition.includes('Grésil')) {
+                    for (let i = 0; i < numPrecipitationDrops; i++) {
+                        precipitationDrops.push({
+                            x: Math.random() * canvasWidth,
+                            y: Math.random() * canvasHeight,
+                            speed: (Math.random() * 2) + 1,
+                            size: (Math.random() * 2) + 1,
+                            color: 'rgba(255, 255, 255, ' + (Math.random() * 0.5 + 0.5) + ')'
+                        });
+                    }
+                }
+
+                // Créer des cellules orageuses si nécessaire
+                if (condition.includes('Orageux') || condition.includes('Orages')) {
+                    stormCells.push({
+                        x: canvasWidth / 2,
+                        y: canvasHeight / 2,
+                        radius: 80,
+                        startAngle: 0
+                    });
+                }
+            }
+
+            function drawWeatherMap(condition, windDirection) {
+                mapCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+                
+                // Dessiner la précipitation
+                if (precipitationDrops.length > 0) {
+                    precipitationDrops.forEach(drop => {
+                        mapCtx.beginPath();
+                        mapCtx.arc(drop.x, drop.y, drop.size, 0, Math.PI * 2);
+                        mapCtx.fillStyle = drop.color;
+                        mapCtx.fill();
+                        drop.y += drop.speed;
+                        if (drop.y > canvasHeight) {
+                            drop.y = 0;
+                            drop.x = Math.random() * canvasWidth;
+                        }
+                    });
+                }
+                
+                // Dessiner les vents
+                windParticles.forEach(particle => {
+                    mapCtx.beginPath();
+                    mapCtx.moveTo(particle.x, particle.y);
+                    
+                    let angle = 0;
+                    if (windDirection) {
+                        if (windDirection.includes('Nord')) angle = -Math.PI / 2;
+                        if (windDirection.includes('Sud')) angle = Math.PI / 2;
+                        if (windDirection.includes('Est')) angle = 0;
+                        if (windDirection.includes('Ouest')) angle = Math.PI;
+                    }
+
+                    mapCtx.lineTo(particle.x + Math.cos(angle) * particle.length, particle.y + Math.sin(angle) * particle.length);
+                    mapCtx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+                    mapCtx.stroke();
+
+                    // Mettre à jour la position de la particule
+                    particle.x += Math.cos(angle) * particle.speed;
+                    particle.y += Math.sin(angle) * particle.speed;
+                    
+                    if (particle.x < 0 || particle.x > canvasWidth || particle.y < 0 || particle.y > canvasHeight) {
+                        particle.x = Math.random() * canvasWidth;
+                        particle.y = Math.random() * canvasHeight;
+                    }
+                });
+
+                // Dessiner les cellules orageuses
+                stormCells.forEach(cell => {
+                    mapCtx.save();
+                    mapCtx.translate(cell.x, cell.y);
+                    mapCtx.scale(pulseScale, pulseScale);
+                    mapCtx.beginPath();
+                    mapCtx.arc(0, 0, cell.radius, 0, Math.PI * 2);
+                    mapCtx.fillStyle = 'rgba(50, 50, 50, 0.4)';
+                    mapCtx.fill();
+                    mapCtx.restore();
+                });
+                
+                // Mettre à jour l'effet de pulsation
+                pulseScale += stormPulseSpeed;
+                if (pulseScale > 1.2 || pulseScale < 0.8) {
+                    stormPulseSpeed *= -1;
+                }
+            }
+            
+            function animateMap(timestamp) {
+                if (!lastTimestamp) lastTimestamp = timestamp;
+                const elapsed = timestamp - lastTimestamp;
+                lastTimestamp = timestamp;
+                
+                // Mettre à jour les positions et redessiner la carte
+                const condition = conditionEl.textContent;
+                const windDirection = windEl.textContent;
+                drawWeatherMap(condition, windDirection);
+                
+                animationFrameId = requestAnimationFrame(animateMap);
+            }
+
+            // Écouteur d'événement pour le bouton de recherche
+            getWeatherBtn.addEventListener('click', async () => {
+                const location = cityInput.value;
+                if (location.trim() === '') {
+                    errorMessage.textContent = 'Veuillez entrer le nom d\'une ville.';
+                    showState('error');
+                    return;
+                }
+
+                showState('loading');
+                errorMessage.textContent = '';
+                
+                try {
+                    const weatherData = await fetchWeatherData(location);
+                    
+                    // Mettre à jour l'interface utilisateur avec les données météo
+                    cityNameEl.textContent = location.charAt(0).toUpperCase() + location.slice(1);
+                    tempEl.textContent = weatherData.temperature;
+                    conditionEl.textContent = weatherData.condition;
+                    windEl.textContent = weatherData.wind;
+                    humidityEl.textContent = weatherData.humidity;
+                    pressureEl.textContent = weatherData.pressure;
+                    precipitationEl.textContent = weatherData.precipitation;
+                    feelsLikeEl.textContent = weatherData.feelsLike;
+                    
+                    showState('weather');
+                    
+                    // Mettre à jour l'icône en fonction de la condition
+                    updateWeatherIcon(weatherData.condition);
+
+                    // Annuler l'animation précédente et initialiser la nouvelle
+                    if (animationFrameId) {
+                        cancelAnimationFrame(animationFrameId);
+                    }
+                    resizeCanvas();
+                    initMapParticles(weatherData.condition);
+                    animateMap();
+
+                    // Démarrer les capsules AI automatiques
+                    const selectedMinutes = parseInt(refreshFrequencySelect.value);
+                    if (selectedMinutes > 0) {
+                        startAiCapsules(selectedMinutes);
+                    } else {
+                        // Afficher l'explication météo par défaut si auto désactivé
+                        const condition = weatherData.condition;
+                        const prompt = `Expliquez simplement le phénomène météo : "${condition}".`;
+                        generateSimulatedContent(prompt, explanationBox);
+                    }
+
+                } catch (error) {
+                    console.error("Erreur de récupération des données météo:", error);
+                    errorMessage.textContent = 'Erreur lors de la récupération des données météo.';
+                    showState('error');
+                }
+            });
+
+            // Écouteur pour le bouton Fait intéressant
+            factBtn.addEventListener('click', () => {
+                const location = cityInput.value || 'Paris';
+                const factPrompt = `Fait intéressant sur ${location}`;
+                generateSimulatedContent(factPrompt, explanationBox);
+            });
+
+            // Écouteur pour le bouton Histoire sur la météo
+            storyBtn.addEventListener('click', () => {
+                const location = cityInput.value || 'Paris';
+                const condition = conditionEl.textContent || 'météo';
+                const storyPrompt = `Histoire sur la météo à ${location}`;
+                generateSimulatedContent(storyPrompt, explanationBox);
+            });
+            
+            // Écouteur pour le bouton Suggestions d'activités
+            activityBtn.addEventListener('click', () => {
+                const location = cityInput.value || 'Paris';
+                const condition = conditionEl.textContent || 'météo';
+                const activityPrompt = `Suggestions d'activités pour ${location}`;
+                generateSimulatedContent(activityPrompt, explanationBox);
+            });
+
+            // Écouteur pour le bouton Conseils vestimentaires
+            clothingBtn.addEventListener('click', () => {
+                const location = cityInput.value || 'Paris';
+                const temp = tempEl.textContent || 'température';
+                const condition = conditionEl.textContent || 'météo';
+                const clothingPrompt = `Conseils vestimentaires pour ${temp} et ${condition}`;
+                generateSimulatedContent(clothingPrompt, explanationBox);
+            });
+
+            // Écouteur pour le bouton Itinéraire de voyage
+            itineraryBtn.addEventListener('click', () => {
+                const location = cityInput.value || 'Paris';
+                const condition = conditionEl.textContent || 'météo';
+                const itineraryPrompt = `Itinéraire de voyage pour ${location}`;
+                generateSimulatedContent(itineraryPrompt, explanationBox);
+            });
+
+            // Écouteur pour le bouton Recette Météo
+            recipeBtn.addEventListener('click', () => {
+                const location = cityInput.value || 'Paris';
+                const temp = tempEl.textContent || 'température';
+                const condition = conditionEl.textContent || 'météo';
+                const recipePrompt = `Recette adaptée à ${temp} et ${condition}`;
+                generateSimulatedContent(recipePrompt, explanationBox);
+            });
+
+            // Écouteur pour le bouton Pression
+            pressureBtn.addEventListener('click', () => {
+                const pressure = pressureEl.textContent || 'pression atmosphérique';
+                const pressurePrompt = `Comprendre la pression atmosphérique`;
+                generateSimulatedContent(pressurePrompt, explanationBox);
+            });
+            
+            // Écouteur pour la fonctionnalité d'analyse de la qualité de l'air
+            airQualityBtn.addEventListener('click', () => {
+                const location = cityInput.value || 'Paris';
+                const wind = windEl.textContent;
+                const humidity = humidityEl.textContent;
+                const airQualityPrompt = `Analyse de la qualité de l'air`;
+                generateSimulatedContent(airQualityPrompt, explanationBox);
+            });
+
+            // Écouteur pour la nouvelle fonctionnalité de conseils santé et bien-être
+            healthBtn.addEventListener('click', () => {
+                const location = cityInput.value || 'Paris';
+                const temp = tempEl.textContent;
+                const condition = conditionEl.textContent;
+                const healthPrompt = `Conseils santé et bien-être`;
+                generateSimulatedContent(healthPrompt, explanationBox);
+            });
+
+            // Écouteur pour la nouvelle fonctionnalité de conseils pour le jardin
+            gardeningBtn.addEventListener('click', () => {
+                const location = cityInput.value || 'Paris';
+                const temp = tempEl.textContent;
+                const condition = conditionEl.textContent;
+                const gardeningPrompt = `Conseils pour le jardin`;
+                generateSimulatedContent(gardeningPrompt, explanationBox);
+            });
+
+            // Écouteur pour la nouvelle fonctionnalité de prévision horaire
+            hourlyForecastBtn.addEventListener('click', async () => {
+                const location = cityInput.value || 'Paris';
+                const weatherData = await fetchWeatherData(location);
+                const hourlyData = weatherData.hourly;
+                const prompt = `Prévision horaire`;
+                generateSimulatedContent(prompt, explanationBox);
+            });
+
+            // Écouteur pour la nouvelle fonctionnalité de prévision quotidienne
+            dailyForecastBtn.addEventListener('click', async () => {
+                const location = cityInput.value || 'Paris';
+                const weatherData = await fetchWeatherData(location);
+                const dailyData = weatherData.daily;
+                const prompt = `Prévision quotidienne`;
+                generateSimulatedContent(prompt, explanationBox);
+            });
+
+            // Écouteur pour la nouvelle fonctionnalité de prévision hebdomadaire
+            weeklyForecastBtn.addEventListener('click', async () => {
+                const location = cityInput.value || 'Paris';
+                const weatherData = await fetchWeatherData(location);
+                const weeklyData = weatherData.weekly;
+                const prompt = `Prévision hebdomadaire`;
+                generateSimulatedContent(prompt, explanationBox);
+            });
+            
+            // Variables d'automatisation
+            let autoRefreshInterval = null;
+            let autoLocationEnabled = false;
+            let aiCapsuleInterval = null;
+            let currentCapsuleIndex = 0;
+            const refreshFrequencySelect = document.getElementById('refresh-frequency');
+            const enterToSendToggle = document.getElementById('enter-to-send');
+            
+            // Fonction globale pour gérer Entrée = Envoyer
+            function setupEnterToSend() {
+                // Sauvegarder la préférence
+                localStorage.setItem('enterToSendEnabled', enterToSendToggle.checked);
+                
+                // Propager à toutes les fenêtres/extensions
+                if (window.parent !== window) {
+                    window.parent.postMessage({
+                        type: 'enterToSendToggle',
+                        enabled: enterToSendToggle.checked
+                    }, '*');
+                }
+            }
+            
+            // Charger la préférence sauvegardée
+            const savedPreference = localStorage.getItem('enterToSendEnabled');
+            if (savedPreference !== null) {
+                enterToSendToggle.checked = savedPreference === 'true';
+            }
+            
+            // Écouter les changements du toggle
+            enterToSendToggle.addEventListener('change', setupEnterToSend);
+            
+            // Écouter les messages des autres fenêtres
+            window.addEventListener('message', (event) => {
+                if (event.data.type === 'enterToSendToggle') {
+                    enterToSendToggle.checked = event.data.enabled;
+                    localStorage.setItem('enterToSendEnabled', event.data.enabled);
+                }
+            });
+            
+            // Liste des capsules AI à faire défiler
+            const aiCapsules = [
+                { name: 'fact', button: factBtn, title: 'Fait intéressant' },
+                { name: 'story', button: storyBtn, title: 'Histoire météo' },
+                { name: 'activity', button: activityBtn, title: 'Suggestions d\'activités' },
+                { name: 'clothing', button: clothingBtn, title: 'Conseils vestimentaires' },
+                { name: 'itinerary', button: itineraryBtn, title: 'Itinéraire' },
+                { name: 'recipe', button: recipeBtn, title: 'Recette' },
+                { name: 'pressure', button: pressureBtn, title: 'Comprendre la pression' },
+                { name: 'airQuality', button: airQualityBtn, title: 'Qualité de l\'air' },
+                { name: 'health', button: healthBtn, title: 'Conseils santé' },
+                { name: 'gardening', button: gardeningBtn, title: 'Conseils jardin' }
+            ];
+            
+            // Fonction pour détecter la géolocalisation
+            function getLocationWeather() {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            // Simuler une ville basée sur la géolocalisation
+                            const cities = ['Paris', 'London', 'New York', 'Montreal'];
+                            const randomCity = cities[Math.floor(Math.random() * cities.length)];
+                            cityInput.value = randomCity;
+                            getWeatherBtn.click();
+                        },
+                        () => {
+                            // Fallback vers Paris si géolocalisation échoue
+                            cityInput.value = 'Paris';
+                            getWeatherBtn.click();
+                        }
+                    );
+                } else {
+                    cityInput.value = 'Paris';
+                    getWeatherBtn.click();
+                }
+            }
+            
+            // Fonction pour activer le rafraîchissement automatique
+            function enableAutoRefresh(minutes = 10) {
+                if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+                autoRefreshInterval = setInterval(() => {
+                    if (cityInput.value.trim() !== '') {
+                        getWeatherBtn.click();
+                    }
+                }, minutes * 60000);
+            }
+            
+            // Fonction pour désactiver le rafraîchissement automatique
+            function disableAutoRefresh() {
+                if (autoRefreshInterval) {
+                    clearInterval(autoRefreshInterval);
+                    autoRefreshInterval = null;
+                }
+            }
+            
+            // Fonction pour démarrer les capsules AI automatiques
+            function startAiCapsules(minutes) {
+                if (aiCapsuleInterval) clearInterval(aiCapsuleInterval);
+                if (minutes === 0) return;
+                
+                // Première capsule immédiatement
+                setTimeout(() => {
+                    if (weatherCard.classList.contains('show')) {
+                        showNextCapsule();
+                    }
+                }, 2000);
+                
+                // Puis toutes les X minutes
+                aiCapsuleInterval = setInterval(() => {
+                    if (weatherCard.classList.contains('show')) {
+                        showNextCapsule();
+                    }
+                }, minutes * 60000);
+            }
+            
+            // Fonction pour arrêter les capsules AI
+            function stopAiCapsules() {
+                if (aiCapsuleInterval) {
+                    clearInterval(aiCapsuleInterval);
+                    aiCapsuleInterval = null;
+                }
+            }
+            
+            // Fonction pour afficher la prochaine capsule
+            function showNextCapsule() {
+                if (aiCapsules.length === 0) return;
+                
+                const capsule = aiCapsules[currentCapsuleIndex];
+                
+                // Mettre à jour le titre de la section
+                const sectionTitle = document.querySelector('.section-title');
+                sectionTitle.textContent = `🤔 ${capsule.title}`;
+                
+                // Déclencher la capsule
+                capsule.button.click();
+                
+                // Passer à la capsule suivante
+                currentCapsuleIndex = (currentCapsuleIndex + 1) % aiCapsules.length;
+            }
+            
+            // Écouteur pour le changement de fréquence
+            refreshFrequencySelect.addEventListener('change', () => {
+                const minutes = parseInt(refreshFrequencySelect.value);
+                stopAiCapsules();
+                if (minutes > 0) {
+                    startAiCapsules(minutes);
+                }
+            });
+            
+            // Recherche automatique lors de la saisie (avec délai)
+            let searchTimeout = null;
+            cityInput.addEventListener('input', () => {
+                if (searchTimeout) clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    if (cityInput.value.trim().length > 2) {
+                        getWeatherBtn.click();
+                    }
+                }, 1500); // Attendre 1.5s après la dernière saisie
+            });
+            
+            // Recherche avec Entrée (conditionnel)
+            cityInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && enterToSendToggle.checked) {
+                    getWeatherBtn.click();
+                }
+            });
+            
+            // Initialisation automatique au chargement
+            window.onload = function() {
+                resizeCanvas();
+                
+                // Charger automatiquement la météo de la localisation
+                setTimeout(() => {
+                    getLocationWeather();
+                }, 500);
+                
+                // Activer le rafraîchissement automatique toutes les 10 minutes
+                enableAutoRefresh(10);
+            }
+            
+            // Redimensionner le canvas lors du redimensionnement de la fenêtre
+            window.addEventListener('resize', () => {
+                resizeCanvas();
+                if (weatherCard.classList.contains('show')) {
+                    const condition = conditionEl.textContent;
+                    if (condition) {
+                        initMapParticles(condition);
+                    }
+                }
+            });
+            
+            // Nettoyage lors de la fermeture
+            window.addEventListener('beforeunload', () => {
+                disableAutoRefresh();
+                stopAiCapsules();
+            });
+        });
+    </script>
+</body>
+</html>

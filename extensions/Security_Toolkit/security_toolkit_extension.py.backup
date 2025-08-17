@@ -1,0 +1,15 @@
+# FICHIER SAUVEGARDÉ - Extension SecurityToolkit avec choix numérotés
+# Cette extension utilisait encore l'ancien système de choix numérotés
+# qui causait de la confusion avec l'extension OSINT
+
+# Contenu original sauvegardé le 2025-07-31
+# Pour réactiver : renommer en security_toolkit_extension.py
+
+# PROBLÈME IDENTIFIÉ :
+# - Ligne 238 : "SÉLECTIONNEZ UN PAYLOAD" 
+# - Méthode handle_menu_choice() avec choix numérotés
+# - command.isdigit() dans execute()
+
+# Cette extension est temporairement désactivée pour éviter
+# la confusion avec l'extension OSINT qui utilise maintenant
+# la recherche directe par terme.

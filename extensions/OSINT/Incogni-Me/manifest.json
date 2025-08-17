@@ -1,0 +1,20 @@
+{
+  "name": "incogni-me",
+  "version": "0.1.0",
+  "description": "Extension FastAPI pour l'effacement et l'anonymisation de l'identité numérique.",
+  "entry_point": "main.py",
+  "author": "boris",
+  "requirements": [
+    "fastapi",
+    "uvicorn[standard]",
+    "sqlalchemy",
+    "psycopg2-binary",
+    "pydantic",
+    "passlib[bcrypt]",
+    "python-jose[cryptography]",
+    "python-dotenv",
+    "requests",
+    "beautifulsoup4",
+    "selenium"
+  ]
+}

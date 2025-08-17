@@ -1,0 +1,20 @@
+<section id="report-section" class="content-section hidden">
+  <h2>📋 GÉNÉRATEUR DE RAPPORTS IA</h2>
+  <div class="report-options">
+    <button>Rapport Sécurité</button>
+    <button>Rapport Exécutif</button>
+  </div>
+  <pre>
+    🛡️ **RAPPORT SÉCURITÉ IA - ...**
+    ...
+  </pre>
+</section>
+
+<section id="help-section" class="content-section hidden">
+  <h2>🤖 DATA ANALYZER - AIDE</h2>
+  <pre>
+    🎯 **OBJECTIF :**
+    Analyse intelligente des données avec interprétation IA
+    ...
+  </pre>
+</section>

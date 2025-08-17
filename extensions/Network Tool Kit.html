@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Outils Réseau Interactifs</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0D1117;
+            color: #E2E8F0;
+        }
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .text-success { color: #32CD32; }
+    </style>
+</head>
+<body class="bg-[#0D1117] text-gray-300 min-h-screen p-4">
+
+    <div class="bg-[#1E1E1E] p-6 rounded-2xl shadow-xl w-full max-w-7xl mx-auto border border-[#2D2D2D]">
+        <!-- Application Header -->
+        <header class="text-center mb-10">
+            <h1 class="text-4xl font-extrabold text-white">
+                🌐 Outils Réseau Interactifs
+            </h1>
+            <p class="text-lg text-gray-400 mt-2">
+                Chaque outil est dans son propre encadré pour une utilisation simple et intuitive.
+            </p>
+        </header>
+
+        <!-- Main container for tool cards -->
+        <main class="flex flex-col gap-6">
+
+            <!-- Ping Card -->
+            <div class="bg-[#2D2D2D] p-6 rounded-2xl shadow-md border border-[#555] hover:shadow-xl transition-shadow duration-300">
+                <h2 class="text-2xl font-bold text-white mb-4">Ping</h2>
+                <div class="flex flex-col gap-4">
+                    <input type="text" id="ping-input" placeholder="Ex: google.com" class="p-3 bg-[#1E1E1E] border border-[#555] text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                    <button onclick="runPing()" class="bg-green-500 text-black font-bold py-3 px-6 rounded-lg shadow-lg hover:bg-green-600 transition-colors">
+                        Lancer Ping
+                    </button>
+                    <pre id="ping-output" class="text-sm bg-[#0D1117] text-green-400 p-4 rounded-lg overflow-auto min-h-[120px] max-h-[250px] border border-[#555]"></pre>
+                </div>
+            </div>
+
+            <!-- Scan Ports Card -->
+            <div class="bg-[#2D2D2D] p-6 rounded-2xl shadow-md border border-[#555] hover:shadow-xl transition-shadow duration-300">
+                <h2 class="text-2xl font-bold text-white mb-4">Scan Ports</h2>
+                <div class="flex flex-col gap-4">
+                    <input type="text" id="scan-input" placeholder="Ex: 127.0.0.1" class="p-3 bg-[#1E1E1E] border border-[#555] text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    <button onclick="runScan()" class="bg-purple-500 text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:bg-purple-600 transition-colors">
+                        Lancer Scan
+                    </button>
+                    <pre id="scan-output" class="text-sm bg-[#0D1117] text-yellow-400 p-4 rounded-lg overflow-auto min-h-[120px] max-h-[250px] border border-[#555]"></pre>
+                </div>
+            </div>
+
+            <!-- Vitesse Card -->
+            <div class="bg-[#2D2D2D] p-6 rounded-2xl shadow-md border border-[#555] hover:shadow-xl transition-shadow duration-300">
+                <h2 class="text-2xl font-bold text-white mb-4">Test de Vitesse</h2>
+                <div class="flex flex-col gap-4">
+                    <button onclick="runSpeedTest()" class="bg-green-500 text-black font-bold py-3 px-6 rounded-lg shadow-lg hover:bg-green-600 transition-colors">
+                        Lancer Test
+                    </button>
+                    <!-- Visual speed gauge -->
+                    <div class="w-full bg-[#555] rounded-full h-8 overflow-hidden relative border border-[#777]">
+                        <div id="speed-gauge-fill" class="h-full bg-cyan-500 transition-all duration-1000 ease-out" style="width: 0%;"></div>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <span id="speed-text" class="text-white font-bold text-lg drop-shadow-sm">0 MB/s</span>
+                        </div>
+                    </div>
+                    <!-- Output for latency -->
+                    <pre id="speed-output" class="text-sm bg-[#0D1117] text-cyan-400 p-4 rounded-lg overflow-auto min-h-[120px] max-h-[250px] border border-[#555]"></pre>
+                </div>
+            </div>
+
+            <!-- Info IP Card -->
+            <div class="bg-[#2D2D2D] p-6 rounded-2xl shadow-md border border-[#555] hover:shadow-xl transition-shadow duration-300">
+                <h2 class="text-2xl font-bold text-white mb-4">Informations IP</h2>
+                <div class="flex flex-col gap-4">
+                    <input type="text" id="ip-input" placeholder="Ex: 8.8.8.8" class="p-3 bg-[#1E1E1E] border border-[#555] text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                    <button onclick="runIpInfo()" class="bg-yellow-500 text-black font-bold py-3 px-6 rounded-lg shadow-lg hover:bg-yellow-600 transition-colors">
+                        Chercher Info
+                    </button>
+                    <pre id="ip-output" class="text-sm bg-[#0D1117] text-orange-400 p-4 rounded-lg overflow-auto min-h-[120px] max-h-[250px] border border-[#555]"></pre>
+                </div>
+            </div>
+
+            <!-- Scan WiFi Card -->
+            <div class="bg-[#2D2D2D] p-6 rounded-2xl shadow-md border border-[#555] hover:shadow-xl transition-shadow duration-300">
+                <h2 class="text-2xl font-bold text-white mb-4">Scan WiFi</h2>
+                <div class="flex flex-col gap-4">
+                    <button onclick="runWifiScan()" class="bg-red-500 text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:bg-red-600 transition-colors">
+                        Lancer Scan WiFi
+                    </button>
+                    <pre id="wifi-output" class="text-sm bg-[#0D1117] text-rose-400 p-4 rounded-lg overflow-auto min-h-[120px] max-h-[250px] border border-[#555]"></pre>
+                </div>
+            </div>
+
+            <!-- AI Report Card -->
+            <div class="bg-[#2D2D2D] p-6 rounded-2xl shadow-md border border-[#555] hover:shadow-xl transition-shadow duration-300">
+                <h2 class="text-2xl font-bold text-white mb-4">Rapport de Sécurité IA</h2>
+                <div class="flex flex-col gap-4">
+                    <p class="text-sm text-gray-400">Génère un rapport basé sur les données de scan disponibles.</p>
+                    <button onclick="runAiReport()" class="bg-indigo-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:bg-indigo-700 transition-colors">
+                        Générer Rapport ✨
+                    </button>
+                    <div id="ai-report-output" class="text-sm bg-[#0D1117] text-fuchsia-400 p-4 rounded-lg overflow-auto min-h-[120px] max-h-[250px] border border-[#555]"></div>
+                </div>
+            </div>
+
+            <!-- Threat Summary Card -->
+            <div class="bg-[#2D2D2D] p-6 rounded-2xl shadow-md border border-[#555] hover:shadow-xl transition-shadow duration-300">
+                <h2 class="text-2xl font-bold text-white mb-4">Synthèse de Menaces IA</h2>
+                <div class="flex flex-col gap-4">
+                    <input type="text" id="threat-input" placeholder="Ex: Ransomware WannaCry" class="p-3 bg-[#1E1E1E] border border-[#555] text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500">
+                    <button onclick="runThreatSummary()" class="bg-pink-500 text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:bg-pink-600 transition-colors">
+                        Synthétiser Menace ✨
+                    </button>
+                    <!-- Changed to a div to allow injecting the copy button -->
+                    <div id="threat-summary-output" class="text-sm bg-[#0D1117] text-red-400 p-4 rounded-lg overflow-auto min-h-[120px] max-h-[250px] border border-[#555]"></div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        // Global variables to store the latest tool results
+        let latestPingResult = '';
+        let latestScanResult = '';
+        let latestIpInfoResult = '';
+        let latestWifiScanResult = '';
+
+        // --- Core Simulation Functions ---
+        async function simulatePing(host) {
+            await new Promise(r => setTimeout(r, 1000));
+            host = host || 'google.com';
+            const ipAddress = (host === 'google.com') ? '142.250.186.110' : '127.0.0.1';
+            
+            // Simulates a failed ping
+            if (host.includes('nonexistent')) {
+                return `❌ Échec de la requête Ping pour ${host}\n\nStatistiques:\n  Paquets: Envoyer = 4, Reçus = 0, Perdus = 4 (100% de perte)\n  Le délai d'attente de la demande est dépassé.`;
+            }
+            
+            // Simulates a successful ping with detailed stats
+            return `🌐 PING ${host} (${ipAddress})\n\nStatistiques:\n   Paquets: Envoyer = 4, Reçus = 4, Perdus = 0 (0% de perte)\n\nTemps de réponse approximatifs en millisecondes:\n   Minimum = 25ms, Maximum = 40ms, Moyen = 32ms\n   TTL = 117`;
+        }
+
+        async function simulateScan(target) {
+            await new Promise(r => setTimeout(r, 1500));
+            target = target || '127.0.0.1';
+            const scanResults = {
+                '127.0.0.1': [
+                    { port: 22, protocol: "TCP", status: "Ouvert", service: "SSH", version: "OpenSSH 8.2p1" },
+                    { port: 80, protocol: "TCP", status: "Ouvert", service: "HTTP", version: "Apache httpd 2.4.41" },
+                    { port: 443, protocol: "TCP", status: "Ouvert", service: "HTTPS", version: "Apache httpd 2.4.41" },
+                    { port: 21, protocol: "TCP", status: "Fermé", service: "FTP", version: "N/A" }
+                ],
+                '8.8.8.8': [
+                    { port: 53, protocol: "UDP", status: "Ouvert", service: "DNS", version: "Google DNS" },
+                    { port: 443, protocol: "TCP", status: "Ouvert", service: "HTTPS", version: "Google Secure" },
+                    { port: 22, protocol: "TCP", status: "Filtré", service: "SSH", version: "N/A" }
+                ],
+            };
+            
+            const results = scanResults[target];
+            
+            if (results && results.length > 0) {
+                let result = `🔍 SCAN PORTS - ${target}\n\n`;
+                results.forEach(item => {
+                    result += `• Port: ${item.port}/${item.protocol}\n`;
+                    result += `  Statut: ${item.status}\n`;
+                    result += `  Service: ${item.service}\n`;
+                    result += `  Version: ${item.version}\n\n`;
+                });
+                return result;
+            } else {
+                return `🔍 Aucun port ouvert trouvé sur ${target}`;
+            }
+        }
+
+        async function simulateSpeed() {
+            // Simulate the speed test with an object return
+            await new Promise(r => setTimeout(r, 2000));
+            return {
+                latency: '35.1 ms',
+                download: Math.floor(Math.random() * (100 - 20 + 1)) + 20, // Random download speed between 20 and 100 MB/s
+                upload: Math.floor(Math.random() * (30 - 5 + 1)) + 5 // Random upload speed
+            };
+        }
+
+        async function simulateIpInfo(ip) {
+            await new Promise(r => setTimeout(r, 1000));
+            ip = ip || '8.8.8.8';
+
+            // Data for different IP scenarios
+            const ipData = {
+                '8.8.8.8': {
+                    country: 'États-Unis',
+                    city: 'Mountain View',
+                    latitude: '37.422476',
+                    longitude: '-122.084249',
+                    as_number: 'AS15169',
+                    organization: 'Google LLC',
+                    connection_type: 'Data Center',
+                    reputation: 'Bonne',
+                    reverse_domain: 'google-public-dns-a.google.com'
+                },
+                '192.168.1.1': {
+                    country: 'Privé',
+                    city: 'Local',
+                    latitude: 'N/A',
+                    longitude: 'N/A',
+                    as_number: 'N/A',
+                    organization: 'Réseau Local',
+                    connection_type: 'Résidentiel',
+                    reputation: 'N/A',
+                    reverse_domain: 'routeur.local'
+                },
+                '45.33.32.128': { // Simulated malicious IP
+                    country: 'États-Unis',
+                    city: 'San Francisco',
+                    latitude: '37.7749',
+                    longitude: '-122.4194',
+                    as_number: 'AS63949',
+                    organization: 'Linode LLC',
+                    connection_type: 'Data Center / Proxy',
+                    reputation: '⚠️ Malveillante (botnet)',
+                    reverse_domain: 'li96-128.members.linode.com'
+                }
+            };
+            
+            const info = ipData[ip] || {
+                country: 'Inconnu',
+                city: 'Inconnu',
+                latitude: 'N/A',
+                longitude: 'N/A',
+                as_number: 'N/A',
+                organization: 'Inconnu',
+                connection_type: 'Inconnu',
+                reputation: 'Inconnu',
+                reverse_domain: 'N/A'
+            };
+
+            return `🌍 INFORMATIONS IP: ${ip}\n\n` +
+                   `📍 Pays: ${info.country}\n` +
+                   `🏙️ Ville: ${info.city}\n` +
+                   `🌐 Coordonnées: ${info.latitude}, ${info.longitude}\n` +
+                   `🏢 Organisation: ${info.organization} (${info.as_number})\n` +
+                   `📱 Type de connexion: ${info.connection_type}\n` +
+                   `🛡️ Réputation: ${info.reputation}\n` +
+                   `🔗 Domaine Inversé: ${info.reverse_domain}\n`;
+        }
+        
+        async function simulateWifiScan() {
+            await new Promise(r => setTimeout(r, 1500));
+            const networks = [
+                {
+                    ssid: "Home_Network_5G",
+                    security: "WPA2/WPA3 (AES)",
+                    signal: "-45 dBm",
+                    strength: "Excellent",
+                    mac: "00:1A:2B:3C:4D:5E",
+                    channel: 149,
+                    bars: 4
+                },
+                {
+                    ssid: "Cafe_WiFi",
+                    security: "Ouvert (Aucun)",
+                    signal: "-68 dBm",
+                    strength: "Bon",
+                    mac: "A1:B2:C3:D4:E5:F6",
+                    channel: 6,
+                    bars: 3
+                },
+                {
+                    ssid: "Freebox-1A2B3C",
+                    security: "WPA2 (TKIP/AES)",
+                    signal: "-75 dBm",
+                    strength: "Faible",
+                    mac: "B1:B1:B1:B1:B1:B1",
+                    channel: 11,
+                    bars: 2
+                },
+                {
+                    ssid: "Public_Guest",
+                    security: "WPA3 (AES)",
+                    signal: "-58 dBm",
+                    strength: "Très bon",
+                    mac: "C2:D3:E4:F5:A6:B7",
+                    channel: 48,
+                    bars: 4
+                },
+                {
+                    ssid: "hidden_network",
+                    security: "WPA2 (AES)",
+                    signal: "-70 dBm",
+                    strength: "Bon",
+                    mac: "D4:E5:F6:A7:B8:C9",
+                    channel: 1,
+                    bars: 3
+                }
+            ];
+            
+            const getSignalBars = (bars) => {
+                const fullBar = '█';
+                const emptyBar = '░';
+                return fullBar.repeat(bars) + emptyBar.repeat(4 - bars);
+            };
+            
+            const getSecurityColor = (security) => {
+                if (security.includes('Ouvert')) return 'text-red-400';
+                if (security.includes('WPA3')) return 'text-green-400';
+                return 'text-yellow-400';
+            };
+            
+            let resultHtml = `
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-bold text-white flex items-center">
+                            📶 Réseaux WiFi détectés (${networks.length})
+                        </h3>
+                        <span class="text-xs text-gray-400">Cliquez pour copier le SSID</span>
+                    </div>
+            `;
+            
+            networks.forEach((net, index) => {
+                const securityColor = getSecurityColor(net.security);
+                resultHtml += `
+                    <div class="bg-[#2D2D2D] border border-[#555] rounded p-2 hover:bg-[#374151] transition-colors cursor-pointer text-xs" onclick="copyToClipboard('${net.ssid}')">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-1">
+                                <span>📡</span>
+                                <span class="font-medium text-white">${net.ssid}</span>
+                            </div>
+                            <div class="flex items-center space-x-1">
+                                <span class="text-gray-400 font-mono">${getSignalBars(net.bars)}</span>
+                                <span class="${net.strength === 'Excellent' ? 'text-green-400' : net.strength === 'Très bon' ? 'text-blue-400' : net.strength === 'Bon' ? 'text-yellow-400' : 'text-red-400'}">${net.strength}</span>
+                            </div>
+                        </div>
+                        <div class="flex justify-between mt-1 text-gray-300">
+                            <span><span class="text-gray-400">Séc:</span> <span class="${securityColor}">${net.security.split(' ')[0]}</span></span>
+                            <span><span class="text-gray-400">Signal:</span> ${net.signal}</span>
+                            <span><span class="text-gray-400">Ch:</span> ${net.channel}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            resultHtml += `</div>`;
+            return resultHtml;
+        }
+
+        // --- Utility function to copy text to clipboard ---
+        function copyToClipboard(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed'; // Avoid scrolling to bottom
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                const successful = document.execCommand('copy');
+                const msg = successful ? 'Copié !' : 'Échec de la copie';
+                alert(msg); // Use a simple alert for now
+            } catch (err) {
+                console.error('Erreur de copie: ', err);
+            }
+            document.body.removeChild(textarea);
+        }
+
+        // --- New Interaction Functions for each card ---
+        async function runPing() {
+            const input = document.getElementById('ping-input').value.trim();
+            const output = document.getElementById('ping-output');
+            output.innerText = 'Chargement...';
+            latestPingResult = await simulatePing(input);
+            output.innerText = latestPingResult;
+        }
+
+        async function runScan() {
+            const input = document.getElementById('scan-input').value.trim();
+            const output = document.getElementById('scan-output');
+            output.innerText = 'Chargement...';
+            latestScanResult = await simulateScan(input);
+            output.innerText = latestScanResult;
+        }
+        
+        async function runSpeedTest() {
+            const output = document.getElementById('speed-output');
+            const gaugeFill = document.getElementById('speed-gauge-fill');
+            const speedText = document.getElementById('speed-text');
+            
+            // Reset state
+            output.innerText = '🚀 Lancement du test de vitesse...';
+            gaugeFill.style.width = '0%';
+            speedText.innerText = '0 MB/s';
+            
+            // Simulate progress visually before getting the final result
+            const maxSpeed = 100; // Used for gauge scaling
+            const startTime = Date.now();
+            const duration = 2000; // 2 seconds for the simulation
+            let interval = setInterval(() => {
+                const elapsed = Date.now() - startTime;
+                const progress = elapsed / duration;
+                if (progress < 1) {
+                    const currentSpeed = Math.floor(progress * 100);
+                    gaugeFill.style.width = `${currentSpeed}%`;
+                    speedText.innerText = `${currentSpeed} MB/s`;
+                } else {
+                    clearInterval(interval);
+                }
+            }, 50);
+
+            // Get the final result after the simulation time
+            const result = await simulateSpeed();
+            
+            // Update the gauge and text to the final value
+            const finalPercentage = (result.download / maxSpeed) * 100;
+            gaugeFill.style.width = `${finalPercentage}%`;
+            speedText.innerText = `${result.download} MB/s`;
+            
+            // Display the full results
+            output.innerText = `✅ Test terminé !\n\n📡 Latence: ${result.latency}\n⬇️ Vitesse de téléchargement: ~${result.download} MB/s\n⬆️ Vitesse de téléversement: ~${result.upload} MB/s`;
+        }
+        
+        async function runIpInfo() {
+            const input = document.getElementById('ip-input').value.trim();
+            const output = document.getElementById('ip-output');
+            output.innerText = 'Chargement...';
+            latestIpInfoResult = await simulateIpInfo(input);
+            output.innerText = latestIpInfoResult;
+        }
+
+        async function runWifiScan() {
+            const output = document.getElementById('wifi-output');
+            output.innerHTML = 'Chargement...'; // Use innerHTML for rich content
+            latestWifiScanResult = await simulateWifiScan();
+            output.innerHTML = latestWifiScanResult;
+        }
+
+        async function runAiReport() {
+            const outputContainer = document.getElementById('ai-report-output');
+            outputContainer.innerHTML = `<p class="text-white">🤖 L'IA génère votre rapport... veuillez patienter.</p>`;
+
+            // Combine all available data into a single, comprehensive prompt
+            let combinedData = '';
+            if (latestPingResult) combinedData += `\n\n--- Rapport Ping ---\n${latestPingResult}`;
+            if (latestScanResult) combinedData += `\n\n--- Rapport Scan Ports ---\n${latestScanResult}`;
+            if (latestIpInfoResult) combinedData += `\n\n--- Rapport Info IP ---\n${latestIpInfoResult}`;
+            if (latestWifiScanResult) combinedData += `\n\n--- Rapport Scan WiFi ---\n${latestWifiScanResult}`;
+
+            if (!combinedData) {
+                outputContainer.innerHTML = `<p class="text-rose-400">❌ Veuillez d'abord effectuer un scan (Ping, Ports, ou IP) pour générer un rapport.</p>`;
+                return;
+            }
+            
+            const prompt = `Génère un rapport de sécurité en français en synthétisant les données de scan suivantes :${combinedData}\n\nInclure une analyse globale, les vulnérabilités potentielles pour chaque port ouvert et des recommandations de sécurité. Rédige le rapport de manière concise et professionnelle.`;
+            const chatHistory = [];
+            chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+            const payload = { contents: chatHistory };
+            const apiKey = ""
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                const text = result.candidates[0].content.parts[0].text;
+                
+                // Construct the HTML with the copy button
+                const finalHtml = `
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="font-bold text-lg">📋 RAPPORT IA</span>
+                        <button onclick="copyToClipboard(document.getElementById('ai-report-text').innerText)" class="bg-gray-600 text-gray-300 hover:bg-gray-500 text-xs font-semibold py-1 px-3 rounded-full transition-colors">
+                            Copier
+                        </button>
+                    </div>
+                    <pre id="ai-report-text" class="whitespace-pre-wrap">${text}</pre>
+                `;
+                outputContainer.innerHTML = finalHtml;
+            } catch (error) {
+                console.error("Erreur lors de la génération du rapport IA :", error);
+                outputContainer.innerHTML = `<p class="text-rose-400">❌ Erreur lors de la génération du rapport IA. Veuillez réessayer.</p>`;
+            }
+        }
+        
+        async function runThreatSummary() {
+            const input = document.getElementById('threat-input').value.trim();
+            const outputContainer = document.getElementById('threat-summary-output');
+            if (!input) {
+                outputContainer.innerHTML = `<p class="text-rose-400">❌ Veuillez entrer une menace à analyser (ex: 'Ransomware WannaCry').</p>`;
+                return;
+            }
+            outputContainer.innerHTML = `<p class="text-white">🤖 L'IA synthétise la menace... veuillez patienter.</p>`;
+
+            const prompt = `Synthétise la menace de sécurité suivante en français : "${input}". Fournis une brève description, son impact et les contre-mesures recommandées. Utilise un format clair et professionnel.`;
+            const chatHistory = [];
+            chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+            const payload = { contents: chatHistory };
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                const text = result.candidates[0].content.parts[0].text;
+
+                // Construct the HTML with the copy button
+                const finalHtml = `
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="font-bold text-lg">📋 SYNTHÈSE DE MENACE IA</span>
+                        <button onclick="copyToClipboard(document.getElementById('threat-summary-text').innerText)" class="bg-gray-600 text-gray-300 hover:bg-gray-500 text-xs font-semibold py-1 px-3 rounded-full transition-colors">
+                            Copier
+                        </button>
+                    </div>
+                    <pre id="threat-summary-text" class="whitespace-pre-wrap">${text}</pre>
+                `;
+                outputContainer.innerHTML = finalHtml;
+            } catch (error) {
+                console.error("Erreur lors de la synthèse de la menace IA :", error);
+                outputContainer.innerHTML = `<p class="text-rose-400">❌ Erreur lors de la synthèse de la menace IA. Veuillez réessayer.</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

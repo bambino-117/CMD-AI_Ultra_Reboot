@@ -1,0 +1,49 @@
+{
+  "name": "cmd-ai-ultra-reboot",
+  "version": "3.0.0-beta",
+  "description": "CMD-AI Ultra Reboot V3 - Interface web avancée avec outils intégrés",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder",
+    "dist": "electron-builder --publish=never",
+    "build-exe": "electron-builder --win portable"
+  },
+  "author": "Boris",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^27.0.0",
+    "electron-builder": "^24.6.4"
+  },
+  "build": {
+    "appId": "com.boris.cmd-ai-ultra-reboot",
+    "productName": "CMD-AI Ultra Reboot V3",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "**/*",
+      "!node_modules",
+      "!dist"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  }
+}
