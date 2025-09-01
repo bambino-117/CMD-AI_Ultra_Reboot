@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Mégastructure // Configurateur</title>
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        /* --- Base Styles (copied for consistency) --- */
+        html {
+            font-size: calc(14px + 0.2vw);
+        }
+        body {
+            margin: 0;
+            font-family: 'Share Tech Mono', monospace;
+            background-color: #0d0d0d;
+            color: #00ffcc;
+            overflow: hidden;
+            font-size: 1rem;
+        }
+        .grime-Overlay, .moving-structure {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none;
+        }
+        /* Note: The paths below assume a 'static' folder at the root of the project */
+        .grime-Overlay { background: url('/static/texture_grime.png') repeat; opacity: 0.08; z-index: 3; }
+        .moving-structure { background: url('/static/structure_moving.png') center center / cover no-repeat; opacity: 0.05; animation: drift 60s infinite linear; z-index: 1; }
+        @keyframes drift {
+            0% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(-1vw, 0.5vh) scale(1.05); }
+            100% { transform: translate(0, 0) scale(1); }
+        }
+        /* Glitch animation from aboutissement.html */
+        @keyframes glitch {
+            0%, 100% { text-shadow: 0.05em 0 red, -0.05em 0 blue; }
+            50% { text-shadow: -0.05em 0 red, 0.05em 0 blue; }
+        }
+
+        /* --- Settings Page Specific Styles --- */
+        .settings-container {
+            position: relative;
+            z-index: 4;
+            padding: 5vh 5vw;
+            box-sizing: border-box;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-y: auto;
+        }
+
+        h1 {
+            font-size: clamp(1.8rem, 4vw, 3.5rem);
+            margin-bottom: 1.25rem;
+            animation: glitch 2s infinite;
+        }
+
+        .settings-section {
+            width: 100%;
+            max-width: 800px;
+            margin-bottom: 2.5rem;
+            border: 1px solid rgba(0, 255, 204, 0.2);
+            padding: 1.5rem;
+            background: rgba(0, 10, 8, 0.4);
+            border-radius: 0.25rem;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            color: #ff33ff;
+            margin-top: 0;
+            margin-bottom: 1rem;
+            letter-spacing: 0.1em;
+            border-bottom: 1px solid rgba(255, 51, 255, 0.3);
+            padding-bottom: 0.5rem;
+        }
+
+        .options-group {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .option-btn {
+            flex-grow: 1;
+            padding: 0.75rem 1rem;
+            background: transparent;
+            border: 1px solid rgba(0, 255, 204, 0.5);
+            color: rgba(0, 255, 204, 0.7);
+            font-family: inherit;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .option-btn:hover {
+            color: #00ffcc;
+            background: rgba(0, 255, 204, 0.1);
+        }
+
+        .option-btn.active {
+            color: #0d0d0d;
+            background: #00ffcc;
+            border-color: #00ffcc;
+            box-shadow: 0 0 15px rgba(0, 255, 204, 0.5);
+        }
+
+        /* --- General Input Styles --- */
+        .input-group input, .input-group select {
+            width: 100%;
+            box-sizing: border-box;
+        }
+        /* --- User Profile Styles --- */
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .input-group label {
+            font-size: 0.9rem;
+            color: rgba(0, 255, 204, 0.8);
+        }
+        .input-group input, .input-group .path-display {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(0, 255, 204, 0.3);
+            color: #00ffcc;
+            font-family: inherit;
+            font-size: 1rem;
+            padding: 0.5rem;
+            border-radius: 0.2rem;
+        }
+        .input-group .path-display {
+            color: rgba(0, 255, 204, 0.6);
+            font-size: 0.8rem;
+        }
+
+        .credits-content p {
+            margin: 0 0 0.5rem 0;
+            color: rgba(0, 255, 204, 0.8);
+        }
+
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 2rem;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .action-btn {
+            padding: 0.8rem 2rem;
+            font-family: inherit;
+            font-size: 1rem;
+            cursor: pointer;
+            border-radius: 0.25rem;
+            transition: all 0.2s ease;
+            border: 1px solid;
+            min-width: 200px;
+        }
+
+        #save-btn {
+            background: #00ffcc;
+            color: #0d0d0d;
+            border-color: #00ffcc;
+        }
+        #save-btn:hover {
+            box-shadow: 0 0 15px rgba(0, 255, 204, 0.7);
+        }
+
+        #back-btn {
+            background: transparent;
+            color: #ff33ff;
+            border-color: #ff33ff;
+        }
+        #back-btn:hover {
+            background: rgba(255, 51, 255, 0.1);
+            box-shadow: 0 0 15px rgba(255, 51, 255, 0.4);
+        }
+
+    </style>
+</head>
+<body>
+    <!-- Visuals -->
+    <div class="moving-structure"></div>
+    <div class="grime-Overlay"></div>
+
+    <!-- Conteneur pour les notifications personnalisées (copié depuis terminaux.html) -->
+    <div id="notification-container"></div>
+
+    <div class="settings-container">
+        <h1>[ NIVEAU 0 // CONFIGURATEUR ]</h1>
+
+        <!-- Display Settings Section -->
+        <div class="settings-section">
+            <h2>Paramètres d'Affichage</h2>
+            <div class="options-group" id="display-mode-options">
+                <button class="option-btn" data-value="fullscreen">Plein Écran</button>
+                <button class="option-btn" data-value="windowed">Fenêtré</button>
+            </div>
+        </div>
+
+        <!-- Navigation Settings Section -->
+        <div class="settings-section">
+            <h2>Paramètres de Navigation</h2>
+            <div class="input-group">
+                <label for="start-level-select">Niveau de départ</label>
+                <select id="start-level-select">
+                    <option value="404">404 : Accesseur</option>
+                    <option value="23">23 : Logicateur</option>
+                    <option value="241">241 : Legislateur</option>
+                    <option value="303">303 : Portail Conteneur</option>
+                    <option value="500">500 : ???</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- AI Settings Section -->
+        <div class="settings-section">
+            <h2>Paramètres IA (Logicateur)</h2>
+
+            <div class="input-group">
+                <label for="ai-model-select">Modèle IA</label>
+                <select id="ai-model-select">
+                    <optgroup label="DeepSeek">
+                        <option value="deepseek-coder">deepseek-coder</option>
+                        <option value="deepseek-chat">deepseek-chat</option>
+                    </optgroup>
+                    <optgroup label="OpenAI">
+                        <option value="gpt-4o">gpt-4o</option>
+                        <option value="gpt-4-turbo">gpt-4-turbo</option>
+                        <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
+                    </optgroup>
+                    <optgroup label="Google">
+                        <option value="gemini-1.5-pro-latest">gemini-1.5-pro-latest</option>
+                        <option value="gemini-pro">gemini-pro</option>
+                    </optgroup>
+                    <optgroup label="Groq (API rapide)">
+                        <option value="llama3-70b-8192">llama3-70b-8192 (Llama3 70B)</option>
+                        <option value="llama3-8b-8192">llama3-8b-8192 (Llama3 8B)</option>
+                        <option value="mixtral-8x7b-32768">mixtral-8x7b-32768 (Mixtral)</option>
+                    </optgroup>
+                    <optgroup label="Ollama (Local)">
+                        <option value="llama3">llama3</option>
+                        <option value="mistral">mistral</option>
+                        <option value="codellama">codellama</option>
+                        <option value="phi3">phi3</option>
+                    </optgroup>
+                </select>
+            </div>
+            <br>
+            <div class="input-group">
+                <label for="deepseek-api-key-input">Clé API (DeepSeek)</label>
+                <input type="password" id="deepseek-api-key-input" placeholder="sk-...">
+            </div><br>
+            <div class="input-group">
+                <label for="openai-api-key-input">Clé API (OpenAI / Azure)</label>
+                <input type="password" id="openai-api-key-input" placeholder="sk-...">
+            </div><br>
+            <div class="input-group">
+                <label for="google-api-key-input">Clé API (Google Gemini)</label>
+                <input type="password" id="google-api-key-input" placeholder="AIzaSy...">
+            </div><br>
+            <div class="input-group">
+                <label for="groq-api-key-input">Clé API (Groq)</label>
+                <input type="password" id="groq-api-key-input" placeholder="gsk_...">
+            </div><br>
+            <div class="input-group">
+                <label for="ollama-base-url-input">URL de base (Ollama)</label>
+                <input type="text" id="ollama-base-url-input" placeholder="http://127.0.0.1:11434">
+            </div>
+        </div>
+
+        <!-- User Profile Section -->
+        <div class="settings-section">
+            <h2>Profil Utilisateur</h2>
+            <div class="input-group">
+                <label for="pseudo-input">Pseudo</label>
+                <input type="text" id="pseudo-input">
+            </div>
+            <br>
+            <div class="input-group">
+                <label>Dossier Utilisateur</label>
+                <div id="user-folder-path" class="path-display">Chargement...</div>
+            </div>
+        </div>
+
+        <!-- Bunker Security Section -->
+        <div class="settings-section">
+            <h2>Sécurité du Bunker</h2>
+            <div class="input-group">
+                <label for="bunker-password-input">Mot de passe d'accès</label>
+                <input type="password" id="bunker-password-input">
+            </div>
+        </div>
+
+        <!-- Credits Section -->
+        <div class="settings-section">
+            <h2>Crédits</h2>
+            <div class="credits-content">
+                <p>Concept & Développement . . . . . . . . . . Boris</p>
+                <p>Assistance IA & Structuration . . . . . . . Gemini Code Assist</p>
+                <p>Moteur d'Interface . . . . . . . . . . . . . pywebview + Flask</p>
+                <p>Ambiance Sonore . . . . . . . . . . . . . . [Source à créditer]</p>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <button id="back-btn" class="action-btn">Retour</button>
+            <button id="save-btn" class="action-btn">Sauvegarder & Quitter</button>
+        </div>
+    </div>
+
+    <script>
+        // Attend que l'API pywebview soit prête avant d'exécuter le code.
+        window.addEventListener('pywebviewready', () => {
+            let currentSettings = {}; // Stocke la configuration chargée
+
+            // --- DOM Elements ---
+            const displayModeButtons = document.querySelectorAll('#display-mode-options .option-btn');
+            const aiModelSelect = document.getElementById('ai-model-select');
+            const deepseekApiKeyInput = document.getElementById('deepseek-api-key-input');
+            const openaiApiKeyInput = document.getElementById('openai-api-key-input');
+            const googleApiKeyInput = document.getElementById('google-api-key-input');
+            const groqApiKeyInput = document.getElementById('groq-api-key-input');
+            const ollamaBaseUrlInput = document.getElementById('ollama-base-url-input');
+            const startLevelSelect = document.getElementById('start-level-select');
+            const pseudoInput = document.getElementById('pseudo-input');
+            const userFolderPathDisplay = document.getElementById('user-folder-path');
+            const bunkerPasswordInput = document.getElementById('bunker-password-input');
+            const saveBtn = document.getElementById('save-btn');
+            const backBtn = document.getElementById('back-btn');
+
+            // Fonction de notification (copiée depuis terminaux.html)
+            function showNotification(message, type = 'info', duration = 4000) {
+                const container = document.getElementById('notification-container');
+                if (!container) return;
+
+                const notif = document.createElement('div');
+                notif.className = `notification ${type}`;
+                notif.textContent = message;
+                container.appendChild(notif);
+
+                setTimeout(() => {
+                    notif.style.transition = 'opacity 0.5s ease';
+                    notif.style.opacity = '0';
+                    notif.addEventListener('transitionend', () => notif.remove());
+                }, duration);
+            }
+
+            // --- Functions ---
+
+            // 1. Charge les paramètres actuels depuis Python et met à jour l'interface.
+            async function loadAndApplySettings() {
+                try {
+                    currentSettings = await window.pywebview.api.load_settings();
+                    
+                    // Applique les paramètres d'affichage
+                    updateDisplayModeSelection(currentSettings.display_mode);
+
+                    // Applique les paramètres de navigation
+                    startLevelSelect.value = currentSettings.navigation.start_level;
+
+                    // Applique les paramètres IA (nouvelle structure)
+                    const aiSettings = currentSettings.ai || {};
+                    const providers = aiSettings.providers || {};
+
+                    aiModelSelect.value = aiSettings.model || 'deepseek-coder';
+
+                    // Fonction utilitaire pour charger les clés sans afficher les placeholders
+                    const loadProviderKey = (inputElement, providerName, keyName, placeholder) => {
+                        const provider = providers[providerName] || {};
+                        const value = provider[keyName] || '';
+                        if (value && !value.includes(placeholder)) {
+                            inputElement.value = value;
+                        } else {
+                            inputElement.value = ''; // Champ vide si c'est la valeur par défaut
+                        }
+                    };
+
+                    loadProviderKey(deepseekApiKeyInput, 'deepseek', 'api_key', 'YOUR_DEEPSEEK_API_KEY_HERE');
+                    loadProviderKey(openaiApiKeyInput, 'openai', 'api_key', 'YOUR_OPENAI_API_KEY_HERE');
+                    loadProviderKey(googleApiKeyInput, 'google', 'api_key', 'YOUR_GEMINI_API_KEY_HERE');
+                    loadProviderKey(groqApiKeyInput, 'groq', 'api_key', 'YOUR_GROQ_API_KEY_HERE');
+
+                    if (providers.ollama) {
+                        ollamaBaseUrlInput.value = providers.ollama.base_url || 'http://127.0.0.1:11434';
+                    }
+
+                    // Applique les paramètres utilisateur
+                    pseudoInput.value = currentSettings.user.pseudo;
+                    userFolderPathDisplay.textContent = currentSettings.user.user_folder_path;
+                    bunkerPasswordInput.value = currentSettings.user.password;
+
+                } catch (e) {
+                    console.error("Erreur lors du chargement des paramètres:", e);
+                }
+            }
+
+            // Met en surbrillance le bouton de l'option active.
+            function updateDisplayModeSelection(activeMode) {
+                displayModeButtons.forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.value === activeMode);
+                });
+            }
+
+            // --- Event Listeners ---
+
+            // 2. Gère le clic sur les options de mode d'affichage.
+            displayModeButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    updateDisplayModeSelection(btn.dataset.value);
+                });
+            });
+
+            // 3. Gère le clic sur le bouton "Retour".
+            backBtn.addEventListener('click', () => {
+                window.location.href = '/terminaux.html';
+            });
+
+            // 4. Gère le clic sur le bouton "Sauvegarder & Quitter".
+            saveBtn.addEventListener('click', async () => {
+                // Met à jour l'objet de configuration avec les valeurs de l'interface
+                currentSettings.display_mode = document.querySelector('#display-mode-options .option-btn.active').dataset.value;
+                
+                // Met à jour les paramètres IA
+                currentSettings.ai.model = aiModelSelect.value;
+                currentSettings.ai.providers.deepseek.api_key = deepseekApiKeyInput.value;
+                currentSettings.ai.providers.openai.api_key = openaiApiKeyInput.value;
+                currentSettings.ai.providers.google.api_key = googleApiKeyInput.value;
+                currentSettings.ai.providers.groq.api_key = groqApiKeyInput.value;
+                currentSettings.ai.providers.ollama.base_url = ollamaBaseUrlInput.value;
+
+                currentSettings.navigation.start_level = parseInt(startLevelSelect.value, 10);
+                currentSettings.user.pseudo = pseudoInput.value;
+                currentSettings.user.password = bunkerPasswordInput.value || 'admin'; // S'assure qu'il y a toujours un mdp
+                // Le chemin du dossier n'est pas modifiable depuis l'UI, donc on ne le met pas à jour.
+
+                const result = await window.pywebview.api.save_settings(currentSettings);
+
+                if (result.status === 'success') {
+                    showNotification('Paramètres sauvegardés. Fermeture de l\'application...');
+                    setTimeout(() => window.pywebview.api.close_app(), 500);
+                } else {
+                    showNotification('Erreur de sauvegarde: ' + result.message, 'error');
+                }
+            });
+
+            // --- Initialisation ---
+            loadAndApplySettings();
+        });
+    </script>
+</body>
+</html>

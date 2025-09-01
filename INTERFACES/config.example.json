@@ -1,0 +1,36 @@
+{
+  "display_mode": "fullscreen",
+  "navigation": {
+    "start_level": 404
+  },
+  "ai": {
+    "model": "deepseek-coder",
+    "providers": {
+      "openai": {
+        "api_key": "YOUR_OPENAI_API_KEY_HERE",
+        "base_url": "https://api.openai.com/v1"
+      },
+      "deepseek": {
+        "api_key": "YOUR_DEEPSEEK_API_KEY_HERE",
+        "base_url": "https://api.deepseek.com/v1"
+      },
+      "google": {
+        "api_key": "YOUR_GEMINI_API_KEY_HERE"
+      },
+      "groq": {
+        "api_key": "YOUR_GROQ_API_KEY_HERE",
+        "base_url": "https://api.groq.com/openai/v1"
+      },
+      "ollama": {
+        "base_url": "http://127.0.0.1:11434"
+      }
+    }
+  },
+  "user": {
+    "pseudo": "Anonyme",
+    "user_folder_path": "",
+    "password": "admin",
+    "neural_ghost_active": false,
+    "installed_extensions": {}
+  }
+}

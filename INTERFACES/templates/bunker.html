@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Mégastructure // Bunker</title>
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        /* --- Base Styles (copied for consistency) --- */
+        html { font-size: calc(14px + 0.2vw); }
+        body { margin: 0; font-family: 'Share Tech Mono', monospace; background-color: #0d0d0d; color: #00ffcc; overflow: hidden; font-size: 1rem; }
+        .grime-Overlay, .moving-structure { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; }
+        .grime-Overlay { background: url('/static/texture_grime.png') repeat; opacity: 0.08; z-index: 3; }
+        .moving-structure { background: url('/static/structure_moving.png') center center / cover no-repeat; opacity: 0.05; animation: drift 60s infinite linear; z-index: 1; }
+        @keyframes drift { 0% { transform: translate(0, 0) scale(1); } 50% { transform: translate(-1vw, 0.5vh) scale(1.05); } 100% { transform: translate(0, 0) scale(1); } }
+        /* Glitch animation from aboutissement.html */
+        @keyframes glitch {
+            0%, 100% { text-shadow: 0.05em 0 red, -0.05em 0 blue; }
+            50% { text-shadow: -0.05em 0 red, 0.05em 0 blue; }
+        }
+
+        /* --- Bunker Page Specific Styles --- */
+        .bunker-container { position: relative; z-index: 4; padding: 5vh 5vw; box-sizing: border-box; height: 100vh; display: flex; flex-direction: column; align-items: center; overflow-y: auto; }
+        h1 {
+            font-size: clamp(1.8rem, 4vw, 3.5rem);
+            margin-bottom: 1.25rem;
+            animation: glitch 2s infinite;
+        }
+        .file-list-section { width: 100%; max-width: 800px; margin-bottom: 2.5rem; border: 1px solid rgba(0, 255, 204, 0.2); padding: 1.5rem; background: rgba(0, 10, 8, 0.4); border-radius: 0.25rem; }
+        h2 { font-size: 1.5rem; color: #ff33ff; margin-top: 0; margin-bottom: 1rem; letter-spacing: 0.1em; border-bottom: 1px solid rgba(255, 51, 255, 0.3); padding-bottom: 0.5rem; }
+        
+        #file-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            font-size: 0.9rem;
+        }
+        #file-list li {
+            padding: 0.5rem 0.2rem;
+            border-bottom: 1px solid rgba(0, 255, 204, 0.1);
+            cursor: pointer; /* Rend les éléments cliquables */
+            color: rgba(0, 255, 204, 0.9);
+            transition: all 0.2s ease;
+        }
+        #file-list li:hover {
+            background: rgba(0, 255, 204, 0.05);
+        }
+        #file-list li::before {
+            content: '⏵ ';
+            color: #ff33ff;
+            margin-right: 0.5em;
+        }
+        .log-critical { color: #ff5555; font-weight: bold; }
+
+        .file-viewer-section {
+            width: 100%;
+            max-width: 800px;
+            margin-bottom: 2.5rem;
+            border: 1px solid rgba(0, 255, 204, 0.2);
+            padding: 1.5rem;
+            background: rgba(0, 10, 8, 0.4);
+            border-radius: 0.25rem;
+        }
+        #file-content {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1rem;
+            border-radius: 0.2rem;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 40vh;
+            overflow-y: auto;
+            color: rgba(255, 255, 255, 0.8);
+            font-family: inherit;
+            font-size: 0.85rem;
+        }
+
+        .action-buttons { display: flex; justify-content: center; gap: 2rem; margin-top: 2rem; width: 100%; max-width: 800px; }
+        .action-btn { padding: 0.8rem 2rem; font-family: inherit; font-size: 1rem; cursor: pointer; border-radius: 0.25rem; transition: all 0.2s ease; border: 1px solid; min-width: 200px; }
+        #back-btn { background: transparent; color: #ff33ff; border-color: #ff33ff; }
+        #back-btn:hover { background: rgba(255, 51, 255, 0.1); box-shadow: 0 0 15px rgba(255, 51, 255, 0.4); }
+    </style>
+</head>
+<body>
+    <!-- Visuals -->
+    <div class="moving-structure"></div>
+    <div class="grime-Overlay"></div>
+
+    <div class="bunker-container">
+        <h1>[ NIVEAU 101 // BUNKER ]</h1>
+
+        <div class="file-list-section">
+            <h2>Contenu du Dossier Utilisateur</h2>
+            <ul id="file-list">
+                <li>Analyse du secteur...</li>
+            </ul>
+        </div>
+
+        <div class="file-viewer-section" style="display: none;">
+            <h2 id="viewer-filename">Sélectionnez un fichier</h2>
+            <pre id="file-content">Le contenu du fichier apparaîtra ici...</pre>
+        </div>
+
+        <div class="action-buttons">
+            <button id="back-btn" class="action-btn">Retour</button>
+        </div>
+    </div>
+
+    <script>
+        window.addEventListener('pywebviewready', () => {
+            const fileList = document.getElementById('file-list');
+            const backBtn = document.getElementById('back-btn');
+            const fileViewer = document.querySelector('.file-viewer-section');
+            const viewerFilename = document.getElementById('viewer-filename');
+            const fileContent = document.getElementById('file-content');
+
+            async function openFile(filename) {
+                viewerFilename.textContent = `Lecture de ${filename}...`;
+                fileContent.textContent = '';
+                fileContent.style.color = 'rgba(255, 255, 255, 0.8)'; // Reset color
+                fileViewer.style.display = 'block';
+
+                try {
+                    const result = await window.pywebview.api.read_bunker_file(filename);
+                    if (result.status === 'success') {
+                        viewerFilename.textContent = filename;
+                        // Si le fichier est vide, afficher un message spécifique
+                        fileContent.textContent = result.content.trim() === '' ? '[ Fichier vide ]' : result.content;
+                    } else {
+                        viewerFilename.textContent = `Erreur - ${filename}`;
+                        fileContent.textContent = result.message;
+                        fileContent.style.color = '#ff5555';
+                    }
+                } catch (e) {
+                    viewerFilename.textContent = `Erreur Système`;
+                    fileContent.textContent = `Impossible de lire le fichier : ${e}`;
+                    fileContent.style.color = '#ff5555';
+                }
+            }
+
+            async function loadBunkerContents() {
+                fileList.innerHTML = '<li>Analyse du secteur...</li>';
+                try {
+                    const result = await window.pywebview.api.list_bunker_files();
+                    fileList.innerHTML = ''; // Clear loading message
+
+                    if (result.status === 'success') {
+                        if (result.files.length === 0) {
+                            fileList.innerHTML = '<li>Bunker vide. Aucune donnée détectée.</li>';
+                        } else {
+                            result.files.forEach(file => {
+                                const li = document.createElement('li');
+                                li.textContent = file;
+                                li.addEventListener('click', () => openFile(file));
+                                fileList.appendChild(li);
+                            });
+                        }
+                    } else {
+                        fileList.innerHTML = `<li><span class="log-critical">ERREUR:</span> ${result.message}</li>`;
+                    }
+                } catch (e) {
+                    console.error("Erreur lors du chargement du bunker:", e);
+                    fileList.innerHTML = `<li><span class="log-critical">ERREUR SYSTÈME:</span> Impossible de contacter le module de stockage.</li>`;
+                }
+            }
+
+            backBtn.addEventListener('click', () => {
+                window.location.href = '/terminaux.html';
+            });
+
+            loadBunkerContents();
+        });
+    </script>
+</body>
+</html>
+
+```
+
+### 3. Mise à jour de la Navigation (`terminaux.html`)
+
+Enfin, nous modifions le script de `terminaux.html` pour que le clic sur "NIVEAU 101 : Bunker" redirige vers la nouvelle page au lieu de déclencher l'animation de défilement.
+
+```diff
+--- a/Users/boris/Desktop/dev/INTERFACES/terminaux.html
++++ b/Users/boris/Desktop/dev/INTERFACES/terminaux.html
+@@ -611,12 +611,19 @@
+         // Handle menu item clicks to interact with the terminal
+         menuItems.forEach(item => {
+             item.addEventListener('click', function() {
++                const level = this.getAttribute('data-level');
++
++                // Special case for levels that are separate pages
++                if (level === '101') {
++                    window.location.href = '/bunker';
++                    return; // Stop execution here
++                }
++
+                 // D'abord, on retire l'état "focus" pour tout faire réapparaître
+                 document.body.classList.remove('focused-view');
+ 
+-                const level = this.getAttribute('data-level');
+                 const name = this.dataset.name || '???';
+                 h1.textContent = `[ ${name.toUpperCase()} // NIVEAU ${level} ]`;
+ 
+
+```
+
+L'étape 2 de la Phase 1 est terminée. Votre application est maintenant capable de créer un dossier personnel pour l'utilisateur et d'en afficher le contenu dans une interface dédiée.
+
+<!--
+[PROMPT_SUGGESTION]Passons à la Phase 2, Étape 3 : le sandboxing logique.[/PROMPT_SUGGESTION]
+[PROMPT_SUGGESTION]Comment pourrions-nous ajouter un bouton pour créer un nouveau fichier dans le Bunker ?[/PROMPT_SUGGESTION]
+-->

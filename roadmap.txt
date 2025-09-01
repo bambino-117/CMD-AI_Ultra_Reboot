@@ -1,0 +1,59 @@
+# --- ROADMAP - Prochaines Étapes ---
+
+# [TERMINÉ] 1. Améliorer l'affichage du sous-menu des niveaux.
+#    - Objectif : Agrandir l'espacement et la largeur pour une meilleure lisibilité et adaptabilité.
+#    - Action 1 : Modification des propriétés CSS `min-width`, `padding` et `gap`. (Terminé)
+#    - Action 2 : Rendre la largeur maximale dynamique avec `calc()` pour s'adapter à la taille de la fenêtre. (Terminé)
+#    - NOTE: Le problème de débordement persiste sur certaines résolutions, à revoir plus tard.
+
+# [TERMINÉ] 2. Ajouter des modèles de langages optionnels.
+#    - Dans `settings.html`, un menu déroulant permet de choisir entre `deepseek-coder` et `deepseek-chat`.
+#    - La logique backend était déjà prête à accepter ce paramètre.
+
+# [TERMINÉ] 3. Finaliser le comportement du terminal dans `terminaux.html`.
+#    - Objectif : Rendre le terminal purement visuel, non-interactif, et visible uniquement pendant les transitions de niveaux.
+#    - Action : Le terminal est invisible par défaut (`opacity: 0`). Il devient visible au début de l'animation de défilement et redevient invisible à la fin.
+#    - Résultat : Le terminal se comporte comme un effet visuel de transition, renforçant l'idée de déplacement dans la Mégastructure.
+
+# [TERMINÉ] 4. Définir le Niveau 500 : "Centre d'Analyse".
+#    - Concept : Un espace dédié à la consultation de rapports d'OSINT et de pentesting.
+#    - Action : Création de la page `centre_analyse.html` avec une interface à deux panneaux (liste de dossiers et visionneuse de rapports).
+#    - Action : Ajout de la route Flask et mise à jour du menu dans `terminaux.html` pour y accéder.
+#    - Résultat : Le Niveau 500 est maintenant une page fonctionnelle avec du contenu de démonstration.
+
+# [TERMINÉ] 5. Mettre en place la logique d'installation/désinstallation des extensions.
+#    - Action : Création des API backend (`install_extension`, etc.) et de l'interface du "Portail Conteneur". (Terminé)
+#    - Action : Le menu de `terminaux.html` est maintenant dynamique et affiche les extensions installées. (Terminé)
+
+# [TERMINÉ] 6. Mettre en place le chargement dynamique du contenu des extensions.
+   - Objectif : Remplacer le `extension_placeholder.html` par des templates spécifiques à chaque extension.
+   - Action 1 : La route `/extension/<slug>` charge maintenant dynamiquement le template HTML spécifié dans le `payload` du conteneur de l'extension. (Terminé)
+   - Action 2 : La méthode `install_extension` sauvegarde le `payload` dans la configuration lors de l'installation. (Terminé)
+   - Action 3 : Création du premier template d'extension réel : `osint_aggregator.html`. (Terminé)
+
+# [TERMINÉ] 7. Implémenter la fonctionnalité de base de l'extension "OSINT Aggregator".
+#    - Action : Création de l'API `run_osint_scan(target)` et mise à jour du front-end pour afficher les résultats. (Terminé)
+
+# [TERMINÉ] 8. Améliorer le système d'extensions avec des logs en temps réel.
+#    - Objectif : Permettre à une extension de renvoyer des messages de log au front-end pendant son exécution.
+#    - Action 1 : La méthode `run_osint_scan` a été modifiée pour accepter une fonction de rappel (callback). (Terminé)
+#    - Action 2 : La méthode envoie des messages de statut ('log', 'success', 'error') via le callback. (Terminé)
+#    - Action 3 : Le JavaScript de `osint_aggregator.html` a été mis à jour pour passer une fonction de rappel et afficher les logs en temps réel. (Terminé)
+
+# [TERMINÉ] 9. Ajouter la sauvegarde des résultats OSINT dans le Bunker.
+#    - Objectif : Permettre à l'utilisateur de sauvegarder un rapport d'analyse depuis l'extension OSINT.
+#    - Action 1 (Frontend) : Ajout d'un bouton "Sauvegarder le rapport" dans `osint_aggregator.html` qui apparaît après un scan réussi. (Terminé)
+#    - Action 2 (Backend) : Création de la méthode API `save_osint_report(target, results)` qui formate les résultats en Markdown et les sauvegarde dans le Bunker. (Terminé)
+#    - Action 3 (Frontend) : Le JavaScript appelle cette nouvelle API et affiche une notification de succès/erreur. (Terminé)
+
+# [TERMINÉ] 10. Ajouter des effets sonores à l'interface.
+#    - Objectif : Rendre l'expérience plus immersive.
+#    - Action 1 (Frontend) : Dans `osint_aggregator.html`, un son de "clic" est joué à chaque nouveau log. (Terminé)
+#    - Action 2 (Frontend) : Dans `terminaux.html`, un son de "whoosh" est joué pendant l'animation de défilement. (Terminé)
+#    - Action 3 (Ressources) : Ajout des éléments `<audio>` et de la logique de lecture. Les fichiers audio (`tick.wav`, `whoosh.mp3`) doivent être placés dans `INTERFACES/static/Ressources/`. (Terminé)
+
+11. Améliorer la gestion des fichiers dans le Bunker.
+    - Objectif : Permettre à l'utilisateur de supprimer des fichiers depuis l'interface du Bunker.
+    - Action 1 (Backend) : Créer une nouvelle méthode API `delete_bunker_file(filename)` qui supprime un fichier de manière sécurisée.
+    - Action 2 (Frontend) : Dans `bunker.html`, ajouter un bouton "Supprimer" à côté de chaque fichier. Un clic demandera une confirmation avant d'appeler l'API.
+    - Action 3 (Frontend) : Mettre à jour la liste des fichiers après une suppression réussie.

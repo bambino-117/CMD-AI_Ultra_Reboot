@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Mégastructure // Centre d'Analyse</title>
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        /* Base styles copied for consistency */
+        html { font-size: calc(14px + 0.2vw); }
+        body { margin: 0; font-family: 'Share Tech Mono', monospace; background-color: #0d0d0d; color: #00ffcc; overflow: hidden; font-size: 1rem; }
+        .grime-Overlay, .moving-structure { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 1; }
+        .grime-Overlay { background: url('/static/texture_grime.png') repeat; opacity: 0.08; z-index: 3; }
+        .moving-structure { background: url('/static/structure_moving.png') center center / cover no-repeat; opacity: 0.05; animation: drift 60s infinite linear; }
+        @keyframes drift { 0% { transform: translate(0, 0) scale(1); } 50% { transform: translate(-1vw, 0.5vh) scale(1.05); } 100% { transform: translate(0, 0) scale(1); } }
+        @keyframes glitch { 0%, 100% { text-shadow: 0.05em 0 red, -0.05em 0 blue; } 50% { text-shadow: -0.05em 0 red, 0.05em 0 blue; } }
+
+        /* Page Layout */
+        .page-container { position: relative; z-index: 4; padding: 2vh 2vw; box-sizing: border-box; height: 100vh; display: flex; flex-direction: column; }
+        h1 { font-size: clamp(1.5rem, 3vw, 2.5rem); margin: 0 0 1.5rem 0; animation: glitch 2s infinite; text-align: center; }
+        
+        .analysis-grid {
+            display: grid;
+            grid-template-columns: 300px 1fr; /* Left panel fixed width, right panel takes rest */
+            gap: 1.5rem;
+            flex-grow: 1;
+            height: calc(100% - 8rem); /* Adjust based on header/footer height */
+        }
+
+        /* Left Panel: Dossier List */
+        .dossier-list {
+            background: rgba(0, 10, 8, 0.4);
+            border: 1px solid rgba(0, 255, 204, 0.2);
+            border-radius: 0.25rem;
+            padding: 1rem;
+            overflow-y: auto;
+        }
+        .dossier-list h2 { font-size: 1.2rem; color: #ff33ff; margin-top: 0; margin-bottom: 1rem; letter-spacing: 0.1em; }
+        .dossier-list ul { list-style: none; padding: 0; margin: 0; }
+        .dossier-list li { padding: 0.5rem; border-bottom: 1px solid rgba(0, 255, 204, 0.1); cursor: pointer; transition: all 0.2s ease; }
+        .dossier-list li:hover, .dossier-list li.active { background: rgba(0, 255, 204, 0.1); }
+        .dossier-list li.active { color: #ff33ff; font-weight: bold; }
+
+        /* Right Panel: Report Viewer */
+        .report-viewer {
+            background: rgba(0, 10, 8, 0.4);
+            border: 1px solid rgba(0, 255, 204, 0.2);
+            border-radius: 0.25rem;
+            padding: 1.5rem;
+            overflow-y: auto;
+            color: rgba(255, 255, 255, 0.85);
+        }
+        .report-viewer h3 { color: #ffff00; margin-top: 0; }
+        .report-viewer p { line-height: 1.6; }
+        .report-viewer pre { background: rgba(0,0,0,0.3); padding: 1rem; white-space: pre-wrap; word-wrap: break-word; border-left: 3px solid #ff33ff; }
+        .report-viewer .placeholder { text-align: center; color: rgba(255,255,255,0.4); padding-top: 10vh; }
+
+        /* Action Buttons */
+        .action-buttons { display: flex; justify-content: center; padding-top: 1.5rem; }
+        .action-btn { padding: 0.8rem 2rem; font-family: inherit; font-size: 1rem; cursor: pointer; border-radius: 0.25rem; transition: all 0.2s ease; border: 1px solid; background: transparent; color: #ff33ff; border-color: #ff33ff; }
+        .action-btn:hover { background: rgba(255, 51, 255, 0.1); box-shadow: 0 0 15px rgba(255, 51, 255, 0.4); }
+    </style>
+</head>
+<body>
+    <!-- Visuals -->
+    <div class="moving-structure"></div>
+    <div class="grime-Overlay"></div>
+
+    <div class="page-container">
+        <h1>[ NIVEAU 500 // CENTRE D'ANALYSE ]</h1>
+
+        <div class="analysis-grid">
+            <!-- Left Panel: Dossier List -->
+            <div class="dossier-list">
+                <h2>DOSSIERS CIBLES</h2>
+                <ul id="dossier-list-ul">
+                    <li data-dossier="arasaka">CASE-073-A: Infiltration Arasaka</li>
+                    <li data-dossier="militech">CASE-112-C: Surveillance Militech</li>
+                    <li data-dossier="kangtao">CASE-201-B: Exfiltration Kang Tao</li>
+                </ul>
+            </div>
+
+            <!-- Right Panel: Report Viewer -->
+            <div id="report-viewer" class="report-viewer">
+                <div class="placeholder">
+                    <p>SELECTIONNEZ UN DOSSIER POUR AFFICHER LE RAPPORT</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <button id="back-btn" class="action-btn">Retour</button>
+        </div>
+    </div>
+
+    <script>
+        // Placeholder data for reports
+        const reportData = {
+            arasaka: {
+                title: "RAPPORT D'INFILTRATION : ARASAKA TOWER",
+                content: `
+                    <p><strong>Agent:</strong> V</p>
+                    <p><strong>Objectif:</strong> Récupération de la puce 'Relic'.</p>
+                    <p><strong>Statut:</strong> ÉCHEC PARTIEL</p>
+                    <p><strong>Résumé:</strong> L'agent a réussi à pénétrer le périmètre sécurisé et à accéder au penthouse de Yorinobu Arasaka. La cible a été témoin de l'assassinat de Saburo Arasaka. L'exfiltration a été compromise, résultant en des dommages critiques pour l'agent et la perte de contrôle de l'artefact.</p>
+                    <h3>Logs d'Opération (Extraits):</h3>
+                    <pre>
+[23:10] - Infiltration via AV de luxe.
+[23:45] - Contournement sécurité penthouse.
+[00:12] - TÉMOIN ÉVÉNEMENT NON-PLANIFIÉ. PROTOCOLE D'URGENCE.
+[00:30] - Exfiltration forcée. Contact hostile avec Adam Smasher.
+[01:15] - Agent neutralisé. Perte de signal.
+                    </pre>
+                `
+            },
+            militech: {
+                title: "RAPPORT DE SURVEILLANCE : MILITECH",
+                content: `
+                    <p><strong>Agent:</strong> Morgan Blackhand (archives)</p>
+                    <p><strong>Objectif:</strong> Évaluation des défenses du QG de Night City.</p>
+                    <p><strong>Statut:</strong> TERMINÉ</p>
+                    <p><strong>Résumé:</strong> Surveillance à longue portée effectuée sur une période de 72 heures. Identification de plusieurs failles dans les rotations de garde et les protocoles de réponse cybernétique. Le système 'Aegis' est puissant mais prédictible.</p>
+                    <h3>Données Exfiltrées:</h3>
+                    <pre>
+ROTATION_GARDE_SECTEUR_GAMMA: 3 heures
+FREQUENCE_SCAN_NET: 15 secondes
+PROTOCOLE_REPONSE_INTRUSION: 'Scorched Earth' (Niveau 3)
+VULNERABILITE_CONNUE: Port 443, vieille version de Kiroshi firmware.
+                    </pre>
+                `
+            },
+            kangtao: {
+                title: "RAPPORT D'EXFILTRATION : KANG TAO",
+                content: `
+                    <p><strong>Agent:</strong> Inconnu (Alias 'Songbird')</p>
+                    <p><strong>Objectif:</strong> Extraction de l'ingénieur en chef des armes intelligentes.</p>
+                    <p><strong>Statut:</strong> SUCCÈS</p>
+                    <p><strong>Résumé:</strong> L'opération a utilisé une brèche dans le Mur Noir pour une infiltration numérique, paralysant les systèmes de sécurité internes. L'extraction physique a été menée sous couvert d'une attaque de diversion par un gang local. La cible a été récupérée sans incident.</p>
+                    <h3>Analyse Post-Op:</h3>
+                    <pre>
+- L'utilisation du Mur Noir était extrêmement risquée.
+- La dépendance de Kang Tao à une IA centralisée pour la sécurité est une faiblesse majeure.
+- L'agent 'Songbird' a démontré des capacités de Netrunning exceptionnelles. Recommander surveillance.
+                    </pre>
+                `
+            }
+        };
+
+        window.addEventListener('pywebviewready', () => {
+            const backBtn = document.getElementById('back-btn');
+            const dossierItems = document.querySelectorAll('#dossier-list-ul li');
+            const reportViewer = document.getElementById('report-viewer');
+
+            backBtn.addEventListener('click', () => {
+                window.location.href = '/terminaux.html';
+            });
+
+            dossierItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    // Remove active class from all items
+                    dossierItems.forEach(i => i.classList.remove('active'));
+                    // Add active class to clicked item
+                    item.classList.add('active');
+
+                    const dossierId = item.dataset.dossier;
+                    const data = reportData[dossierId];
+                    if (data) {
+                        reportViewer.innerHTML = `<h3>${data.title}</h3>${data.content}`;
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

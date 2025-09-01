@@ -1,0 +1,12 @@
+{
+    "id": 901,
+    "type": "extension",
+    "name": "OSINT Aggregator",
+    "description": "Un outil pour agréger des flux de renseignements open-source et analyser des cibles.",
+    "version": "1.0.0",
+    "author": "Cygnus X-1",
+    "dependencies": [],
+    "payload": {
+        "entry_point_template": "osint_aggregator.html" 
+    }
+}

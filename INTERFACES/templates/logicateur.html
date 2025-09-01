@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Mégastructure // Logicateur</title>
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        /* --- Base Styles (copied for consistency) --- */
+        html { font-size: calc(14px + 0.2vw); }
+        body { margin: 0; font-family: 'Share Tech Mono', monospace; background-color: #0d0d0d; color: #00ffcc; overflow: hidden; font-size: 1rem; }
+        .grime-Overlay, .moving-structure { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; }
+        .grime-Overlay { background: url('/static/texture_grime.png') repeat; opacity: 0.08; z-index: 3; }
+        .moving-structure { background: url('/static/structure_moving.png') center center / cover no-repeat; opacity: 0.05; animation: drift 60s infinite linear; z-index: 1; }
+        @keyframes drift { 0% { transform: translate(0, 0) scale(1); } 50% { transform: translate(-1vw, 0.5vh) scale(1.05); } 100% { transform: translate(0, 0) scale(1); } }
+        @keyframes glitch { 0%, 100% { text-shadow: 0.05em 0 red, -0.05em 0 blue; } 50% { text-shadow: -0.05em 0 red, 0.05em 0 blue; } }
+
+        /* --- Logicateur Page Specific Styles --- */
+        .main-container {
+            position: relative;
+            z-index: 4;
+            padding: 3vh 4vw;
+            box-sizing: border-box;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        h1 {
+            font-size: clamp(1.8rem, 4vw, 3.5rem);
+            margin-bottom: 1rem;
+            animation: glitch 2s infinite;
+            text-align: center;
+        }
+
+        .chat-window {
+            flex-grow: 1;
+            border: 1px solid rgba(0, 255, 204, 0.2);
+            background: rgba(0, 10, 8, 0.4);
+            border-radius: 0.25rem;
+            padding: 1rem;
+            overflow-y: auto;
+            margin-bottom: 1rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 0.6rem 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 0.8rem;
+            line-height: 1.4;
+        }
+        .message.user {
+            background: rgba(0, 255, 204, 0.1);
+            align-self: flex-end;
+            color: #00ffcc;
+        }
+        .message.ai {
+            background: rgba(255, 51, 255, 0.1);
+            align-self: flex-start;
+            color: #ffccff;
+        }
+        .message.system {
+            background: transparent;
+            align-self: center;
+            text-align: center;
+            color: rgba(255, 255, 0, 0.6);
+            font-size: 0.8rem;
+        }
+        .message.error {
+            background: rgba(255, 0, 0, 0.2);
+            color: #ffaaaa;
+        }
+
+        .input-area {
+            display: flex;
+            gap: 1rem;
+        }
+
+        #prompt-input {
+            flex-grow: 1;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(0, 255, 204, 0.3);
+            color: #00ffcc;
+            font-family: inherit;
+            font-size: 1rem;
+            padding: 0.75rem;
+            border-radius: 0.2rem;
+        }
+
+        #send-btn, #back-btn {
+            padding: 0.75rem 1.5rem;
+            font-family: inherit;
+            font-size: 1rem;
+            cursor: pointer;
+            border-radius: 0.25rem;
+            transition: all 0.2s ease;
+            border: 1px solid;
+        }
+
+        #send-btn { background: #00ffcc; color: #0d0d0d; border-color: #00ffcc; }
+        #send-btn:hover { box-shadow: 0 0 15px rgba(0, 255, 204, 0.7); }
+        #send-btn:disabled { background: #555; border-color: #555; color: #888; cursor: not-allowed; }
+
+        #back-btn { background: transparent; color: #ff33ff; border-color: #ff33ff; }
+        #back-btn:hover { background: rgba(255, 51, 255, 0.1); box-shadow: 0 0 15px rgba(255, 51, 255, 0.4); }
+
+    </style>
+</head>
+<body>
+    <!-- Visuals -->
+    <div class="moving-structure"></div>
+    <div class="grime-Overlay"></div>
+
+    <div class="main-container">
+        <h1>[ NIVEAU 23 // LOGICATEUR ]</h1>
+        <div class="chat-window" id="chat-window">
+            <div class="message system">Connexion au sub-processeur IA établie. Attente d'instruction.</div>
+        </div>
+        <div class="input-area">
+            <input type="text" id="prompt-input" placeholder="Envoyer une instruction...">
+            <button id="send-btn">Envoyer</button>
+            <button id="back-btn">Retour</button>
+        </div>
+    </div>
+
+    <script>
+        window.addEventListener('pywebviewready', () => {
+            const h1 = document.querySelector('h1');
+            const chatWindow = document.getElementById('chat-window');
+            const promptInput = document.getElementById('prompt-input');
+            const sendBtn = document.getElementById('send-btn');
+            const backBtn = document.getElementById('back-btn');
+
+            function addMessage(text, type) {
+                const msgDiv = document.createElement('div');
+                msgDiv.classList.add('message', type);
+                msgDiv.textContent = text;
+                chatWindow.appendChild(msgDiv);
+                chatWindow.scrollTop = chatWindow.scrollHeight; // Auto-scroll
+            }
+
+            async function checkInfectionStatus() {
+                try {
+                    const settings = await window.pywebview.api.load_settings();
+                    if (settings.user && settings.user.neural_ghost_active) {
+                        // L'infection est active, on modifie l'interface
+                        h1.textContent = '[ CANAL COMPROMIS // NEURAL_GHOST ]';
+                        const initialMessage = chatWindow.querySelector('.message.system');
+                        if (initialMessage) {
+                            initialMessage.textContent = '...NOUVELLE CONNEXION DÉTECTÉE...';
+                        }
+                    }
+                } catch (e) {
+                    console.error("Impossible de vérifier l'état de l'infection:", e);
+                }
+            }
+
+            async function handleSend() {
+                const prompt = promptInput.value.trim();
+                if (!prompt) return;
+
+                addMessage(prompt, 'user');
+                promptInput.value = '';
+                sendBtn.disabled = true;
+                addMessage('...', 'ai'); // Thinking indicator
+
+                try {
+                    const result = await window.pywebview.api.get_ai_response(prompt);
+                    const lastMessage = chatWindow.querySelector('.message:last-child');
+
+                    if (result.status === 'success') {
+                        lastMessage.textContent = result.content;
+                    } else {
+                        lastMessage.textContent = `ERREUR: ${result.message}`;
+                        lastMessage.classList.add('error');
+                    }
+                } catch (e) {
+                    addMessage(`ERREUR SYSTÈME: ${e}`, 'error');
+                } finally {
+                    sendBtn.disabled = false;
+                }
+            }
+
+            sendBtn.addEventListener('click', handleSend);
+            promptInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') handleSend();
+            });
+
+            backBtn.addEventListener('click', () => {
+                window.location.href = '/terminaux.html';
+            });
+
+            // Vérifier l'état de l'infection au chargement de la page
+            checkInfectionStatus();
+        });
+    </script>
+</body>
+</html>

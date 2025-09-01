@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Mégastructure // Terminal Actif</title>
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        /* --- Base & Fluid Typography --- */
+        html {
+            /* Crée une taille de police de base qui s'adapte légèrement à la largeur de l'écran. */
+            /* 1rem sera égal à cette valeur, rendant toute l'interface adaptable. */
+            font-size: calc(14px + 0.2vw);
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Share Tech Mono' , monospace;
+            background-color: #0d0d0d;
+            color: #00ffcc;
+            overflow: hidden;
+            font-size: 1rem; /* Définit la taille de police par défaut du corps à 1rem */
+        }
+
+        /* Overlay de saleté/moisissure */
+        .grime-Overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: url('/static/texture_grime.png') repeat;
+            opacity: 0.08;
+            transition: opacity 0.8s ease-in-out;
+            pointer-events: none;
+            z-index: 3;
+        }
+
+        /* Structures mouvantes en fond */
+        .moving-structure {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: url('/static/structure_moving.png') center center / cover no-repeat;
+            opacity: 0.05;
+            transition: opacity 0.8s ease-in-out;
+            animation: drift 60s infinite linear;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        @keyframes drift {
+            0% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(-1vw, 0.5vh) scale(1.05); } /* Rendu relatif à la taille de l'écran */
+            100% { transform: translate(0, 0) scale(1); }
+        }
+
+        /* Main container for the whole page content */
+        .main-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-height: 100vh;
+            padding: 2vh 2vw 2vh 8vw; /* Padding vertical relatif à la hauteur de l'écran */
+            box-sizing: border-box;
+            position: relative; /* Pour positionner les éléments en overlay */
+        }
+
+        /* Container for the side UI elements to align them perfectly */
+        .side-ui-container {
+            position: absolute;
+            top: 50%;
+            left: 3vw; /* Adjust horizontal position of the whole block */
+            transform: translateY(-50%);
+            display: flex;
+            align-items: center; /* This is the key to vertical alignment */
+            gap: 1.5vw; /* Space between button and title */
+        }
+
+        /* NOUVEAU : Style pour le bouton d'accès principal à côté du titre H1 */
+        #main-access-btn {
+            background: transparent;
+            border: 1px solid #ff33ff;
+            color: #ff33ff;
+            font-family: inherit;
+            font-size: 1rem;
+            padding: 0.4rem 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            opacity: 0.8;
+        }
+        #main-access-btn:hover {
+            opacity: 1;
+            background: rgba(255, 51, 255, 0.1);
+            box-shadow: 0 0 8px rgba(255, 51, 255, 0.4);
+        }
+
+        h1 {
+            /* Taille de police fluide avec des limites min/max pour éviter les extrêmes */
+            font-size: clamp(1.8rem, 4vw, 3.5rem);
+            margin: 0;
+            animation: glitch 2s infinite;
+            transform: rotate(-90deg);
+            pointer-events: none; /* Pour ne pas être cliquable */
+        }
+
+        @keyframes glitch {
+            0%, 100% { 
+                text-shadow: 2px 0 rgba(255, 0, 0, 0.7), -2px 0 rgba(0, 0, 255, 0.7); 
+                transform: skewX(0);
+            }
+            49% { text-shadow: 2px 0 rgba(255, 0, 0, 0.7), -2px 0 rgba(0, 0, 255, 0.7); transform: skewX(0); }
+            50% { 
+                text-shadow: -5px 0 rgba(255, 0, 0, 0.7), 3px 0 rgba(0, 0, 255, 0.7);
+                transform: skewX(-5deg);
+            }
+            51% { text-shadow: 2px 0 rgba(255, 0, 0, 0.7), -2px 0 rgba(0, 0, 255, 0.7); transform: skewX(0); }
+        }
+
+        @keyframes screen-shake {
+            0%, 100% { transform: translate(0, 0); }
+            10%, 30%, 50%, 70%, 90% { transform: translate(-2px, 2px); }
+            20%, 40%, 60%, 80% { transform: translate(2px, -2px); }
+        }
+        .shake-effect { animation: screen-shake 0.3s; }
+
+        /* Terminal window styles */
+        #cyber-terminal {
+            flex-grow: 1; /* Take up remaining vertical space */
+            background: rgba(0, 10, 8, 0.4);
+            border: 0 solid rgba(0, 255, 204, 0.2);
+            border-radius: 0.25rem;
+            overflow-y: auto;
+            padding: 1rem;
+            position: relative; 
+            /* MODIFICATION: Le terminal est invisible par défaut et apparaît pendant les animations. */
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            box-shadow: inset 0 0 1rem rgba(0, 255, 204, 0.1);
+            font-size: 0.9rem;
+            /* MODIFICATION : Rend le terminal complètement insensible aux clics et au scroll de la souris. */
+            pointer-events: none;
+        }
+
+        /* Custom scrollbar for the terminal */
+        #cyber-terminal::-webkit-scrollbar {
+            width: 6px; /* Rendre la barre de défilement plus fine */
+        }
+        #cyber-terminal::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        /* La barre de défilement est toujours invisible car le terminal n'est pas interactif. */
+        #cyber-terminal::-webkit-scrollbar-thumb {
+            background-color: transparent;
+            border-radius: 0.25rem;
+        }
+
+        /* Content inside the terminal */
+        #terminal-content {
+            /* Opacité fixe pour un effet ambiant, plus de changement au survol. */
+            opacity: 0.4;
+        }
+
+        #terminal-content p {
+            margin: 0 0 0.2em 0; /* Marge inférieure pour un espacement lisible mais dense */
+            white-space: pre-wrap; /* Respect whitespace and wrap lines */
+            text-align: left; /* Align terminal text to the left */
+            word-break: break-all;
+        }
+
+        /* Conditional syntax highlighting for logs */
+        .log-critical { color: #ff5555; font-weight: bold; }
+        .log-warning { color: #ffcc00; }
+        .log-hex { color: #999; }
+        .log-symbol { color: #80ffff; }
+
+        .level-header {
+            color: #ffff00; /* Yellow to stand out */
+            margin: 1.5rem 0;
+            letter-spacing: 0.15em; /* Relatif à la taille de la police de l'élément */
+            position: relative; /* Contexte de positionnement pour le bouton d'accès */
+            /* MODIFICATION : Utilisation de Flexbox pour un alignement parfait */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem; /* Espace entre le titre et le bouton */
+        }
+
+        /* Blinking cursor for typewriter effect */
+        .level-header.typing::after {
+            content: '█';
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink {
+            from, to { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        /* --- Navigation Menu Styles --- */
+        .scroll-control {
+            position: relative; /* It's now a flex item, so its position is relative to the flex container */
+        }
+
+        .scroll-btn {
+            background: none;
+            border: none;
+            color: #00ffcc;
+            /* La taille est maintenant contrôlée par l'icône SVG */
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 0;
+            line-height: 0; /* Assure que le bouton s'ajuste à la hauteur de l'icône */
+        }
+
+        .scroll-btn svg {
+            width: 2.5rem;
+            height: 2.5rem;
+            display: block;
+        }
+
+        .scroll-btn:hover {
+            color: #ff33ff;
+            text-shadow: 0 0 8px #ff33ff;
+        }
+
+        .context-menu {
+            position: absolute;
+            top: 120%;
+            left: 0;
+            background: rgba(13, 13, 13, 0.95);
+            border: 1px solid #00ffcc; /* 1px est acceptable pour une bordure fine et nette */
+            border-radius: 0.25rem;
+            padding: 0.75rem;
+            min-width: 16rem; /* Augmentation de la largeur minimale */
+            /* ADAPTATION : La largeur maximale s'adapte à la fenêtre pour éviter le débordement. */
+            max-width: calc(100vw - 6vw); /* 100% de la largeur de la fenêtre moins la marge gauche (3vw) et une marge de sécurité à droite (3vw). */
+            display: none;
+            flex-direction: column;
+            gap: 0.6rem; /* Léger agrandissement de l'espace entre les items */
+            max-height: 70vh; /* Augmentation de la hauteur maximale avant défilement */
+            overflow-y: auto; /* CORRECTION: Ajoute une barre de défilement si nécessaire */
+            z-index: 1000;
+            box-shadow: 0 0 15px rgba(0, 255, 204, 0.3);
+            backdrop-filter: blur(5px);
+            box-sizing: border-box; /* IMPORTANT: Assure que padding/border sont inclus dans la largeur totale */
+        }
+
+        /* Scrollbar pour le menu contextuel, si nécessaire (copié du terminal) */
+        .context-menu::-webkit-scrollbar {
+            width: 6px;
+        }
+        .context-menu::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .context-menu::-webkit-scrollbar-thumb {
+            background-color: rgba(0, 255, 204, 0.4);
+            border-radius: 0.25rem;
+        }
+
+        .scroll-control.active .context-menu {
+            display: flex;
+            animation: menuAppear 0.3s ease;
+        }
+
+        @keyframes menuAppear {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .menu-item {
+            padding: 0.75rem 1rem; /* Augmentation du padding pour plus d'aisance */
+            color: #00ffcc;
+            font-size: 0.9rem;            line-height: 1.3; /* Un peu plus d'espace pour la description */
+            cursor: pointer;
+            border-radius: 0.2rem;
+            transition: all 0.2s ease;
+            box-sizing: border-box; /* Cohérence pour le calcul de la taille */
+            overflow-wrap: break-word; /* Permet au texte de se couper pour éviter le débordement */
+        }
+
+        /* Utilise un pseudo-élément pour afficher la description en sous-titre */
+        .menu-item::after {
+            content: attr(data-description); /* Récupère le texte de l'attribut data-description */
+            display: block; /* Affiche sur une nouvelle ligne */
+            font-size: 0.75em; /* Police plus petite pour le sous-titre */
+            color: rgba(0, 255, 204, 0.7); /* Couleur légèrement atténuée */
+            margin-top: 0.2em;
+            white-space: normal; /* Permet au texte de passer à la ligne si besoin */
+            pointer-events: none; /* S'assure que le sous-titre n'interfère pas avec les clics */
+        }
+
+        .menu-item:hover {
+            background: rgba(0, 255, 204, 0.2);
+        }
+
+        .menu-item:active {
+            background: rgba(0, 255, 204, 0.3);
+        }
+
+        /* Classe pour l'état "focus" où seul le titre et le bouton restent */
+        body.focused-view .moving-structure,
+        body.focused-view .grime-Overlay,
+        body.focused-view #config-button { /* Cache aussi le bouton de config en mode focus */
+            opacity: 0;
+            pointer-events: none; /* Empêche l'interaction avec les éléments invisibles */
+        }
+
+        /* CORRECTION: Cache complètement le terminal pour faire disparaître sa scrollbar */
+        body.focused-view #cyber-terminal {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        /* --- Modal Styles --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+        .modal-content {
+            background: #0d0d0d;
+            border: 1px solid #ff33ff;
+            padding: 2rem;
+            border-radius: 0.25rem;
+            text-align: center;
+            box-shadow: 0 0 25px rgba(255, 51, 255, 0.4);
+            animation: menuAppear 0.5s ease;
+        }
+        .modal-content.shake-effect {
+            animation: screen-shake 0.4s;
+        }
+        .modal-content h2 { color: #ff33ff; margin-top: 0; }
+        .modal-content p { color: rgba(0, 255, 204, 0.8); }
+        .modal-content input {
+            background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(0, 255, 204, 0.3);
+            color: #00ffcc; font-family: inherit; font-size: 1.2rem;
+            padding: 0.5rem; text-align: center; margin: 1rem 0;
+        }
+        .modal-actions { display: flex; gap: 1rem; justify-content: center; margin-top: 1rem; }
+        .modal-actions button {
+            padding: 0.5rem 1.5rem; font-family: inherit; font-size: 1rem;
+            cursor: pointer; border-radius: 0.25rem; transition: all 0.2s ease;
+        }
+        #bunker-cancel-btn { background: transparent; border: 1px solid #ff5555; color: #ff5555; }
+        #bunker-cancel-btn:hover { background: rgba(255, 85, 85, 0.1); }
+        #bunker-submit-btn { background: #00ffcc; border: 1px solid #00ffcc; color: #0d0d0d; }
+        #bunker-submit-btn:hover { box-shadow: 0 0 15px rgba(0, 255, 204, 0.7); }
+
+
+        /* --- Style du Bouton Configurateur --- */
+        #config-button {
+            position: fixed;
+            bottom: 2vh;
+            right: 2vw;
+            color: rgba(0, 255, 204, 0.6);
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 10;
+            letter-spacing: 0.1em;
+        }
+        #config-button:hover {
+            color: #ff33ff;
+            text-shadow: 0 0 8px #ff33ff;
+        }
+
+        /* --- Media Queries for Responsiveness --- */
+        @media (min-width: 2200px) {
+            /* On very wide screens, prevent the terminal from becoming too wide for readability. */
+            /* We constrain the main container and center it. */
+            .main-container {
+                max-width: 2000px;
+                margin-left: auto;
+                margin-right: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Eléments Visuels -->
+    <div class="moving-structure"></div>
+    <div class="grime-Overlay"></div>
+
+    <!-- Ambience sonore -->
+    <audio autoplay loop>
+        <source src="/static/Ressources/ambiance_sonore.mp3" type="audio/mpeg">
+        pilotes/चालक audio Испорченный/corrupted
+    </audio>
+    <!-- NOUVEAU: Son pour l'animation de défilement -->
+    <audio id="scroll-whoosh-sound" src="/static/Ressources/whoosh.mp3" preload="auto"></audio>
+
+    <!-- Contenu -->
+    <div class="main-container">
+        <!-- Wrapper for side UI to ensure vertical alignment -->
+        <div class="side-ui-container">
+            <div class="scroll-control">
+                <button id="scrollToggle" class="scroll-btn" aria-label="Ouvrir le menu de navigation">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4L7 9h3v6H7l5 5 5-5h-3V9h3L12 4z"/></svg>
+                </button>
+                <div id="contextMenu" class="context-menu">
+                    <!-- Nouveaux items du menu avec les data-attributes -->
+                    <div class="menu-item" data-level="404" data-name="Accesseur" data-description="Est le landing niveau.">
+                        NIVEAU 404 : Accesseur
+                    </div>
+                    <div class="menu-item" data-level="23" data-name="Logicateur" data-description="Donnera accès à un chat avec ia intégrée." data-url="/logicateur">
+                        NIVEAU 23 : Logicateur
+                    </div>
+                    <div class="menu-item" data-level="101" data-name="Bunker" data-description="Contiendra l'accès au dossier utilisateur et fichiers de configurations, tous fichiers relatifs aux données personnelles de l'user." data-url="/bunker">
+                        NIVEAU 101 : Bunker
+                    </div>
+                    <div class="menu-item" data-level="241" data-name="Legislateur" data-description="Contiendra un accès à des rappels de lois EU et le disclaimer de l'app.">
+                        NIVEAU 241 : Legislateur
+                    </div>
+                    <div class="menu-item" data-level="303" data-name="Portail Conteneur" data-description="Donnera accès à la page des extensions." data-url="/portail_conteneur">
+                        NIVEAU 303 : Portail Conteneur
+                    </div>
+                    <div class="menu-item" data-level="500" data-name="Centre d'Analyse" data-description="Consultation de rapports d'OSINT et de pentesting." data-url="/centre_analyse">
+                        NIVEAU 500 : Centre d'Analyse
+                    </div>
+                </div>
+            </div>
+            <h1>[ NIVEAU 404 // ACCESSEUR ]</h1>            <button id="main-access-btn" style="display: none;">[ ACCÉDER ]</button>
+        </div>
+
+        <div id="cyber-terminal">
+            <div id="terminal-content"></div>
+        </div>
+    </div>
+
+    <!-- Modal pour le mot de passe du Bunker -->
+    <div id="bunker-password-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2>ACCÈS NIVEAU 101 // BUNKER</h2>
+            <p>Authentification requise.</p>
+            <input type="password" id="bunker-password-input" placeholder="Mot de passe...">
+            <div class="modal-actions">
+                <button id="bunker-cancel-btn">Annuler</button>
+                <button id="bunker-submit-btn">Valider</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bouton pour le configurateur (Niveau 0) -->
+    <div id="config-button" data-level="0" data-name="Configurateur" data-url="/settings">
+        [ NIVEAU 0 // CONFIGURATEUR ]
+    </div>
+
+    <script>
+        // === DOM Elements ===
+        const h1 = document.querySelector('h1');
+        const terminal = document.getElementById('cyber-terminal');
+        const terminalContent = document.getElementById('terminal-content');
+        const contextMenu = document.getElementById('contextMenu');
+        const scrollToggleBtn = document.getElementById('scrollToggle');
+        const configButton = document.getElementById('config-button');
+        const scrollControl = document.querySelector('.scroll-control');
+        // Modal elements
+        const mainAccessBtn = document.getElementById('main-access-btn');
+        const bunkerModal = document.getElementById('bunker-password-modal');
+        const bunkerPasswordInput = document.getElementById('bunker-password-input');
+        const bunkerSubmitBtn = document.getElementById('bunker-submit-btn');
+        const bunkerCancelBtn = document.getElementById('bunker-cancel-btn');
+        const scrollWhooshSound = document.getElementById('scroll-whoosh-sound');
+
+        // === MODIFICATION ROBUSTE : Gestion du menu ===
+        scrollToggleBtn.addEventListener('click', function(event) {
+            event.stopPropagation();
+            console.log("Clic sur le bouton de navigation détecté. Bascule du menu.");
+            scrollControl.classList.toggle('active');
+        });
+
+        document.addEventListener('click', function(event) {
+            // Vérifie si le clic est en dehors de la zone du menu ET du bouton
+            const isClickOutside = !scrollControl.contains(event.target);
+            
+            if (scrollControl.classList.contains('active') && isClickOutside) {
+                console.log("Clic en dehors du menu. Fermeture.");
+                scrollControl.classList.remove('active');
+            }
+        });
+
+        // Fermer le menu avec la touche Échap
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape' && scrollControl.classList.contains('active')) {
+                scrollControl.classList.remove('active');
+            }
+        });
+
+        // === Bunker Password Modal Logic ===
+        bunkerSubmitBtn.addEventListener('click', async () => {
+            const password = bunkerPasswordInput.value;
+            if (!password) return;
+
+            const result = await window.pywebview.api.check_bunker_password(password);
+            if (result.status === 'success') {
+                bunkerModal.style.display = 'none';
+                bunkerPasswordInput.value = '';
+                window.location.href = '/bunker';
+            } else {
+                const modalContent = bunkerModal.querySelector('.modal-content');
+                modalContent.classList.add('shake-effect');
+                bunkerPasswordInput.value = '';
+                bunkerPasswordInput.focus();
+                setTimeout(() => modalContent.classList.remove('shake-effect'), 500);
+            }
+        });
+
+        bunkerCancelBtn.addEventListener('click', () => {
+            bunkerModal.style.display = 'none';
+            bunkerPasswordInput.value = '';
+        });
+
+        bunkerPasswordInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') bunkerSubmitBtn.click();
+        });
+
+        // === Terminal Logic: The "Long Page" Illusion ===
+
+        const levelMarkers = {}; // To store references to level headers
+
+
+        // --- Data for log generation ---
+        const multilingualKeywords = [
+            // Anglais
+            "INFECTION", "CONTAMINATION", "BREACH", "CORRUPTION", "OVERRIDE", "FAILOVER",
+            "//ERROR//", "WARNING", "CRITICAL", "KERNEL PANIC", "EXECUTE", "INTRUSION",
+            "QUARANTINE FAILED", "MALWARE DETECTED", "SYSTEM COMPROMISE", "DATA LEAK",
+            "UNAUTHORIZED ACCESS", "ROOTKIT", "EXPLOIT", "ZERO-DAY",
+            // Hindi
+            "संक्रमण", "भंग", "चेतावनी", "सिस्टम विफल", "अनधिकृत पहुंच",
+            // Japonais
+            "感染", "破損", "警告", "システムエラー", "不正アクセス",
+            // Ukrainien
+            "зараження", "пошкодження", "попередження", "системний збій", "несанкціонований доступ",
+            // Polonais
+            "infekcja", "uszkodzony", "ostrzeżenie", "awaria systemu", "nieautoryzowany dostęp",
+            // Arabe
+            "إصابة", "تلف", "تحذير", "عطل في النظام", "وصول غير مصرح به"
+        ];
+
+        // Sets for faster lookup and classification
+        const criticalKeywords = new Set(["INFECTION", "BREACH", "CORRUPTION", "FAILOVER", "//ERROR//", "CRITICAL", "KERNEL PANIC", "INTRUSION", "QUARANTINE FAILED", "MALWARE DETECTED", "SYSTEM COMPROMISE", "DATA LEAK", "UNAUTHORIZED ACCESS", "ROOTKIT", "EXPLOIT", "ZERO-DAY", "संक्रमण", "भंग", "системний збій", "зараження", "infekcja", "awaria systemu", "nieautoryzowany dostęp", "إصابة", "عطل في النظام", "وصول غير مصرح به", "破損", "システムエラー", "不正アクセス"]);
+        const warningKeywords = new Set(["CONTAMINATION", "WARNING", "попередження", "ostrzeżenie", "تحذير", "警告", "uszkodzony", "تلف"]);
+
+        const hexCodes = Array.from({length: 20}, () => '0x' + Math.floor(Math.random() * 0xFFFFFF).toString(16).toUpperCase().padStart(6, '0'));
+        const unicodeChars = [
+            // Caractères "linguistiques" pour brouiller les pistes
+            "∀", "∃", "∧", "∨", "¬", "∈", "∉", "⊕", "⊗", // Logique mathématique
+            "ᚠ", "ᚢ", "ᚦ", "ᚨ", "ᚱ", // Runes
+            "☯", "☮", "☣", "☢", // Symboles
+            "א", "ב", "ג", "د", "ذ", "ر", "ز", // Alphabets divers
+            "ㄱ", "ㄴ", "ㄷ", "ㄹ", "ㅁ", "ㅂ", "ㅅ" // Hangul (Coréen)
+        ];
+
+        // --- New log generation function ---
+        function generateRandomLine() {
+            const numSegments = Math.floor(Math.random() * 4) + 2; // Entre 2 et 5 segments
+            let messageParts = [];
+
+            for (let i = 0; i < numSegments; i++) {
+                const segmentType = Math.random();
+                let segmentHTML = '';
+
+                if (segmentType < 0.5) {
+                    const keyword = multilingualKeywords[Math.floor(Math.random() * multilingualKeywords.length)];
+                    if (criticalKeywords.has(keyword)) {
+                        segmentHTML = `<span class="log-critical">${keyword}</span>`;
+                    } else if (warningKeywords.has(keyword)) {
+                        segmentHTML = `<span class="log-warning">${keyword}</span>`;
+                    } else {
+                        segmentHTML = keyword;
+                    }
+                } else if (segmentType < 0.7) {
+                    const hex = hexCodes[Math.floor(Math.random() * hexCodes.length)];
+                    segmentHTML = `<span class="log-hex">${hex}</span>`;
+                } else if (segmentType < 0.9) {
+                    const unicodeSeq = Array.from({length: Math.floor(Math.random() * 5) + 3}, () => unicodeChars[Math.floor(Math.random() * unicodeChars.length)]).join('');
+                    segmentHTML = `<span class="log-symbol">${unicodeSeq}</span>`;
+                } else {
+                    const chaos = [multilingualKeywords[Math.floor(Math.random() * multilingualKeywords.length)], hexCodes[Math.floor(Math.random() * hexCodes.length)], unicodeChars[Math.floor(Math.random() * unicodeChars.length)]].sort(() => Math.random() - 0.5).join('');
+                    segmentHTML = chaos;
+                }
+                messageParts.push(segmentHTML);
+            }
+            const separators = [' ', ':', '//', '||', '><', '##'];
+            const chosenSeparator = separators[Math.floor(Math.random() * separators.length)];
+            return messageParts.join(` ${chosenSeparator} `);
+        }
+        // Function to add a line to the terminal (without auto-scrolling)
+        function addTerminalLine(text, className = '') {
+            // REFACTORING : Cette fonction ne gère plus que les lignes de log (<p>).
+            // La création des en-têtes (<div>) est maintenant gérée directement dans populateTerminal.
+            const p = document.createElement('p');
+            p.innerHTML = text; // innerHTML est nécessaire pour les spans de couleur.
+            if (className) p.className = className;
+            terminalContent.appendChild(p);
+            return p;
+        }
+
+        // Pre-populates the terminal with a lot of content
+        function populateTerminal() {
+            const levelsToGenerate = [404, 23, 101, 241, 303, 500];
+            const linesPerLevel = 200;
+
+            for (const level of levelsToGenerate) {
+                // --- En-tête de DÉBUT (BEGIN) - Méthode programmatique robuste ---
+                const beginHeader = document.createElement('div');
+                beginHeader.className = 'level-header';
+                beginHeader.id = `level-start-${level}`;
+
+                // 1. Créer et ajouter le texte du titre dans un span.
+                const textSpan = document.createElement('span');
+                textSpan.textContent = `--- BEGIN TRANSMISSION // NIVEAU ${level} ---`;
+                beginHeader.appendChild(textSpan);
+
+                terminalContent.appendChild(beginHeader);
+                levelMarkers[level] = beginHeader;
+
+                // --- Génération des lignes de log ---
+                for (let j = 0; j < linesPerLevel; j++) addTerminalLine(generateRandomLine());
+
+                // --- En-tête de FIN (END) ---
+                const endHeader = document.createElement('div');
+                endHeader.className = 'level-header';
+                endHeader.textContent = `--- END TRANSMISSION // NIVEAU ${level} ---`;
+                terminalContent.appendChild(endHeader);
+            }
+        }
+
+        // --- Typewriter effect for headers ---
+        function typewriterEffect(element, onComplete) {
+            const originalText = element.textContent;
+            let i = 0;
+            element.textContent = '';
+            element.classList.add('typing'); // Add class for cursor
+
+            function type() {
+                if (i < originalText.length) {
+                    element.textContent += originalText.charAt(i);
+                    i++;
+                    setTimeout(type, 50); // Typing speed (50ms)
+                } else {
+                    element.classList.remove('typing'); // Remove cursor
+                    if (onComplete) onComplete();
+                }
+            }
+            type();
+        }
+
+        // --- Custom Scrolling Animation Engine ---
+        function customScrollTo(targetPosition, duration = 1500, onComplete) {
+            // --- MODIFICATION : Bloquer le défilement utilisateur ---
+            terminal.style.overflowY = 'hidden';
+
+            const startPosition = terminal.scrollTop;
+            const distance = targetPosition - startPosition;
+            let startTime = null;
+
+            // Easing function for a smooth start and end (ease-in-out)
+            function easeInOutQuad(t, b, c, d) {
+                t /= d / 2;
+                if (t < 1) return c / 2 * t * t + b;
+                t--;
+                return -c / 2 * (t * (t - 2) - 1) + b;
+            };
+
+            function animation(currentTime) {
+                if (startTime === null) startTime = currentTime;
+                const timeElapsed = currentTime - startTime;
+                const run = easeInOutQuad(timeElapsed, startPosition, distance, duration);
+                terminal.scrollTop = run;
+                if (timeElapsed < duration) {
+                    requestAnimationFrame(animation);
+                } else {
+                    terminal.scrollTop = targetPosition; // Ensure it lands perfectly
+                    // --- MODIFICATION : Réactiver le défilement utilisateur ---
+                    terminal.style.overflowY = 'auto';
+                    if (onComplete) onComplete(); // Execute callback when finished
+                }
+            }
+
+            requestAnimationFrame(animation);
+        }
+
+        // Fonction pour jouer un son de manière fiable
+        function playSound(audioElement) {
+            if (audioElement) {
+                audioElement.currentTime = 0;
+                audioElement.play().catch(e => console.error("Erreur de lecture audio:", e));
+            }
+        }
+
+        // The "Avalanche" effect with the new mechanics
+        function triggerScrollAvalanche(level) {
+            const targetMarker = levelMarkers[level];
+            if (!targetMarker) return;
+
+            // --- MODIFICATION : Rendre le terminal visible pour l'animation ---
+            terminal.style.opacity = 1;
+
+            const targetPosition = targetMarker.offsetTop - 15; // -15px for padding            
+            terminal.classList.add('shake-effect'); // Shake the terminal
+
+            playSound(scrollWhooshSound); // Jouer le son de transition
+
+            // Start custom scroll, and execute callback on completion
+            customScrollTo(targetPosition, 1500, () => {
+                // Scroll is finished. Fade out the decor and terminal.
+                document.body.classList.add('focused-view');
+            });
+
+            setTimeout(() => terminal.classList.remove('shake-effect'), 800);
+        }
+
+        function updateMainAccessButton(level) {
+            const menuItem = document.querySelector(`.menu-item[data-level="${level}"]`);
+            const url = menuItem ? menuItem.dataset.url : null;
+
+            if (url) {
+                mainAccessBtn.style.display = 'block';
+                mainAccessBtn.dataset.level = level;
+                mainAccessBtn.dataset.url = url;
+                mainAccessBtn.dataset.name = menuItem.dataset.name;
+            } else {
+                mainAccessBtn.style.display = 'none';
+            }
+        }
+
+        // Fonction unifiée pour gérer les clics sur les items de menu et les boutons
+        function handleNavigation(item) {
+            const level = item.dataset.level;
+            const name = item.dataset.name || '???';
+            const url = item.dataset.url;
+
+            scrollControl.classList.remove('active'); // Toujours fermer le menu
+
+            if (url) {
+                if (level === '101') {
+                    bunkerModal.style.display = 'flex';
+                    bunkerPasswordInput.focus();
+                    return; // La logique du modal prend le relais
+                }
+                window.location.href = url;
+            } else {
+                document.body.classList.remove('focused-view');
+                h1.textContent = `[ NIVEAU ${level} // ${name.toUpperCase()} ]`;
+                updateMainAccessButton(level);
+                triggerScrollAvalanche(level);
+            }
+        }
+
+        // Utilise la délégation d'événements pour gérer les clics sur les items du menu (statiques et dynamiques)
+        contextMenu.addEventListener('click', (event) => {
+            const menuItem = event.target.closest('.menu-item');
+            if (menuItem) {
+                handleNavigation(menuItem);
+            }
+        });
+
+        // Le clic sur le bouton d'accès principal déclenche la navigation
+        mainAccessBtn.addEventListener('click', () => {
+            handleNavigation(mainAccessBtn);
+        });
+
+        // Le clic sur le bouton de configuration navigue aussi
+        configButton.addEventListener('click', function() {
+            handleNavigation(this);
+        });
+
+        // --- NOUVEAU : Construction dynamique du menu ---
+        async function buildDynamicMenu() {
+            try {
+                const result = await window.pywebview.api.get_installed_extensions();
+                if (result.status === 'success' && result.extensions.length > 0) {
+                    const separator = document.createElement('div');
+                    separator.style.height = '1px';
+                    separator.style.background = 'rgba(0, 255, 204, 0.2)';
+                    separator.style.margin = '0.5rem 0';
+                    contextMenu.appendChild(separator);
+
+                    // Tri des extensions par niveau pour un affichage ordonné
+                    result.extensions.sort((a, b) => a.level - b.level);
+
+                    result.extensions.forEach(ext => {
+                        const menuItem = document.createElement('div');
+                        menuItem.className = 'menu-item';
+                        menuItem.dataset.level = ext.level;
+                        menuItem.dataset.name = ext.name;
+                        menuItem.dataset.description = ext.description;
+                        menuItem.dataset.url = ext.url;
+                        menuItem.textContent = `NIVEAU ${ext.level} : ${ext.name}`;
+                        
+                        contextMenu.appendChild(menuItem);
+                    });
+                }
+            } catch (e) {
+                console.error("Impossible de charger les extensions installées:", e);
+            }
+        }
+
+        // On page load, populate and set initial view
+        window.addEventListener('pywebviewready', () => {
+            populateTerminal();
+
+            // Construit le menu avec les extensions installées
+            buildDynamicMenu();
+
+            // Set initial view to the configured start level passed from Python
+            let initialLevel;
+            try {
+                // This will work when run with Python/Flask
+                initialLevel = {{ start_level | tojson }};
+            } catch (e) {
+                // This will be caught when run with Live Server, providing a fallback
+                initialLevel = 404; // Default level for preview
+            }
+            const initialMenuItem = document.querySelector(`.menu-item[data-level="${initialLevel}"]`);
+            const initialName = initialMenuItem ? initialMenuItem.dataset.name : 'ACCESSEUR';
+            h1.textContent = `[ NIVEAU ${initialLevel} // ${initialName.toUpperCase()} ]`;
+            updateMainAccessButton(initialLevel);
+            const initialMarker = levelMarkers[initialLevel];
+            if (initialMarker) {
+                initialMarker.scrollIntoView({ behavior: 'auto', block: 'start' });
+            }
+        });
+    </script>
+</body>
+</html>

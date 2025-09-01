@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Mégastructure // Portail Conteneur</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        /* --- Base Styles --- */
+        html { font-size: calc(14px + 0.2vw); }
+        body { margin: 0; font-family: 'Share Tech Mono', monospace; background-color: #0d0d0d; color: #00ffcc; overflow: hidden; font-size: 1rem; }
+        .grime-Overlay, .moving-structure { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; }
+        .grime-Overlay { background: url('/static/texture_grime.png') repeat; opacity: 0.08; z-index: 3; }
+        .moving-structure { background: url('/static/structure_moving.png') center center / cover no-repeat; opacity: 0.05; animation: drift 60s infinite linear; z-index: 1; }
+        @keyframes drift { 0% { transform: translate(0, 0) scale(1); } 50% { transform: translate(-1vw, 0.5vh) scale(1.05); } 100% { transform: translate(0, 0) scale(1); } }
+        
+        /* --- Animations --- */
+        @keyframes glitch {
+            0%, 100% { text-shadow: 0.05em 0 red, -0.05em 0 blue; }
+            50% { text-shadow: -0.05em 0 red, 0.05em 0 blue; }
+        }
+        @keyframes furtif-glitch {
+            0%, 100% { opacity: inherit; transform: none; }
+            50% { opacity: 0.8; }
+            52% { transform: translate(1px, -1px); }
+            54% { transform: translate(0, 0); }
+        }
+        @keyframes purulent-code-anim {
+            0% { content: '#!$0*?'; opacity: 0.7; transform: translateX(2px) scale(1.1); }
+            20% { content: 'ERR_CORRUPT'; opacity: 0.9; transform: translateY(-2px); filter: blur(0.5px); }
+            40% { content: '0xDEADBEEF'; opacity: 0.6; transform: skew(-10deg); }
+            60% { content: '...purging...'; opacity: 0.8; transform: translateX(-1px) scale(0.9); filter: blur(0); }
+            80% { content: '§§§§§§'; opacity: 0.7; transform: translateY(1px); }
+            100% { content: 'FAULT_CASCADE'; opacity: 0.9; transform: none; filter: blur(0.8px); }
+        }
+
+        /* --- Page Specific Styles --- */
+        .main-container {
+            position: relative; z-index: 4; padding: 5vh 5vw; box-sizing: border-box;
+            height: 100vh; display: flex; flex-direction: column; align-items: center; overflow: hidden;
+        }
+        h1 {
+            font-size: clamp(1.8rem, 4vw, 3.5rem); margin-bottom: 1.25rem;
+            animation: glitch 2s infinite; flex-shrink: 0;
+        }
+        .portail-layout {
+            display: flex; gap: 2rem; width: 100%; flex-grow: 1; overflow: hidden;
+        }
+        #grille-conteneurs {
+            flex-grow: 1; display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr);
+            gap: 0.5rem; border: 1px solid rgba(0, 255, 204, 0.1); padding: 0.5rem; background: rgba(0, 10, 8, 0.2);
+        }
+        .conteneur {
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; transition: all 0.2s ease; user-select: none; cursor: pointer; position: relative;
+        }
+
+        /* --- Styles par Type --- */
+        .conteneur.type-standard { border: 1px solid rgba(0, 255, 204, 0.3); color: rgba(0, 255, 204, 0.5); }
+        .conteneur.type-blindé { border: 2px solid rgba(0, 255, 204, 0.6); box-shadow: inset 0 0 4px rgba(0, 255, 204, 0.2); color: rgba(0, 255, 204, 0.7); font-weight: bold; }
+        .conteneur.type-furtif { border: 1px dashed #ff33ff; color: rgba(255, 51, 255, 0.6); animation: furtif-glitch 5s infinite step-end; }
+
+        /* --- Styles par Statut --- */
+        .conteneur.status-inerte {
+            border-style: dotted;
+            color: rgba(0, 150, 130, 0.4);
+            border-color: rgba(0, 150, 130, 0.3);
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        .conteneur.status-bloqué {
+            color: #ff4d4d;
+            border: 1px solid #ff4d4d;
+            background: rgba(255, 77, 77, 0.05);
+        }
+        .conteneur.status-contaminé {
+            color: #e0ff00;
+            border: 1px solid #e0ff00;
+            background: rgba(224, 255, 0, 0.05);
+        }
+
+        /* --- Styles d'Interaction --- */
+        .conteneur:not(.status-inerte):not(.status-bloqué):hover { transform: scale(1.05); z-index: 10; }
+        .conteneur.type-standard:hover { box-shadow: 0 0 10px rgba(0, 255, 204, 0.5); border-color: #00ffcc; }
+        .conteneur.type-blindé:hover { box-shadow: 0 0 12px rgba(0, 255, 204, 0.7), inset 0 0 6px rgba(0, 255, 204, 0.4); border-color: #99ffec; }
+        .conteneur.type-furtif:hover { box-shadow: 0 0 10px rgba(255, 51, 255, 0.6); border-color: #ff99ff; animation-play-state: paused; }
+        
+        /* Effet "purulent" pour conteneur contaminé */
+        .conteneur.status-contaminé:hover::after {
+            content: 'CORRUPT';
+            position: absolute;
+            top: -1.5em;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #e0ff00;
+            color: #0d0d0d;
+            padding: 2px 5px;
+            font-size: 0.8rem;
+            border-radius: 2px;
+            animation: purulent-code-anim 3s infinite linear;
+        }
+
+        .conteneur.active {
+            opacity: 1;
+            border: 2px solid #00ff88;
+            color: #00ff88;
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.6);
+            transform: scale(1.08);
+        }
+
+        /* --- Panneau d'information --- */
+        #panneau-info {
+            width: 350px; flex-shrink: 0; border: 1px solid rgba(0, 255, 204, 0.2);
+            background: rgba(0, 10, 8, 0.4); padding: 1.5rem; display: flex;
+            flex-direction: column; color: rgba(0, 255, 204, 0.7);
+        }
+        #panneau-contenu { flex-grow: 1; }
+        .panneau-placeholder { margin: auto; text-align: center; }
+        .panneau-placeholder h2 { color: #ff33ff; font-size: 1.2rem; }
+        .panneau-placeholder p { font-size: 0.9rem; line-height: 1.5; }
+        #panneau-info h2 { color: #00ff88; font-size: 1.4rem; border-bottom: 1px solid rgba(0, 255, 136, 0.3); padding-bottom: 0.5rem; margin-top: 0; }
+        #panneau-info h2.error { color: #ff4d4d; border-bottom-color: rgba(255, 77, 77, 0.3); }
+        #panneau-info ul { list-style: none; padding: 0; margin: 1rem 0 0 0; }
+        #panneau-info li { margin-bottom: 0.75rem; font-size: 1rem; }
+        #panneau-info li span { color: #ff33ff; }
+
+        /* --- Autres --- */
+        .action-buttons { display: flex; justify-content: center; gap: 2rem; margin-top: 2rem; width: 100%; max-width: 800px; }
+        .action-btn { padding: 0.8rem 2rem; font-family: inherit; font-size: 1rem; cursor: pointer; border-radius: 0.25rem; transition: all 0.2s ease; border: 1px solid; min-width: 200px; }
+        #back-btn { background: transparent; color: #ff33ff; border-color: #ff33ff; }
+        #back-btn:hover { background: rgba(255, 51, 255, 0.1); box-shadow: 0 0 15px rgba(255, 51, 255, 0.4); }
+        #tooltip-custom {
+            position: fixed; display: none; pointer-events: none; background: rgba(10, 25, 22, 0.85);
+            border: 1px solid rgba(0, 255, 204, 0.5); backdrop-filter: blur(4px); padding: 0.5rem 1rem;
+            font-size: 0.9rem; z-index: 100; transition: opacity 0.1s ease; white-space: pre; border-radius: 3px;
+        }
+        #souris-tracker {
+            flex-shrink: 0; font-size: 0.8rem; color: rgba(0, 255, 204, 0.4);
+            border-top: 1px solid rgba(0, 255, 204, 0.1); padding-top: 0.5rem; margin-top: 1rem; white-space: pre;
+        }
+    </style>
+</head>
+<body>
+    <!-- Visuals -->
+    <div class="moving-structure"></div>
+    <div class="grime-Overlay"></div>
+
+    <div class="main-container">
+        <h1>[ NIVEAU 303 // PORTAIL CONTENEUR ]</h1>
+        <div class="portail-layout">
+            <div id="grille-conteneurs">
+                <!-- Les 64 conteneurs seront générés ici par JavaScript -->
+            </div>
+            <div id="panneau-info">
+                <div id="panneau-contenu">
+                    <div class="panneau-placeholder">
+                        <h2>// AUCUN CONTENEUR SÉLECTIONNÉ //</h2>
+                        <p>Survolez un conteneur pour un aperçu rapide.<br>Cliquez pour afficher les détails complets.</p>
+                    </div>
+                </div>
+                <div id="souris-tracker"></div>
+            </div>
+        </div>
+        <div class="action-buttons">
+            <button id="back-btn" class="action-btn">Retour</button>
+        </div>
+    </div>
+
+    <div id="tooltip-custom"></div>
+
+    <script>
+        window.addEventListener('pywebviewready', () => {
+            const backBtn = document.getElementById('back-btn');
+            backBtn.addEventListener('click', () => { window.location.href = '/terminaux.html'; });
+
+            let conteneursData = [];
+            const grille = document.getElementById('grille-conteneurs');
+            const panneauContenu = document.getElementById('panneau-contenu');
+            const tooltip = document.getElementById('tooltip-custom');
+            const sourisTracker = document.getElementById('souris-tracker');
+            const defaultPlaceholder = panneauContenu.innerHTML;
+            
+            // Variables pour gérer l'effet de brouillage
+            let brouillageInterval;
+            let conteneursInertes = [];
+
+            // Fonction pour générer des données de conteneurs aléatoires
+            function genererDonneesConteneurs() {
+                const types = ['standard', 'blindé', 'furtif'];
+                const statuts = ['actif', 'inerte', 'bloqué', 'contaminé'];
+                const conteneurs = [];
+                
+                // Probabilités pour les statuts spéciaux
+                const probabiliteBloque = 0.05;   // 5% de chance d'être bloqué
+                const probabiliteContamine = 0.03; // 3% de chance d'être contaminé
+                const probabiliteInerte = 0.15;    // 15% de chance d'être inerte
+                
+                for (let id = 1; id <= 64; id++) {
+                    // Déterminer le type (aléatoire mais pondéré)
+                    let type;
+                    const randType = Math.random();
+                    if (randType < 0.7) type = 'standard';        // 70% standard
+                    else if (randType < 0.9) type = 'blindé';     // 20% blindé
+                    else type = 'furtif';                         // 10% furtif
+                    
+                    // Déterminer le statut
+                    let statut;
+                    const randStatut = Math.random();
+                    if (randStatut < probabiliteBloque) {
+                        statut = 'bloqué';
+                    } else if (randStatut < probabiliteBloque + probabiliteContamine) {
+                        statut = 'contaminé';
+                    } else if (randStatut < probabiliteBloque + probabiliteContamine + probabiliteInerte) {
+                        statut = 'inerte';
+                    } else {
+                        statut = 'actif';
+                    }
+                    
+                    conteneurs.push({
+                        id: id,
+                        nom: `CTN-${String(id).padStart(3, '0')}`,
+                        type: type,
+                        status: statut
+                    });
+                }
+                
+                return conteneurs;
+            }
+
+            async function genererGrille() {
+                try {
+                    // Générer des données de conteneurs aléatoires
+                    const conteneurs = genererDonneesConteneurs();
+                    
+                    conteneursData = conteneurs;
+                    grille.innerHTML = '';
+                    
+                    conteneurs.forEach(conteneur => {
+                        const divConteneur = document.createElement('div');
+                        divConteneur.className = `conteneur type-${conteneur.type} status-${conteneur.status}`;
+                        divConteneur.dataset.id = conteneur.id;
+                        divConteneur.textContent = `${String(conteneur.id).padStart(2, '0')}`;
+                        grille.appendChild(divConteneur);
+                    });
+
+                    grille.addEventListener('click', gererClicSurGrille);
+                    grille.addEventListener('mouseover', gererSurvolConteneur);
+                    grille.addEventListener('mouseout', gererSortieConteneur);
+                    
+                    // Initialiser l'effet de brouillage pour les conteneurs inertes
+                    initialiserEffetBrouillage();
+                    
+                } catch (e) {
+                    console.error("Erreur système lors de la génération de la grille:", e);
+                    grille.innerHTML = `<p style="color: #ff5555; grid-column: 1 / -1;">Erreur Système: ${e}</p>`;
+                }
+            }
+
+            function initialiserEffetBrouillage() {
+                // Récupérer tous les conteneurs inertes
+                conteneursInertes = Array.from(document.querySelectorAll('.conteneur.status-inerte'));
+                
+                // Arrêter l'intervalle précédent s'il existe
+                if (brouillageInterval) {
+                    clearInterval(brouillageInterval);
+                }
+                
+                // Démarrer l'effet de brouillage seulement s'il y a au moins 2 conteneurs inertes
+                if (conteneursInertes.length >= 2) {
+                    brouillageInterval = setInterval(brouillerNumeros, 2000);
+                    // Premier brouillage immédiat
+                    brouillerNumeros();
+                }
+            }
+
+            function brouillerNumeros() {
+                // Créer une copie des conteneurs inertes non survolés
+                const conteneursABrouiller = conteneursInertes.filter(conteneur => !conteneur.matches(':hover'));
+                
+                if (conteneursABrouiller.length < 2) return;
+                
+                // Récupérer les IDs actuels
+                const idsActuels = conteneursABrouiller.map(conteneur => conteneur.textContent);
+                
+                // Mélanger les IDs
+                const idsMelanges = [...idsActuels];
+                for (let i = idsMelanges.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [idsMelanges[i], idsMelanges[j]] = [idsMelanges[j], idsMelanges[i]];
+                }
+                
+                // Assurer qu'aucun conteneur n'a son propre ID
+                for (let i = 0; i < conteneursABrouiller.length; i++) {
+                    if (idsMelanges[i] === idsActuels[i]) {
+                        // Échanger avec le suivant (ou précédent si dernier)
+                        const j = (i + 1) % conteneursABrouiller.length;
+                        [idsMelanges[i], idsMelanges[j]] = [idsMelanges[j], idsMelanges[i]];
+                    }
+                }
+                
+                // Appliquer les IDs mélangés
+                conteneursABrouiller.forEach((conteneur, index) => {
+                    conteneur.textContent = idsMelanges[index];
+                });
+            }
+
+            function afficherDetailsConteneur(id) {
+                const conteneur = conteneursData.find(c => c.id === parseInt(id, 10));
+                if (!conteneur) return;
+
+                panneauContenu.innerHTML = `
+                    <h2>${conteneur.nom}</h2>
+                    <ul>
+                        <li><span>ID:</span> ${conteneur.id}</li>
+                        <li><span>TYPE:</span> ${conteneur.type.toUpperCase()}</li>
+                        <li><span>STATUT:</span> <span style="color:${getStatutColor(conteneur.status)}">${conteneur.status.toUpperCase()}</span></li>
+                    </ul>
+                `;
+            }
+            
+            function getStatutColor(status) {
+                switch(status) {
+                    case 'actif': return '#00ff88';
+                    case 'contaminé': return '#e0ff00';
+                    case 'bloqué': return '#ff4d4d';
+                    case 'inerte': return 'rgba(0, 150, 130, 0.4)';
+                    default: return 'inherit';
+                }
+            }
+
+            function gererClicSurGrille(event) {
+                const conteneurCible = event.target.closest('.conteneur');
+                if (!conteneurCible) return;
+
+                // Clic sur Inerte: ne rien faire
+                if (conteneurCible.classList.contains('status-inerte')) {
+                    return;
+                }
+
+                const id = conteneurCible.dataset.id;
+                const conteneur = conteneursData.find(c => c.id === parseInt(id, 10));
+                if (!conteneur) return;
+
+                const conteneurActif = grille.querySelector('.conteneur.active');
+                if (conteneurActif) {
+                    conteneurActif.classList.remove('active');
+                }
+                conteneurCible.classList.add('active');
+
+                // Clic sur Bloqué: afficher message spécifique
+                if (conteneurCible.classList.contains('status-bloqué')) {
+                    panneauContenu.innerHTML = `
+                        <h2 class="error">// ACCÈS BLOQUÉ //</h2>
+                        <ul>
+                            <li><span>ID:</span> ${conteneur.id}</li>
+                            <li><span>NOM:</span> ${conteneur.nom}</li>
+                            <li><span>RAISON:</span> Signal de sécurité prioritaire.</li>
+                        </ul>`;
+                    return;
+                }
+                
+                // Comportement normal
+                afficherDetailsConteneur(id);
+            }
+
+            function gererSurvolConteneur(event) {
+                const conteneurCible = event.target.closest('.conteneur');
+                if (!conteneurCible) return;
+                
+                // Pour les conteneurs inertes, afficher le vrai ID au survol
+                if (conteneurCible.classList.contains('status-inerte')) {
+                    const vraiId = String(conteneurCible.dataset.id).padStart(2, '0');
+                    conteneurCible.textContent = vraiId;
+                    
+                    // Afficher aussi les infos dans le tooltip
+                    const id = conteneurCible.dataset.id;
+                    const conteneur = conteneursData.find(c => c.id === parseInt(id, 10));
+                    if (!conteneur) return;
+
+                    tooltip.innerHTML = `<b>${conteneur.nom}</b>
+    <span style="color:#ff33ff">Type:</span> ${conteneur.type.toUpperCase()}
+    <span style="color:#ff33ff">Statut:</span> ${conteneur.status.toUpperCase()}`;
+                    tooltip.style.display = 'block';
+                    return;
+                }
+                
+                // Pas de tooltip pour bloqué
+                if (conteneurCible.classList.contains('status-bloqué')) {
+                    tooltip.style.display = 'none';
+                    return;
+                }
+
+                const id = conteneurCible.dataset.id;
+                const conteneur = conteneursData.find(c => c.id === parseInt(id, 10));
+                if (!conteneur) return;
+
+                tooltip.innerHTML = `<b>${conteneur.nom}</b>
+    <span style="color:#ff33ff">Type:</span> ${conteneur.type.toUpperCase()}
+    <span style="color:#ff33ff">Statut:</span> ${conteneur.status.toUpperCase()}`;
+                tooltip.style.display = 'block';
+            }
+
+            function gererSortieConteneur(event) {
+                const conteneurCible = event.target.closest('.conteneur');
+                if (!conteneurCible) return;
+                
+                // Pour les conteneurs inertes, réintégrer au brouillage
+                if (conteneurCible.classList.contains('status-inerte')) {
+                    // Le prochain intervalle de brouillage s'occupera de remettre un ID aléatoire
+                }
+                
+                tooltip.style.display = 'none';
+            }
+
+            // --- Suivi de la souris ---
+            let lastX = 0, lastY = 0, lastTime = Date.now(), lastVelocity = 0;
+            let throttleTimeout;
+
+            window.addEventListener('mousemove', (e) => {
+                tooltip.style.left = (e.clientX + 20) + 'px';
+                tooltip.style.top = (e.clientY + 20) + 'px';
+
+                if (throttleTimeout) return;
+                throttleTimeout = setTimeout(() => {
+                    const now = Date.now();
+                    const deltaTime = now - lastTime;
+                    if (deltaTime > 0) {
+                        const deltaX = e.clientX - lastX;
+                        const deltaY = e.clientY - lastY;
+                        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+                        lastVelocity = (distance / deltaTime) * 1000;
+                    }
+                    
+                    sourisTracker.innerHTML = `X: ${String(e.clientX).padStart(4, ' ')} | Y: ${String(e.clientY).padStart(4, ' ')}
+    V: ${lastVelocity.toFixed(2).padStart(7, ' ')} px/s`;
+
+                    lastX = e.clientX;
+                    lastY = e.clientY;
+                    lastTime = now;
+                    throttleTimeout = null;
+                }, 100);
+            });
+
+            // Démarrer la génération de la grille
+            genererGrille();
+        });
+    </script>
+</body>
+</html>

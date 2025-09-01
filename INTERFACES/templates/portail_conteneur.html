@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Mégastructure // Portail Conteneur</title>
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        /* --- Base Styles (copied for consistency) --- */
+        html { font-size: calc(14px + 0.2vw); }
+        body { margin: 0; font-family: 'Share Tech Mono', monospace; background-color: #0d0d0d; color: #00ffcc; overflow: hidden; font-size: 1rem; }
+        .grime-Overlay, .moving-structure { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; }
+        .grime-Overlay { background: url('/static/texture_grime.png') repeat; opacity: 0.08; z-index: 3; }
+        .moving-structure { background: url('/static/structure_moving.png') center center / cover no-repeat; opacity: 0.05; animation: drift 60s infinite linear; z-index: 1; }
+        @keyframes drift { 0% { transform: translate(0, 0) scale(1); } 50% { transform: translate(-1vw, 0.5vh) scale(1.05); } 100% { transform: translate(0, 0) scale(1); } }
+        @keyframes glitch { 0%, 100% { text-shadow: 0.05em 0 red, -0.05em 0 blue; } 50% { text-shadow: -0.05em 0 red, 0.05em 0 blue; } }
+
+        /* --- Page Specific Styles --- */
+        .portail-container { position: relative; z-index: 4; padding: 5vh 5vw; box-sizing: border-box; height: 100vh; display: flex; flex-direction: column; align-items: center; }
+        h1 { font-size: clamp(1.8rem, 4vw, 3.5rem); margin-bottom: 1.25rem; animation: glitch 2s infinite; }
+        #conteneur-list { width: 100%; max-width: 900px; height: 70vh; overflow-y: auto; display: flex; flex-direction: column; gap: 1.5rem; padding-right: 1rem; }
+        
+        /* Custom Scrollbar */
+        #conteneur-list::-webkit-scrollbar { width: 6px; }
+        #conteneur-list::-webkit-scrollbar-track { background: transparent; }
+        #conteneur-list::-webkit-scrollbar-thumb { background-color: rgba(0, 255, 204, 0.4); border-radius: 0.25rem; }
+
+        .conteneur-card { border: 1px solid rgba(0, 255, 204, 0.2); padding: 1.5rem; background: rgba(0, 10, 8, 0.4); border-radius: 0.25rem; display: flex; flex-direction: column; gap: 0.5rem; }
+        .card-header { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid rgba(0, 255, 204, 0.1); padding-bottom: 0.5rem; margin-bottom: 0.5rem; }
+        .card-header h2 { font-size: 1.5rem; color: #ff33ff; margin: 0; letter-spacing: 0.1em; }
+        .card-header .version { font-size: 0.8rem; color: rgba(0, 255, 204, 0.5); }
+        .card-description { color: rgba(0, 255, 204, 0.8); font-size: 0.9rem; flex-grow: 1; }
+        .card-footer { display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; color: rgba(0, 255, 204, 0.6); margin-top: 1rem; }
+        .card-footer .author { font-style: italic; }
+        .card-footer .type { text-transform: uppercase; letter-spacing: 0.1em; }
+
+        .card-actions { margin-top: 1rem; display: flex; justify-content: flex-end; align-items: center; gap: 1rem; }
+        .action-btn { padding: 0.5rem 1.5rem; font-family: inherit; font-size: 0.9rem; cursor: pointer; border-radius: 0.25rem; transition: all 0.2s ease; border: 1px solid; }
+        .install-btn { background: #00ffcc; color: #0d0d0d; border-color: #00ffcc; }
+        .install-btn:hover { box-shadow: 0 0 15px rgba(0, 255, 204, 0.7); }
+        .uninstall-btn { background: transparent; color: #ff5555; border-color: #ff5555; }
+        .uninstall-btn:hover { background: rgba(255, 85, 85, 0.1); }
+        .installed-info { color: #00ffcc; font-style: italic; }
+
+        #back-btn { position: fixed; bottom: 2vh; right: 2vw; color: rgba(0, 255, 204, 0.6); font-size: 0.8rem; cursor: pointer; transition: all 0.3s ease; z-index: 10; letter-spacing: 0.1em; }
+        #back-btn:hover { color: #ff33ff; text-shadow: 0 0 8px #ff33ff; }
+
+        /* Notification styles */
+        #notification-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .notification { padding: 10px 20px; background-color: rgba(0, 255, 204, 0.9); color: #0d0d0d; border-radius: 3px; box-shadow: 0 2px 10px rgba(0,0,0,0.5); font-size: 0.9rem; opacity: 1; transition: opacity 0.5s ease; }
+        .notification.error { background-color: rgba(255, 51, 255, 0.9); }
+    </style>
+</head>
+<body>
+    <div class="moving-structure"></div>
+    <div class="grime-Overlay"></div>
+    <div id="notification-container"></div>
+
+    <div class="portail-container">
+        <h1>[ NIVEAU 303 // PORTAIL CONTENEUR ]</h1>
+        <div id="conteneur-list">
+            <!-- Les conteneurs seront injectés ici par JavaScript -->
+        </div>
+    </div>
+
+    <div id="back-btn" onclick="window.location.href='/terminaux.html'">[ RETOUR ]</div>
+
+    <script>
+        window.addEventListener('pywebviewready', () => {
+            const conteneurList = document.getElementById('conteneur-list');
+            let installedExtensions = {};
+
+            function showNotification(message, type = 'info', duration = 4000) {
+                const container = document.getElementById('notification-container');
+                if (!container) return;
+                const notif = document.createElement('div');
+                notif.className = `notification ${type}`;
+                notif.textContent = message;
+                container.appendChild(notif);
+                setTimeout(() => {
+                    notif.style.opacity = '0';
+                    notif.addEventListener('transitionend', () => notif.remove());
+                }, duration);
+            }
+
+            async function renderPortail() {
+                conteneurList.innerHTML = '<p>Synchronisation avec le réseau de conteneurs...</p>';
+
+                try {
+                    // 1. Récupérer les extensions installées
+                    const installedResult = await window.pywebview.api.get_installed_extensions();
+                    if (installedResult.status === 'success') {
+                        installedExtensions = installedResult.extensions.reduce((acc, ext) => {
+                            acc[ext.name] = ext;
+                            return acc;
+                        }, {});
+                    } else {
+                        showNotification('Erreur de synchronisation des extensions installées.', 'error');
+                    }
+
+                    // 2. Récupérer tous les conteneurs disponibles
+                    const conteneursResult = await window.pywebview.api.get_conteneurs();
+                    if (conteneursResult.status !== 'success') {
+                        conteneurList.innerHTML = `<p class="error">${conteneursResult.message}</p>`;
+                        return;
+                    }
+
+                    conteneurList.innerHTML = ''; // Vider la liste
+
+                    // 3. Afficher chaque conteneur
+                    if (conteneursResult.conteneurs.length === 0) {
+                        conteneurList.innerHTML = '<p>Aucun conteneur détecté sur le réseau.</p>';
+                        return;
+                    }
+
+                    conteneursResult.conteneurs.forEach(c => {
+                        const isExtension = c.type === 'extension';
+                        const isInstalled = isExtension && installedExtensions[c.name];
+
+                        const card = document.createElement('div');
+                        card.className = 'conteneur-card';
+
+                        let actionsHtml = '';
+                        if (isExtension) {
+                            if (isInstalled) {
+                                const level = installedExtensions[c.name].level;
+                                actionsHtml = `
+                                    <div class="card-actions">
+                                        <span class="installed-info">Installé au Niveau ${level}</span>
+                                        <button class="action-btn uninstall-btn" data-name="${c.name}">Désinstaller</button>
+                                    </div>`;
+                            } else {
+                                actionsHtml = `
+                                    <div class="card-actions">
+                                        <button class="action-btn install-btn" data-id="${c.id}">Installer</button>
+                                    </div>`;
+                            }
+                        }
+
+                        card.innerHTML = `
+                            <div class="card-header">
+                                <h2>${c.name || 'Conteneur Anonyme'}</h2>
+                                <span class="version">v${c.version || '?.?'}</span>
+                            </div>
+                            <p class="card-description">${c.description || 'Aucune description.'}</p>
+                            <div class="card-footer">
+                                <span class="author">Auteur: ${c.author || 'Inconnu'}</span>
+                                <span class="type">Type: ${c.type || 'Indéfini'}</span>
+                            </div>
+                            ${actionsHtml}
+                        `;
+                        conteneurList.appendChild(card);
+                    });
+
+                } catch (e) {
+                    conteneurList.innerHTML = `<p class="error">Erreur de connexion au portail: ${e}</p>`;
+                }
+            }
+
+            async function handleActionClick(event) {
+                const installBtn = event.target.closest('.install-btn');
+                const uninstallBtn = event.target.closest('.uninstall-btn');
+
+                if (installBtn) {
+                    const id = parseInt(installBtn.dataset.id, 10);
+                    showNotification(`Installation de l'extension ID:${id}...`);
+                    const result = await window.pywebview.api.install_extension(id);
+                    if (result.status === 'success') {
+                        showNotification(result.message, 'info');
+                        await renderPortail(); // Recharger la liste
+                    } else {
+                        showNotification(result.message, 'error');
+                    }
+                }
+
+                if (uninstallBtn) {
+                    const name = uninstallBtn.dataset.name;
+                    showNotification(`Désinstallation de '${name}'...`);
+                    const result = await window.pywebview.api.uninstall_extension(name);
+                    if (result.status === 'success') {
+                        showNotification(result.message, 'info');
+                        await renderPortail(); // Recharger la liste
+                    } else {
+                        showNotification(result.message, 'error');
+                    }
+                }
+            }
+
+            conteneurList.addEventListener('click', handleActionClick);
+            renderPortail();
+        });
+    </script>
+</body>
+</html>
