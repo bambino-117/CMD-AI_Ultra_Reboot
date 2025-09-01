@@ -1,0 +1,18 @@
+{
+  "username": "Utilisateur",
+  "system_info": {
+    "system": "Linux",
+    "release": "6.12.33+kali-amd64",
+    "version": "#1 SMP PREEMPT_DYNAMIC Kali 6.12.33-1kali1 (2025-06-25)",
+    "machine": "x86_64",
+    "processor": "",
+    "cpu_count": 2,
+    "memory_gb": 7.51,
+    "python_version": "3.13.3"
+  },
+  "system_detected": true,
+  "selected_llm": "1",
+  "api_keys": {
+    "gemini": "je veux utiliser OSINT"
+  }
+}

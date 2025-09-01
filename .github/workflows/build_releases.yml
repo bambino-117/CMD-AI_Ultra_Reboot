@@ -1,0 +1,130 @@
+name: 🏗️ Build Multi-Platform Releases
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+        pip install pyinstaller
+    
+    - name: Build Windows executable
+      run: |
+        pyinstaller --onefile --windowed --name CMD-AI_Ultra_Reboot --icon ressources/icons/CMD-AI_Ultra_main.ico --add-data "ressources;ressources" --add-data "extensions;extensions" main.py
+    
+    - name: Create Windows package
+      run: |
+        mkdir dist_windows
+        copy dist\CMD-AI_Ultra_Reboot.exe dist_windows\
+        copy *.md dist_windows\
+        copy requirements.txt dist_windows\
+    
+    - name: Upload Windows artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: CMD-AI_Ultra_Reboot_Windows
+        path: dist_windows/
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+        pip install pyinstaller
+    
+    - name: Build macOS executable
+      run: |
+        pyinstaller --onefile --windowed --name CMD-AI_Ultra_Reboot --icon ressources/logos/CMD-AI_Ultra_main.png --add-data "ressources:ressources" --add-data "extensions:extensions" main.py
+    
+    - name: Create macOS package
+      run: |
+        mkdir dist_macos
+        cp -R dist/CMD-AI_Ultra_Reboot.app dist_macos/
+        cp *.md dist_macos/
+        cp requirements.txt dist_macos/
+    
+    - name: Upload macOS artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: CMD-AI_Ultra_Reboot_macOS
+        path: dist_macos/
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y python3-tk python3-dev
+    
+    - name: Install Python dependencies
+      run: |
+        pip install -r requirements.txt
+        pip install pyinstaller
+    
+    - name: Build Linux executable
+      run: |
+        pyinstaller --onefile --windowed --name CMD-AI_Ultra_Reboot --add-data "ressources:ressources" --add-data "extensions:extensions" main.py
+    
+    - name: Create Linux package
+      run: |
+        mkdir dist_linux
+        cp dist/CMD-AI_Ultra_Reboot dist_linux/
+        cp *.md dist_linux/
+        cp requirements.txt dist_linux/
+        tar -czf CMD-AI_Ultra_Reboot_Linux.tar.gz -C dist_linux .
+    
+    - name: Upload Linux artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: CMD-AI_Ultra_Reboot_Linux
+        path: CMD-AI_Ultra_Reboot_Linux.tar.gz
+
+  create-release:
+    needs: [build-windows, build-macos, build-linux]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+    
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          CMD-AI_Ultra_Reboot_Windows/*
+          CMD-AI_Ultra_Reboot_macOS/*
+          CMD-AI_Ultra_Reboot_Linux/*
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UI Generator</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>🎨 UI Generator</h2>
+            <p>Analysez votre design et générez du code Python</p>
+        </div>
+        
+        <div class="section">
+            <button id="analyzeBtn" class="btn-primary">🔍 Analyser le document</button>
+        </div>
+        
+        <div class="section">
+            <h3>Éléments détectés</h3>
+            <div id="results" class="results-box">
+                Aucune analyse effectuée
+            </div>
+        </div>
+        
+        <div class="section">
+            <h3>Format de sortie</h3>
+            <select id="codeFormat">
+                <option value="tkinter">Tkinter (Python)</option>
+                <option value="pyqt">PyQt5 (Python)</option>
+                <option value="html">HTML/CSS</option>
+            </select>
+        </div>
+        
+        <div class="section">
+            <h3>Code généré</h3>
+            <textarea id="codeOutput" readonly></textarea>
+        </div>
+        
+        <div class="section">
+            <div class="btn-group">
+                <button id="copyBtn" class="btn-secondary">📋 Copier</button>
+                <button id="saveBtn" class="btn-secondary">💾 Sauver</button>
+                <button id="sendBtn" class="btn-primary">📤 Envoyer vers CMD-AI</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="js/CSInterface.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
