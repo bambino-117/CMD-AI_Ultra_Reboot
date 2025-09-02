@@ -11,6 +11,12 @@ import inspect
 import platform
 from LOGIQUES.EXTENSIONS.base_extension import BaseExtension
 from datetime import datetime
+
+# --- NOUVEAU : Importation du module de mécanique ---
+try:
+    from LOGIQUES.mecannique import search_admin_data
+except ImportError:
+    search_admin_data = None
 import requests
 from bs4 import BeautifulSoup
 
@@ -337,12 +343,18 @@ class Api:
             if ext_name in installed_extensions:
                 return {'status': 'error', 'message': 'Extension déjà installée.'}
 
-            # 3. Trouver un niveau disponible (de 501 à 999)
+            # 3. Trouver un niveau disponible aléatoirement (de 1 à 500)
+            import random
             used_levels = {ext['level'] for ext in installed_extensions.values()}
-            new_level = next((level for level in range(501, 1000) if level not in used_levels), -1)
-
-            if new_level == -1:
+            # Niveaux système réservés
+            reserved_levels = {0, 23, 101, 241, 303, 404, 500}
+            used_levels.update(reserved_levels)
+            
+            available_levels = [level for level in range(1, 501) if level not in used_levels]
+            if not available_levels:
                 return {'status': 'error', 'message': 'Plus de niveaux disponibles pour les extensions.'}
+            
+            new_level = random.choice(available_levels)
 
             # 4. Créer et sauvegarder la nouvelle entrée d'extension
             slug = ext_name.replace(' ', '_').lower()
@@ -378,6 +390,91 @@ class Api:
         except Exception as e:
             return {'status': 'error', 'message': f"Erreur lors de la désinstallation : {e}"}
 
+    def analyze_osint_results(self, results_data):
+        """Exposée au JS. Envoie les résultats OSINT à l'IA pour analyse."""
+        try:
+            # 1. Formatter les données en un texte lisible pour l'IA
+            report_text = "Données brutes collectées :\n\n"
+            
+            if results_data.get('search_results'):
+                report_text += "--- Résultats des Moteurs de Recherche ---\n"
+                for res in results_data['search_results']:
+                    report_text += f"Titre: {res.get('title', 'N/A')}\n"
+                    report_text += f"Lien: {res.get('link', 'N/A')}\n"
+                    report_text += f"Extrait: {res.get('snippet', 'N/A')}\n\n"
+
+            if results_data.get('social_media'):
+                social = results_data['social_media']
+                report_text += "--- Scan des Réseaux Sociaux ---\n"
+                if social.get('utilisateurs'):
+                    report_text += f"Utilisateurs associés: {', '.join(social['utilisateurs'])}\n"
+                if social.get('mentions'):
+                    report_text += f"Mentions trouvées: {', '.join(social['mentions'])}\n"
+                if social.get('tags'):
+                    report_text += f"Tags associés: {', '.join(social['tags'])}\n"
+                if social.get('citations'):
+                    report_text += "Citations/Posts notables:\n"
+                    for quote in social['citations']:
+                        report_text += f"- \"{quote}\"\n"
+                if social.get('liens'):
+                    report_text += f"Liens découverts: {', '.join(social['liens'])}\n"
+                if social.get('locations'):
+                    locations_str = ', '.join([loc['name'] for loc in social['locations']])
+                    report_text += f"Localisations potentielles: {locations_str}\n"
+                report_text += "\n"
+
+            # 2. Créer le prompt pour l'IA
+            prompt = f"""
+            En tant qu'analyste en renseignement expert, analyse les données OSINT brutes suivantes.
+            Ton objectif est de produire un rapport de synthèse clair et concis.
+
+            Le rapport doit inclure :
+            1.  **Résumé Exécutif** : Un paragraphe résumant les découvertes les plus importantes.
+            2.  **Entités Clés Identifiées** : Liste les personnes, organisations, noms d'utilisateur ou autres identifiants uniques.
+            3.  **Analyse des Connexions** : Décris les relations potentielles entre les entités, les thèmes récurrents ou les points d'intérêt.
+            4.  **Vecteurs de Risques Potentiels** : Sur la base des informations, identifie les risques potentiels (exposition d'informations personnelles, affiliations, etc.).
+
+            Présente le rapport final en Markdown.
+
+            Voici les données à analyser :
+            ---
+            {report_text}
+            ---
+            """
+
+            return self.get_ai_response(prompt)
+        except Exception as e:
+            return {'status': 'error', 'message': f"Erreur lors de la préparation de l'analyse IA : {e}"}
+
+    def get_data_portals(self):
+        """Exposée au JS. Retourne la liste des continents et pays disponibles pour le sondage."""
+        if search_admin_data is None:
+            return {'status': 'error', 'message': 'Module de recherche introuvable.'}
+        
+        try:
+            # Importation locale pour s'assurer d'avoir la dernière version et éviter les soucis de chargement
+            from LOGIQUES.mecannique import DATA_PORTALS
+            portal_map = {}
+            for continent, countries in DATA_PORTALS.items():
+                portal_map[continent] = list(countries.keys())
+            return {'status': 'success', 'portals': portal_map}
+        except Exception as e:
+            return {'status': 'error', 'message': f"Erreur lors de la récupération des portails : {e}"}
+
+    def run_admin_data_search(self, query, target_country=None):
+        """Exposée au JS. Lance une recherche sur les portails de données administratifs."""
+        if search_admin_data is None:
+            return {'status': 'error', 'message': 'Le module de recherche administrative (mecannique.py) est introuvable.'}
+        
+        try:
+            # On passe le pays cible (qui peut être None) à la fonction de recherche
+            results = search_admin_data(query, target_country=target_country)
+            return {'status': 'success', 'results': results}
+        except Exception as e:
+            # Log l'erreur côté serveur pour le débogage
+            print(f"Erreur dans run_admin_data_search: {e}")
+            return {'status': 'error', 'message': f"Une erreur inattendue est survenue lors de la recherche : {e}"}
+
     def get_conteneurs(self):
         """
         Exposée au JS. Scanne, lit et retourne les données de tous les conteneurs.
@@ -388,119 +485,57 @@ class Api:
         conteneurs_data = []
         try:
             # S'assure que les fichiers sont lus dans un ordre prévisible (00, 01, 02...)
-            for filename in sorted(os.listdir(CONTENEURS_FOLDER)):
+            filenames = sorted(os.listdir(CONTENEURS_FOLDER))
+            for filename in filenames:
                 if filename.startswith('conteneur_') and filename.endswith('.json'):
                     file_path = os.path.join(CONTENEURS_FOLDER, filename)
+
+                    # Vérifier si le fichier n'est pas vide avant de tenter de le lire
+                    if os.path.getsize(file_path) == 0:
+                        print(f"Avertissement : Le fichier conteneur '{filename}' est vide et sera ignoré.")
+                        continue  # Passe au fichier suivant
+
                     with open(file_path, 'r', encoding='utf-8') as f:
                         data = json.load(f)
                         conteneurs_data.append(data)
             
             # Tri final par ID pour garantir l'ordre, au cas où les noms de fichiers seraient incohérents
             conteneurs_data.sort(key=lambda x: x.get('id', 0))
-
             return {'status': 'success', 'conteneurs': conteneurs_data}
         except json.JSONDecodeError as e:
-            return {'status': 'error', 'message': f"Erreur de décodage JSON dans un fichier conteneur : {e}"}
+            # L'erreur inclut maintenant le nom du fichier problématique pour un débogage plus facile
+            return {'status': 'error', 'message': f"Erreur de décodage JSON dans le fichier '{filename}' : {e}"}
         except Exception as e:
             return {'status': 'error', 'message': f"Erreur inattendue lors de la lecture des conteneurs : {e}"}
 
     def save_osint_report(self, target, results):
-        """
-        Exposée au JS. Formate les résultats d'un scan OSINT en Markdown
-        et les sauvegarde dans un fichier dans le Bunker.
-        """
-        try:
-            if not target or not isinstance(results, list):
-                return {'status': 'error', 'message': 'Données du rapport invalides.'}
-
-            # 1. Formater le contenu en Markdown
-            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            report_content = f"# Rapport OSINT : {target}\n"
-            report_content += f"## Généré le {timestamp}\n\n"
-            report_content += f"---\n\n"
-
-            if not results:
-                report_content += "Aucun résultat trouvé pour cette cible.\n"
-            else:
-                for i, res in enumerate(results):
-                    report_content += f"### Résultat {i+1}: {res.get('title', 'Sans titre')}\n"
-                    report_content += f"**Lien:** [{res.get('link', '#')}]({res.get('link', '#')})\n\n"
-                    report_content += f"**Extrait:**\n"
-                    report_content += f"> {res.get('snippet', 'Aucun extrait.')}\n\n"
-                    report_content += f"---\n\n"
-
-            # 2. Générer un nom de fichier sécurisé et unique
-            safe_target_name = "".join(c for c in target if c.isalnum() or c in (' ', '_')).rstrip().replace(' ', '_')
-            report_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"osint_report_{safe_target_name}_{report_timestamp}.md"
-
-            # 3. Utiliser _secure_path pour obtenir le chemin complet et sécurisé
-            full_path, error = self._secure_path(filename)
-            if error:
-                return {'status': 'error', 'message': error}
-
-            # 4. Écrire le fichier
-            with open(full_path, 'w', encoding='utf-8') as f:
-                f.write(report_content)
-
-            return {'status': 'success', 'message': f"Rapport '{filename}' sauvegardé dans le Bunker."}
-        except Exception as e:
-            return {'status': 'error', 'message': f"Erreur lors de la sauvegarde du rapport : {e}"}
+        """Exposée au JS. Wrapper pour appeler la méthode de sauvegarde de l'extension OSINT."""
+        if "OSINT Aggregator" in loaded_extensions:
+            osint_ext = loaded_extensions["OSINT Aggregator"]
+            # L'extension a besoin de la configuration pour le chemin du Bunker
+            return osint_ext.save_report(target, results, self.config)
+        else:
+            return {'status': 'error', 'message': 'L\'extension OSINT n\'est pas chargée.'}
 
     def run_osint_scan(self, target, callback):
-        """
-        Exposée au JS. Effectue une recherche web simple pour la cible
-        et retourne les titres et liens des résultats via un callback.
-        """
-        if not target:
-            callback({'status': 'error', 'message': 'Aucune cible spécifiée.'})
-            return
+        """Exposée au JS. Wrapper pour appeler la méthode de scan de l'extension OSINT."""
+        if "OSINT Aggregator" in loaded_extensions:
+            osint_ext = loaded_extensions["OSINT Aggregator"]
+            # L'extension a besoin de la configuration pour les éventuelles clés API
+            osint_ext.execute_scan(target, callback, self.config)
+        else:
+            callback({'status': 'error', 'message': 'L\'extension OSINT n\'est pas chargée.'})
 
+    def run_deep_social_scan(self, target, callback):
+        """Exposée au JS. Appelle l'outil de recherche sociale et retourne les résultats."""
+        from LOGIQUES.EXTENSIONS.OSINT.deep_social import search_social_media
         try:
-            # Utilise DuckDuckGo pour éviter les blocages de Google
-            # On utilise la version HTML pour un scraping plus simple et stable
-            from urllib.parse import unquote, parse_qs
-            
-            callback({'status': 'log', 'message': f'// Initialisation du scan pour la cible : {target}...'})
-            
-            search_url = f"https://html.duckduckgo.com/html/?q={requests.utils.quote(target)}"
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-            }
-            
-            callback({'status': 'log', 'message': '// Envoi de la requête au réseau DuckDuckGo...'})
-            response = requests.get(search_url, headers=headers, timeout=10)
-            response.raise_for_status()
-            callback({'status': 'log', 'message': f'// Réponse reçue ({response.status_code}). Analyse du DOM...'})
-
-            soup = BeautifulSoup(response.text, 'html.parser')
-            
-            results = []
-            result_items = soup.find_all('div', class_='result')
-            callback({'status': 'log', 'message': f'// {len(result_items)} résultats potentiels trouvés. Extraction...'})
-
-            for item in result_items:
-                title_tag = item.find('a', class_='result__a')
-                snippet_tag = item.find('a', class_='result__snippet')
-                
-                if title_tag and snippet_tag:
-                    title = title_tag.get_text(strip=True)
-                    link = title_tag['href']
-                    snippet = snippet_tag.get_text(strip=True)
-                    
-                    if link.startswith('/l/'):
-                        qs = parse_qs(link.split('?')[1])
-                        if 'uddg' in qs:
-                            link = unquote(qs['uddg'][0])
-
-                    results.append({'title': title, 'link': link, 'snippet': snippet})
-            
+            # La fonction search_social_media retourne les résultats,
+            # nous devons les encapsuler dans un callback de succès pour le JS.
+            results = search_social_media(target, callback)
             callback({'status': 'success', 'results': results})
-
-        except requests.exceptions.RequestException as e:
-            callback({'status': 'error', 'message': f'Erreur réseau lors du scan : {e}'})
         except Exception as e:
-            callback({'status': 'error', 'message': f'Erreur inattendue lors du scan : {e}'})
+            callback({'status': 'error', 'message': str(e)})
 
 @app.route('/')
 def login_page():
@@ -547,13 +582,6 @@ def portail_conteneur_page():
     Sert la page du Portail Conteneur (Niveau 303).
     """
     return render_template('portail_conteneur.html')
-
-@app.route('/centre_analyse')
-def centre_analyse_page():
-    """
-    Sert la page du Centre d'Analyse (Niveau 500).
-    """
-    return render_template('centre_analyse.html')
 
 @app.route('/extension/<extension_slug>')
 def extension_page(extension_slug):
@@ -680,33 +708,34 @@ def load_config():
 
 def load_extensions_from_disk():
     """
-    Scanne le dossier EXTENSIONS, importe dynamiquement les modules
+    Scanne le dossier EXTENSIONS et ses sous-dossiers, importe dynamiquement les modules
     et instancie les classes qui héritent de BaseExtension.
     """
     if not os.path.isdir(EXTENSIONS_FOLDER):
         print(f"Avertissement : Le dossier des extensions '{EXTENSIONS_FOLDER}' n'a pas été trouvé.")
         return
 
-    for filename in os.listdir(EXTENSIONS_FOLDER):
-        # On ne charge que les fichiers python, en ignorant les fichiers de base/init
-        if filename.endswith('.py') and filename not in ['__init__.py', 'base_extension.py']:
-            module_name = filename[:-3]
-            file_path = os.path.join(EXTENSIONS_FOLDER, filename)
-            
-            try:
-                # Importation dynamique du module
-                spec = importlib.util.spec_from_file_location(module_name, file_path)
-                module = importlib.util.module_from_spec(spec)
-                spec.loader.exec_module(module)
+    for root, _, files in os.walk(EXTENSIONS_FOLDER):
+        for filename in files:
+            # On ne charge que les fichiers python, en ignorant les fichiers de base/init
+            if filename.endswith('.py') and filename not in ['__init__.py', 'base_extension.py']:
+                module_name = filename[:-3]
+                file_path = os.path.join(root, filename)
+                
+                try:
+                    # Importation dynamique du module
+                    spec = importlib.util.spec_from_file_location(module_name, file_path)
+                    module = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(module)
 
-                # On cherche les classes dans le module qui sont des extensions valides
-                for name, obj in inspect.getmembers(module, inspect.isclass):
-                    if issubclass(obj, BaseExtension) and obj is not BaseExtension:
-                        instance = obj()
-                        print(f"Extension chargée : {instance.NAME}")
-                        loaded_extensions[instance.NAME] = instance
-            except Exception as e:
-                print(f"Erreur lors du chargement de l'extension {filename}: {e}")
+                    # On cherche les classes dans le module qui sont des extensions valides
+                    for name, obj in inspect.getmembers(module, inspect.isclass):
+                        if issubclass(obj, BaseExtension) and obj is not BaseExtension:
+                            instance = obj()
+                            print(f"Extension chargée : {instance.NAME} depuis {filename}")
+                            loaded_extensions[instance.NAME] = instance
+                except Exception as e:
+                    print(f"Erreur lors du chargement de l'extension {filename}: {e}")
 
 # Variable globale pour stocker la configuration
 app_config = {}

@@ -1,6 +1,12 @@
 {
     "id": 17,
-    "nom": "Conteneur #17",
-    "type": "standard",
-    "status": "actif"
+    "name": "OSINT Aggregator",
+    "version": "1.0.0",
+    "author": "Anonyme",
+    "type": "extension",
+    "status": "actif",
+    "description": "Un outil puissant pour agr\u00e9ger des informations open-source sur une cible donn\u00e9e. Combine plusieurs moteurs de recherche et analyse les r\u00e9sultats.",
+    "payload": {
+        "entry_point_template": "osint_tool.html"
+    }
 }

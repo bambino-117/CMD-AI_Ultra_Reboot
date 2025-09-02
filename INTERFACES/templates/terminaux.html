@@ -76,24 +76,6 @@
             gap: 1.5vw; /* Space between button and title */
         }
 
-        /* NOUVEAU : Style pour le bouton d'accès principal à côté du titre H1 */
-        #main-access-btn {
-            background: transparent;
-            border: 1px solid #ff33ff;
-            color: #ff33ff;
-            font-family: inherit;
-            font-size: 1rem;
-            padding: 0.4rem 0.8rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            opacity: 0.8;
-        }
-        #main-access-btn:hover {
-            opacity: 1;
-            background: rgba(255, 51, 255, 0.1);
-            box-shadow: 0 0 8px rgba(255, 51, 255, 0.4);
-        }
-
         h1 {
             /* Taille de police fluide avec des limites min/max pour éviter les extrêmes */
             font-size: clamp(1.8rem, 4vw, 3.5rem);
@@ -123,6 +105,11 @@
         }
         .shake-effect { animation: screen-shake 0.3s; }
 
+        /* --- CONFIGURATION FINALE DU TERMINAL D'ARRIÈRE-PLAN - NE PAS MODIFIER --- */
+        /* Cette section définit l'apparence et le comportement du terminal. */
+        /* Son opacité (invisible par défaut) est gérée par JS pour l'animation. */
+        /* Il est non-interactif par défaut (pointer-events: none). */
+        /* Cette configuration est validée et fonctionnelle. */
         /* Terminal window styles */
         #cyber-terminal {
             flex-grow: 1; /* Take up remaining vertical space */
@@ -132,7 +119,7 @@
             overflow-y: auto;
             padding: 1rem;
             position: relative; 
-            /* MODIFICATION: Le terminal est invisible par défaut et apparaît pendant les animations. */
+            /* Le terminal est invisible par défaut et apparaît pendant l'animation de défilement. */
             opacity: 0;
             transition: opacity 0.5s ease-in-out;
             box-shadow: inset 0 0 1rem rgba(0, 255, 204, 0.1);
@@ -140,6 +127,7 @@
             /* MODIFICATION : Rend le terminal complètement insensible aux clics et au scroll de la souris. */
             pointer-events: none;
         }
+        /* --- FIN CONFIGURATION TERMINAL --- */
 
         /* Custom scrollbar for the terminal */
         #cyber-terminal::-webkit-scrollbar {
@@ -185,12 +173,28 @@
             gap: 1rem; /* Espace entre le titre et le bouton */
         }
 
-        /* Blinking cursor for typewriter effect */
+        /* NOUVEAU: Style pour le bouton d'accès à côté du titre du niveau */
+        .access-level-btn {
+            background: transparent;
+            border: 1px solid #ff33ff;
+            color: #ff33ff;
+            font-family: inherit;
+            font-size: 0.8rem;
+            padding: 0.2rem 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .access-level-btn:hover {
+            background: rgba(255, 51, 255, 0.1);
+            box-shadow: 0 0 8px rgba(255, 51, 255, 0.4);
+        }
+
         .level-header.typing::after {
             content: '█';
             animation: blink 1s step-end infinite;
         }
-
+        
         @keyframes blink {
             from, to { opacity: 1; }
             50% { opacity: 0; }
@@ -237,8 +241,13 @@
             display: none;
             flex-direction: column;
             gap: 0.6rem; /* Léger agrandissement de l'espace entre les items */
-            max-height: 70vh; /* Augmentation de la hauteur maximale avant défilement */
-            overflow-y: auto; /* CORRECTION: Ajoute une barre de défilement si nécessaire */
+            /* --- CONFIGURATION FINALE DU MENU - NE PAS MODIFIER --- */
+            /* La hauteur maximale (max-height) est calculée pour éviter que le menu ne sorte de l'écran par le bas. */
+            /* Le défilement interne (overflow-y) est activé si le contenu dépasse cette hauteur. */
+            /* Cette configuration est validée et fonctionnelle. */
+            max-height: 45vh;
+            overflow-y: auto; /* Ajoute une barre de défilement si le contenu dépasse max-height. */
+            /* --- FIN CONFIGURATION FINALE DU MENU --- */
             z-index: 1000;
             box-shadow: 0 0 15px rgba(0, 255, 204, 0.3);
             backdrop-filter: blur(5px);
@@ -295,21 +304,6 @@
 
         .menu-item:active {
             background: rgba(0, 255, 204, 0.3);
-        }
-
-        /* Classe pour l'état "focus" où seul le titre et le bouton restent */
-        body.focused-view .moving-structure,
-        body.focused-view .grime-Overlay,
-        body.focused-view #config-button { /* Cache aussi le bouton de config en mode focus */
-            opacity: 0;
-            pointer-events: none; /* Empêche l'interaction avec les éléments invisibles */
-        }
-
-        /* CORRECTION: Cache complètement le terminal pour faire disparaître sa scrollbar */
-        body.focused-view #cyber-terminal {
-            opacity: 0;
-            visibility: hidden;
-            pointer-events: none;
         }
 
         /* --- Modal Styles --- */
@@ -405,28 +399,45 @@
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4L7 9h3v6H7l5 5 5-5h-3V9h3L12 4z"/></svg>
                 </button>
                 <div id="contextMenu" class="context-menu">
-                    <!-- Nouveaux items du menu avec les data-attributes -->
-                    <div class="menu-item" data-level="404" data-name="Accesseur" data-description="Est le landing niveau.">
-                        NIVEAU 404 : Accesseur
-                    </div>
                     <div class="menu-item" data-level="23" data-name="Logicateur" data-description="Donnera accès à un chat avec ia intégrée." data-url="/logicateur">
                         NIVEAU 23 : Logicateur
                     </div>
                     <div class="menu-item" data-level="101" data-name="Bunker" data-description="Contiendra l'accès au dossier utilisateur et fichiers de configurations, tous fichiers relatifs aux données personnelles de l'user." data-url="/bunker">
                         NIVEAU 101 : Bunker
                     </div>
-                    <div class="menu-item" data-level="241" data-name="Legislateur" data-description="Contiendra un accès à des rappels de lois EU et le disclaimer de l'app.">
-                        NIVEAU 241 : Legislateur
-                    </div>
                     <div class="menu-item" data-level="303" data-name="Portail Conteneur" data-description="Donnera accès à la page des extensions." data-url="/portail_conteneur">
                         NIVEAU 303 : Portail Conteneur
                     </div>
-                    <div class="menu-item" data-level="500" data-name="Centre d'Analyse" data-description="Consultation de rapports d'OSINT et de pentesting." data-url="/centre_analyse">
-                        NIVEAU 500 : Centre d'Analyse
+                    <div class="menu-item" data-level="404" data-name="Accesseur" data-description="Est le landing niveau.">
+                        NIVEAU 404 : Accesseur
+                    </div>
+                    <div class="menu-item" data-level="500" data-name="..." data-description="Emplacement réseau non alloué.">
+                        NIVEAU 500 : ...
+                    </div>
+                    <!-- Séparateur pour les niveaux d'ambiance/non-alloués -->
+                    <div style="height: 1px; background: rgba(0, 255, 204, 0.2); margin: 0.5rem 0;"></div>
+                    <!-- Niveaux d'ambiance et non alloués, triés par ordre numérique -->
+                    <div class="menu-item" data-level="77" data-name="..." data-description="Emplacement réseau non alloué.">
+                        NIVEAU 77 : ...
+                    </div>
+                    <div class="menu-item" data-level="159" data-name="..." data-description="Emplacement réseau non alloué.">
+                        NIVEAU 159 : ...
+                    </div>
+                    <div class="menu-item" data-level="241" data-name="Legislateur" data-description="Contiendra un accès à des rappels de lois EU et le disclaimer de l'app.">
+                        NIVEAU 241 : Legislateur
+                    </div>
+                    <div class="menu-item" data-level="288" data-name="..." data-description="Emplacement réseau non alloué.">
+                        NIVEAU 288 : ...
+                    </div>
+                    <div class="menu-item" data-level="341" data-name="..." data-description="Emplacement réseau non alloué.">
+                        NIVEAU 341 : ...
+                    </div>
+                    <div class="menu-item" data-level="418" data-name="..." data-description="Emplacement réseau non alloué.">
+                        NIVEAU 418 : ...
                     </div>
                 </div>
             </div>
-            <h1>[ NIVEAU 404 // ACCESSEUR ]</h1>            <button id="main-access-btn" style="display: none;">[ ACCÉDER ]</button>
+            <h1>[ NIVEAU 404 // ACCESSEUR ]</h1>
         </div>
 
         <div id="cyber-terminal">
@@ -461,8 +472,6 @@
         const scrollToggleBtn = document.getElementById('scrollToggle');
         const configButton = document.getElementById('config-button');
         const scrollControl = document.querySelector('.scroll-control');
-        // Modal elements
-        const mainAccessBtn = document.getElementById('main-access-btn');
         const bunkerModal = document.getElementById('bunker-password-modal');
         const bunkerPasswordInput = document.getElementById('bunker-password-input');
         const bunkerSubmitBtn = document.getElementById('bunker-submit-btn');
@@ -606,14 +615,36 @@
 
         // Pre-populates the terminal with a lot of content
         function populateTerminal() {
-            const levelsToGenerate = [404, 23, 101, 241, 303, 500];
+            // Niveaux statiques et d'ambiance
+            const baseLevels = [404, 23, 101, 241, 303, 500, 77, 159, 288, 341, 418];
             const linesPerLevel = 200;
+
+            // Récupérer les infos des items du menu pour savoir lesquels ont une URL
+            const menuItemsData = {};
+            document.querySelectorAll('.menu-item').forEach(item => {
+                const level = item.dataset.level;
+                menuItemsData[level] = {
+                    url: item.dataset.url,
+                    name: item.dataset.name
+                };
+            });
+
+            // Ajouter les niveaux des extensions (ceux qui ne sont pas déjà dans la liste de base)
+            const extensionLevels = Object.keys(menuItemsData)
+                .map(level => parseInt(level, 10))
+                .filter(level => !baseLevels.includes(level));
+
+            const levelsToGenerate = [...baseLevels, ...extensionLevels];
+
+            // Trier tous les niveaux par ordre décroissant pour un affichage cohérent dans le terminal
+            levelsToGenerate.sort((a, b) => b - a);
 
             for (const level of levelsToGenerate) {
                 // --- En-tête de DÉBUT (BEGIN) - Méthode programmatique robuste ---
                 const beginHeader = document.createElement('div');
                 beginHeader.className = 'level-header';
                 beginHeader.id = `level-start-${level}`;
+                beginHeader.dataset.level = level; // Stocker le niveau pour le retrouver
 
                 // 1. Créer et ajouter le texte du titre dans un span.
                 const textSpan = document.createElement('span');
@@ -621,6 +652,17 @@
                 beginHeader.appendChild(textSpan);
 
                 terminalContent.appendChild(beginHeader);
+
+                // 2. NOUVEAU: Ajouter un bouton "ACCÉDER" si une URL est définie pour ce niveau
+                const levelData = menuItemsData[level];
+                if (levelData && levelData.url) {
+                    const button = document.createElement('button');
+                    button.className = 'access-level-btn';
+                    button.textContent = '[ ACCÉDER ]';
+                    button.dataset.url = levelData.url; // Stocker l'URL sur le bouton
+                    beginHeader.appendChild(button);
+                }
+
                 levelMarkers[level] = beginHeader;
 
                 // --- Génération des lignes de log ---
@@ -654,6 +696,11 @@
             type();
         }
 
+        /* --- CONFIGURATION FINALE DE L'ANIMATION DE DÉFILEMENT - NE PAS MODIFIER --- */
+        /* Ce moteur gère l'animation de défilement personnalisée du terminal. */
+        /* La durée (passée en argument, actuellement 2500ms) et la fonction d'easing (easeOutQuint) */
+        /* ont été choisies pour un effet de "freinage" prononcé et ne doivent pas être changées. */
+        /* La fonction est appelée par triggerScrollAvalanche. */
         // --- Custom Scrolling Animation Engine ---
         function customScrollTo(targetPosition, duration = 1500, onComplete) {
             // --- MODIFICATION : Bloquer le défilement utilisateur ---
@@ -663,18 +710,17 @@
             const distance = targetPosition - startPosition;
             let startTime = null;
 
-            // Easing function for a smooth start and end (ease-in-out)
-            function easeInOutQuad(t, b, c, d) {
-                t /= d / 2;
-                if (t < 1) return c / 2 * t * t + b;
+            // Easing function with a strong "braking" effect at the end (starts fast, ends slow).
+            function easeOutQuint(t, b, c, d) {
+                t /= d;
                 t--;
-                return -c / 2 * (t * (t - 2) - 1) + b;
-            };
+                return c * (t * t * t * t * t + 1) + b;
+            }
 
             function animation(currentTime) {
                 if (startTime === null) startTime = currentTime;
                 const timeElapsed = currentTime - startTime;
-                const run = easeInOutQuad(timeElapsed, startPosition, distance, duration);
+                const run = easeOutQuint(timeElapsed, startPosition, distance, duration);
                 terminal.scrollTop = run;
                 if (timeElapsed < duration) {
                     requestAnimationFrame(animation);
@@ -688,6 +734,7 @@
 
             requestAnimationFrame(animation);
         }
+        /* --- FIN CONFIGURATION ANIMATION --- */
 
         // Fonction pour jouer un son de manière fiable
         function playSound(audioElement) {
@@ -697,12 +744,17 @@
             }
         }
 
+        // --- LOGIQUE DE NAVIGATION DU MENU - NE PAS MODIFIER ---
+        // Cette section gère la sélection d'un niveau, l'animation de défilement,
+        // et l'affichage conditionnel du bouton "ACCÉDER".
+        // Le flux a été validé : sélection -> animation -> affichage bouton.
+        // Toute modification risque de casser la séquence.
         // The "Avalanche" effect with the new mechanics
-        function triggerScrollAvalanche(level) {
+        function triggerScrollAvalanche(level, onComplete) {
             const targetMarker = levelMarkers[level];
             if (!targetMarker) return;
 
-            // --- MODIFICATION : Rendre le terminal visible pour l'animation ---
+            // Rendre le terminal visible pour l'animation de défilement.
             terminal.style.opacity = 1;
 
             const targetPosition = targetMarker.offsetTop - 15; // -15px for padding            
@@ -711,67 +763,61 @@
             playSound(scrollWhooshSound); // Jouer le son de transition
 
             // Start custom scroll, and execute callback on completion
-            customScrollTo(targetPosition, 1500, () => {
+            customScrollTo(targetPosition, 2500, () => {
                 // Scroll is finished. Fade out the decor and terminal.
-                document.body.classList.add('focused-view');
+                if (onComplete) onComplete();
             });
 
             setTimeout(() => terminal.classList.remove('shake-effect'), 800);
         }
 
-        function updateMainAccessButton(level) {
-            const menuItem = document.querySelector(`.menu-item[data-level="${level}"]`);
-            const url = menuItem ? menuItem.dataset.url : null;
-
-            if (url) {
-                mainAccessBtn.style.display = 'block';
-                mainAccessBtn.dataset.level = level;
-                mainAccessBtn.dataset.url = url;
-                mainAccessBtn.dataset.name = menuItem.dataset.name;
+        // Gère la navigation vers une autre page (appelé par le bouton ACCÉDER)
+        function handleNavigation(level, url) {
+            if (level === '101') {
+                bunkerModal.style.display = 'flex';
+                bunkerPasswordInput.focus();
             } else {
-                mainAccessBtn.style.display = 'none';
-            }
-        }
-
-        // Fonction unifiée pour gérer les clics sur les items de menu et les boutons
-        function handleNavigation(item) {
-            const level = item.dataset.level;
-            const name = item.dataset.name || '???';
-            const url = item.dataset.url;
-
-            scrollControl.classList.remove('active'); // Toujours fermer le menu
-
-            if (url) {
-                if (level === '101') {
-                    bunkerModal.style.display = 'flex';
-                    bunkerPasswordInput.focus();
-                    return; // La logique du modal prend le relais
-                }
                 window.location.href = url;
-            } else {
-                document.body.classList.remove('focused-view');
-                h1.textContent = `[ NIVEAU ${level} // ${name.toUpperCase()} ]`;
-                updateMainAccessButton(level);
-                triggerScrollAvalanche(level);
             }
         }
+        // --- FIN DE LA LOGIQUE DE NAVIGATION ---
 
-        // Utilise la délégation d'événements pour gérer les clics sur les items du menu (statiques et dynamiques)
+        // Le clic sur un item du menu ne fait que FAIRE DÉFILER le terminal
         contextMenu.addEventListener('click', (event) => {
             const menuItem = event.target.closest('.menu-item');
             if (menuItem) {
-                handleNavigation(menuItem);
+                event.stopPropagation(); // Empêche le menu de se fermer à cause d'un autre listener
+                
+                const level = menuItem.dataset.level;
+                const name = menuItem.dataset.name || '???';
+
+                scrollControl.classList.remove('active'); // Fermer le menu
+                // Rendre le terminal visible pour l'animation
+                terminal.style.opacity = 1;
+                h1.textContent = `[ NIVEAU ${level} // ${name.toUpperCase()} ]`;
+
+                // Lancer l'animation de défilement, sans callback de navigation.
+                // Le terminal restera visible après.
+                triggerScrollAvalanche(level, null);
             }
         });
 
-        // Le clic sur le bouton d'accès principal déclenche la navigation
-        mainAccessBtn.addEventListener('click', () => {
-            handleNavigation(mainAccessBtn);
+        configButton.addEventListener('click', function() {
+            const url = this.dataset.url;
+            if (url) {
+                window.location.href = url;
+            }
         });
 
-        // Le clic sur le bouton de configuration navigue aussi
-        configButton.addEventListener('click', function() {
-            handleNavigation(this);
+        // NOUVEAU: Le clic sur un bouton [ACCÉDER] dans le terminal déclenche la navigation
+        terminalContent.addEventListener('click', (event) => {
+            const accessBtn = event.target.closest('.access-level-btn');
+            if (accessBtn) {
+                const header = accessBtn.closest('.level-header');
+                const level = header.dataset.level;
+                const url = accessBtn.dataset.url;
+                handleNavigation(level, url);
+            }
         });
 
         // --- NOUVEAU : Construction dynamique du menu ---
@@ -807,28 +853,30 @@
 
         // On page load, populate and set initial view
         window.addEventListener('pywebviewready', () => {
-            populateTerminal();
-
-            // Construit le menu avec les extensions installées
-            buildDynamicMenu();
-
-            // Set initial view to the configured start level passed from Python
-            let initialLevel;
-            try {
-                // This will work when run with Python/Flask
-                initialLevel = {{ start_level | tojson }};
-            } catch (e) {
-                // This will be caught when run with Live Server, providing a fallback
-                initialLevel = 404; // Default level for preview
+            function setupInitialView(initialLevel) {
+                const initialMenuItem = document.querySelector(`.menu-item[data-level="${initialLevel}"]`);
+                const initialName = initialMenuItem ? initialMenuItem.dataset.name : 'ACCESSEUR';
+                h1.textContent = `[ NIVEAU ${initialLevel} // ${initialName.toUpperCase()} ]`;
+                const initialMarker = levelMarkers[initialLevel];
+                if (initialMarker) {
+                    terminal.scrollTop = initialMarker.offsetTop - 15;
+                }
             }
-            const initialMenuItem = document.querySelector(`.menu-item[data-level="${initialLevel}"]`);
-            const initialName = initialMenuItem ? initialMenuItem.dataset.name : 'ACCESSEUR';
-            h1.textContent = `[ NIVEAU ${initialLevel} // ${initialName.toUpperCase()} ]`;
-            updateMainAccessButton(initialLevel);
-            const initialMarker = levelMarkers[initialLevel];
-            if (initialMarker) {
-                initialMarker.scrollIntoView({ behavior: 'auto', block: 'start' });
+
+            async function initialize() {
+                await buildDynamicMenu();
+                populateTerminal();
+
+                let initialLevel;
+                try {
+                    initialLevel = {{ start_level | tojson }};
+                } catch (e) {
+                    initialLevel = 404;
+                }
+                setupInitialView(initialLevel);
             }
+
+            initialize();
         });
     </script>
 </body>

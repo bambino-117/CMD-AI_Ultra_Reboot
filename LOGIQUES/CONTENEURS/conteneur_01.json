@@ -1,6 +1,6 @@
 {
     "id": 1,
     "nom": "Conteneur #01",
-    "type": "furtif",
+    "type": "standard",
     "status": "actif"
 }
