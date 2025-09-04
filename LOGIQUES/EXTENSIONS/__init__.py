@@ -1,0 +1,1 @@
+# Ce fichier rend le dossier EXTENSIONS importable en tant que package.

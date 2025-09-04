@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Mégastructure // TITRE DE LA PAGE</title>
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        /* --- Styles de Base --- */
+        html { font-size: calc(14px + 0.2vw); }
+        body { margin: 0; font-family: 'Share Tech Mono', monospace; background-color: #0d0d0d; color: #00ffcc; overflow: hidden; font-size: 1rem; }
+        .grime-Overlay, .moving-structure { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; }
+        .grime-Overlay { background: url('/static/texture_grime.png') repeat; opacity: 0.08; z-index: 3; }
+        .moving-structure { background: url('/static/structure_moving.png') center center / cover no-repeat; opacity: 0.05; animation: drift 60s infinite linear; z-index: 1; }
+        @keyframes drift { 0% { transform: translate(0, 0) scale(1); } 50% { transform: translate(-1vw, 0.5vh) scale(1.05); } 100% { transform: translate(0, 0) scale(1); } }
+        @keyframes glitch { 0%, 100% { text-shadow: 0.05em 0 red, -0.05em 0 blue; } 50% { text-shadow: -0.05em 0 red, 0.05em 0 blue; } }
+
+        /* --- Styles Spécifiques à la Page --- */
+        .main-container {
+            position: relative;
+            z-index: 4;
+            padding: 3vh 4vw;
+            box-sizing: border-box;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        h1 {
+            font-size: clamp(1.5rem, 3vw, 2.5rem);
+            margin: 0 0 1.5rem 0;
+            animation: glitch 2s infinite;
+            text-align: center;
+        }
+        /* Ajoutez d'autres styles spécifiques ici */
+
+    </style>
+</head>
+<body>
+    <!-- Éléments Visuels de Fond -->
+    <div class="moving-structure"></div>
+    <div class="grime-Overlay"></div>
+
+    <!-- Contenu Principal -->
+    <div class="main-container">
+        <h1>[ NIVEAU XXX // TITRE ]</h1>
+        
+        <!-- Votre contenu spécifique va ici -->
+
+    </div>
+
+    <script>
+        window.addEventListener('pywebviewready', () => {
+            // --- Éléments du DOM ---
+            // const myElement = document.getElementById('my-element');
+
+            // --- Logique JavaScript ---
+            console.log("La page est prête et l'API Python est disponible.");
+
+        });
+    </script>
+</body>
+</html>

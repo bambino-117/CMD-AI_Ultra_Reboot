@@ -20,65 +20,345 @@
             50% { text-shadow: -0.05em 0 red, 0.05em 0 blue; }
         }
 
+        .hidden {
+            display: none !important; /* Utiliser !important pour s'assurer qu'il est bien caché */
+        }
+
         /* --- Bunker Page Specific Styles --- */
-        .bunker-container { position: relative; z-index: 4; padding: 5vh 5vw; box-sizing: border-box; height: 100vh; display: flex; flex-direction: column; align-items: center; overflow-y: auto; }
-        h1 {
-            font-size: clamp(1.8rem, 4vw, 3.5rem);
-            margin-bottom: 1.25rem;
-            animation: glitch 2s infinite;
+        .bunker-container {
+            position: relative;
+            z-index: 4;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden; /* Empêche tout débordement */
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
-        .file-list-section { width: 100%; max-width: 800px; margin-bottom: 2.5rem; border: 1px solid rgba(0, 255, 204, 0.2); padding: 1.5rem; background: rgba(0, 10, 8, 0.4); border-radius: 0.25rem; }
-        h2 { font-size: 1.5rem; color: #ff33ff; margin-top: 0; margin-bottom: 1rem; letter-spacing: 0.1em; border-bottom: 1px solid rgba(255, 51, 255, 0.3); padding-bottom: 0.5rem; }
-        
-        #file-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            font-size: 0.9rem;
-        }
-        #file-list li {
-            padding: 0.5rem 0.2rem;
-            border-bottom: 1px solid rgba(0, 255, 204, 0.1);
-            cursor: pointer; /* Rend les éléments cliquables */
-            color: rgba(0, 255, 204, 0.9);
-            transition: all 0.2s ease;
-        }
-        #file-list li:hover {
-            background: rgba(0, 255, 204, 0.05);
-        }
-        #file-list li::before {
-            content: '⏵ ';
-            color: #ff33ff;
-            margin-right: 0.5em;
-        }
-        .log-critical { color: #ff5555; font-weight: bold; }
 
-        .file-viewer-section {
+        #data-field {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
-            max-width: 800px;
-            margin-bottom: 2.5rem;
-            border: 1px solid rgba(0, 255, 204, 0.2);
-            padding: 1.5rem;
-            background: rgba(0, 10, 8, 0.4);
-            border-radius: 0.25rem;
-        }
-        #file-content {
-            background: rgba(0, 0, 0, 0.3);
-            padding: 1rem;
-            border-radius: 0.2rem;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            max-height: 40vh;
-            overflow-y: auto;
-            color: rgba(255, 255, 255, 0.8);
-            font-family: inherit;
-            font-size: 0.85rem;
+            height: 100%;
+            box-shadow: inset 0 0 0px rgba(255, 85, 85, 0), 0 0 0px rgba(255, 85, 85, 0);
+            border: 2px solid transparent;
+            transition: box-shadow 0.4s ease, border-color 0.4s ease;
+            box-sizing: border-box; /* Pour inclure la bordure dans la taille */
         }
 
-        .action-buttons { display: flex; justify-content: center; gap: 2rem; margin-top: 2rem; width: 100%; max-width: 800px; }
-        .action-btn { padding: 0.8rem 2rem; font-family: inherit; font-size: 1rem; cursor: pointer; border-radius: 0.25rem; transition: all 0.2s ease; border: 1px solid; min-width: 200px; }
-        #back-btn { background: transparent; color: #ff33ff; border-color: #ff33ff; }
-        #back-btn:hover { background: rgba(255, 51, 255, 0.1); box-shadow: 0 0 15px rgba(255, 51, 255, 0.4); }
+        #data-field.delete-mode-active {
+            box-shadow: inset 0 0 50px rgba(255, 85, 85, 0.5), 0 0 20px rgba(255, 85, 85, 0.3);
+            border-color: rgba(255, 85, 85, 0.4);
+        }
+
+
+        /* NOUVEAU: Wrapper pour la console et son cadre */
+        #console-wrapper {
+            position: relative; /* Contexte de positionnement pour le cadre et le bouton */
+            z-index: 10;
+        }
+
+        #central-console {
+            position: relative; /* Pour le z-index par rapport au cadre */
+            z-index: 11; /* Au-dessus du cadre étendu */
+            padding: 1rem; /* Padding réduit */
+            background: rgba(0, 10, 8, 0.7);
+            border: 1px solid rgba(0, 255, 204, 0.3);
+            border-radius: 0.25rem;
+            text-align: center;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 0 25px rgba(0, 255, 204, 0.1);
+            width: 150px; /* Largeur réduite de moitié */
+            pointer-events: none; /* Permet aux cercles de passer à travers */
+        }
+
+        #central-console h2 { font-size: 1rem; color: #ff33ff; margin-top: 0; margin-bottom: 1rem; letter-spacing: 0.05em; border-bottom: 1px solid rgba(255, 51, 255, 0.3); padding-bottom: 0.25rem; }
+        #central-console p { font-size: 0.7rem; color: rgba(0, 255, 204, 0.6); margin-bottom: 1rem; }
+
+        .action-btn { 
+            padding: 0.5rem 1rem; 
+            font-family: inherit; 
+            font-size: 0.8rem; 
+            cursor: pointer; 
+            border-radius: 0.25rem; 
+            transition: all 0.2s ease; 
+            border: 1px solid; 
+            width: 100%;
+            pointer-events: auto; /* Réactive les événements pour les boutons */
+        }
+
+        /* NOUVEAU: Bouton chevron pour étendre la console */
+        #expand-console-btn {
+            position: absolute;
+            bottom: -25px; /* Positionné juste sous la console */
+            left: 50%;
+            transform: translateX(-50%);
+            color: #ff33ff;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 0 10px;
+            line-height: 1;
+            text-shadow: 0 0 8px #ff33ff;
+            pointer-events: auto; /* Réactive les événements pour le bouton d'expansion */
+        }
+        #expand-console-btn:hover {
+            color: #00ffcc;
+            text-shadow: 0 0 8px #00ffcc;
+        }
+
+        /* NOUVEAU: Cadre étendu */
+        #expanded-console-frame {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            z-index: 10; /* Derrière la console principale mais devant les cercles */
+            border: 1px solid rgba(0, 255, 204, 0.3);
+            background: rgba(0, 10, 8, 0.7);
+            backdrop-filter: blur(5px);
+            border-radius: 0.25rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease, transform 0.4s ease, width 0.4s ease, height 0.4s ease;
+            transform: translate(-50%, -50%) scale(0.95);
+        }
+        #expanded-console-frame.visible { opacity: 1; transform: translate(-50%, -50%) scale(1); pointer-events: auto; }
+
+        /* NOUVEAU: Styles pour les actions dans le cadre */
+        .frame-action {
+            position: absolute;
+            width: 35px;
+            height: 35px;
+            border: 1px solid rgba(0, 255, 204, 0.4);
+            color: rgba(0, 255, 204, 0.6);
+            background: rgba(0, 10, 8, 0.8);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(3px);
+            box-shadow: 0 0 10px rgba(0, 255, 204, 0.1);
+        }
+        .frame-action:hover { 
+            background: rgba(0, 255, 204, 0.15); 
+            color: #00ffcc;
+            border-color: rgba(0, 255, 204, 0.8);
+            box-shadow: 0 0 15px rgba(0, 255, 204, 0.3);
+            transform: scale(1.1);
+        }
+        .action-top { top: 5px; left: 50%; transform: translateX(-50%); }
+        .action-bottom { bottom: 5px; left: 50%; transform: translateX(-50%); }
+        .action-left { left: 5px; top: 50%; transform: translateY(-50%); }
+        .action-right { right: 5px; top: 50%; transform: translateY(-50%); }
+        .frame-action.delete-mode {
+            background: rgba(255, 85, 85, 0.3);
+            color: #ff5555;
+            border-color: rgba(255, 85, 85, 0.8);
+            box-shadow: 0 0 15px rgba(255, 85, 85, 0.4);
+            animation: pulse-danger 2s infinite;
+        }
+        .frame-action.rename-mode {
+            background: rgba(255, 255, 0, 0.3);
+            color: #ffff00;
+            border-color: rgba(255, 255, 0, 0.8);
+            box-shadow: 0 0 15px rgba(255, 255, 0, 0.4);
+            animation: pulse-warning 2s infinite;
+        }
+        .frame-action.back-btn {
+            background: rgba(85, 85, 255, 0.3);
+            color: #aaaaff;
+            border-color: rgba(85, 85, 255, 0.8);
+            box-shadow: 0 0 15px rgba(85, 85, 255, 0.4);
+        }
+        /* NOUVEAU: Style pour le bouton d'analyse OSINT */
+        .frame-action.analyze-btn {
+            background: rgba(255, 165, 0, 0.3);
+            color: #ffa500;
+            border-color: rgba(255, 165, 0, 0.8);
+            box-shadow: 0 0 15px rgba(255, 165, 0, 0.4);
+        }
+        
+        @keyframes pulse-danger {
+            0%, 100% { box-shadow: 0 0 15px rgba(255, 85, 85, 0.4); }
+            50% { box-shadow: 0 0 25px rgba(255, 85, 85, 0.7); }
+        }
+        @keyframes pulse-warning {
+            0%, 100% { box-shadow: 0 0 15px rgba(255, 255, 0, 0.4); }
+            50% { box-shadow: 0 0 25px rgba(255, 255, 0, 0.7); }
+        }
+        .data-circle.folder {
+            border-color: #ffff00; /* Jaune pour les dossiers */
+            color: #ffff00;
+        }
+        .data-circle.folder::before {
+            content: '○'; /* Symbole pour dossier */
+            position: absolute;
+            font-size: 1.5rem;
+            opacity: 0.3;
+        }
+
+        /* NOUVEAU: Styles pour le visualiseur de fichier dans le cadre */
+        .file-viewer {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            padding: 1rem;
+            box-sizing: border-box;
+        }
+        .file-viewer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #ff33ff;
+            border-bottom: 1px solid rgba(255, 51, 255, 0.3);
+            padding-bottom: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .file-viewer-content { flex-grow: 1; overflow-y: auto; white-space: pre-wrap; word-break: break-all; font-size: 0.8rem; color: rgba(255, 255, 255, 0.9); }
+        .close-viewer-btn { cursor: pointer; font-size: 1.2rem; }
+
+        #exit-btn { 
+            background: transparent; 
+            color: rgba(255, 51, 255, 0.4); 
+            border-color: rgba(255, 51, 255, 0.3); 
+            font-size: 0.7rem;
+            opacity: 0.6;
+        }
+        #exit-btn:hover { 
+            background: rgba(255, 51, 255, 0.1); 
+            color: rgba(255, 51, 255, 0.8);
+            opacity: 1;
+        }
+
+        /* --- NOUVEAU : Styles pour les cercles de données --- */
+        .data-circle {
+            position: absolute;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 0.25rem;
+            border-radius: 50%;
+            border: 1px solid rgba(0, 255, 204, 0.5);
+            background: rgba(0, 20, 15, 0.6);
+            color: #00ffcc;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            overflow: hidden; /* Empêche le texte de déborder */
+            white-space: nowrap; /* Empêche le texte de passer à la ligne */
+            text-overflow: ellipsis; /* Ajoute "..." si le texte est trop long */
+            box-shadow: inset 0 0 10px rgba(0, 255, 204, 0.1);
+            font-size: 0.6rem;
+        }
+        .data-circle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(0, 255, 204, 0.5);
+            z-index: 20; /* Amener au premier plan au survol */
+        }
+        .data-circle.inaccessible {
+            border-color: rgba(255, 85, 85, 0.5);
+            color: rgba(255, 85, 85, 0.7);
+            cursor: not-allowed;
+            box-shadow: inset 0 0 10px rgba(255, 85, 85, 0.2);
+        }
+        .data-circle.inaccessible:hover {
+            transform: scale(1); /* Pas de zoom au survol */
+            box-shadow: 0 0 15px rgba(255, 85, 85, 0.5);
+        }
+        .data-circle.contaminated {
+            border-color: #ff33ff;
+            color: #ff33ff;
+            animation: pulse-contaminated 2s infinite;
+        }
+        @keyframes pulse-contaminated { 0%, 100% { box-shadow: inset 0 0 10px rgba(255, 51, 255, 0.2), 0 0 5px rgba(255, 51, 255, 0.2); } 50% { box-shadow: inset 0 0 15px rgba(255, 51, 255, 0.4), 0 0 15px rgba(255, 51, 255, 0.4); } }
+
+        /* --- NOUVEAU : Styles pour la trace vérolée --- */
+        .corrupted-trace {
+            position: absolute;
+            pointer-events: none;
+            font-size: 0.9rem;
+            color: #ff33ff;
+            text-shadow: 0 0 5px #ff33ff;
+            z-index: 5; /* Au-dessus du fond, mais sous les cercles */
+            animation: fadeOutTrace 1.5s forwards ease-out;
+        }
+
+        @keyframes fadeOutTrace {
+            from {
+                opacity: 0.8;
+                transform: translateY(0) scale(1);
+            }
+            to {
+                opacity: 0;
+                transform: translateY(20px) scale(0.8); /* Tombe et rétrécit en disparaissant */
+            }
+        }
+
+        /* --- NOUVEAU : Styles pour l'authentification --- */
+        .auth-overlay {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            transition: opacity 0.5s ease;
+        }
+        .auth-box {
+            background: #0d0d0d;
+            border: 1px solid #ff33ff;
+            padding: 2rem;
+            border-radius: 0.25rem;
+            text-align: center;
+            box-shadow: 0 0 25px rgba(255, 51, 255, 0.4);
+            animation: fadeIn 0.5s ease;
+            width: 350px;
+        }
+        .auth-box.shake-effect { animation: shake 0.4s; }
+        @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+        .auth-box h2 { color: #ff33ff; margin-top: 0; }
+        .auth-box p { color: rgba(0, 255, 204, 0.8); }
+        .auth-box input {
+            background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(0, 255, 204, 0.3);
+            color: #00ffcc; font-family: inherit; font-size: 1.2rem;
+            padding: 0.5rem; text-align: center; margin: 1rem 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .auth-actions button { background: #00ffcc; border: 1px solid #00ffcc; color: #0d0d0d; }
+        .auth-actions button:hover { box-shadow: 0 0 15px rgba(0, 255, 204, 0.7); }
+
+        /* --- NOUVEAU : Styles pour le Drag & Drop --- */
+        #drop-overlay {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 255, 204, 0.2);
+            border: 3px dashed #00ffcc;
+            z-index: 99;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            pointer-events: none; /* Important pour ne pas bloquer les autres événements */
+            box-sizing: border-box;
+        }
+        #drop-overlay .drop-message {
+            font-size: 2rem;
+            color: #fff;
+            text-shadow: 0 0 10px #000;
+            animation: glitch 1.5s infinite;
+        }
     </style>
 </head>
 <body>
@@ -87,88 +367,558 @@
     <div class="grime-Overlay"></div>
 
     <div class="bunker-container">
-        <h1>[ NIVEAU 101 // BUNKER ]</h1>
-
-        <div class="file-list-section">
-            <h2>Contenu du Dossier Utilisateur</h2>
-            <ul id="file-list">
-                <li>Analyse du secteur...</li>
-            </ul>
+        <!-- NOUVEAU : Superposition pour le mot de passe -->
+        <div id="password-overlay" class="auth-overlay">
+            <div class="auth-box">
+                <h2>Authentification Requise</h2>
+                <p>NIVEAU 101 // BUNKER</p>
+                <input type="password" id="password-input" placeholder="Mot de passe...">
+                <div class="auth-actions">
+                    <button id="auth-submit-btn" class="action-btn">Valider</button>
+                </div>
+            </div>
         </div>
 
-        <div class="file-viewer-section" style="display: none;">
-            <h2 id="viewer-filename">Sélectionnez un fichier</h2>
-            <pre id="file-content">Le contenu du fichier apparaîtra ici...</pre>
+        <!-- NOUVEAU : Superposition pour le glisser-déposer -->
+        <div id="drop-overlay" class="hidden">
+            <div class="drop-message">DÉPOSER DANS LE BUNKER</div>
         </div>
 
-        <div class="action-buttons">
-            <button id="back-btn" class="action-btn">Retour</button>
+        <div id="data-field" class="hidden">
+            <!-- Les cercles (fichiers) seront injectés ici par JavaScript -->
+        </div>
+
+        <!-- NOUVEAU: Wrapper pour la console et son cadre étendu -->
+        <div id="console-wrapper" class="hidden">
+            <div id="central-console">
+                <h2>Dossier Utilisateur</h2>
+                <p>NIVEAU 101 // BUNKER</p>
+                <button id="exit-btn" class="action-btn">Sortie</button>
+                <div id="expand-console-btn">
+                    <span>&raquo;</span>
+                </div>
+            </div>
+            <div id="expanded-console-frame"></div>
         </div>
     </div>
 
     <script>
         window.addEventListener('pywebviewready', () => {
-            const fileList = document.getElementById('file-list');
-            const backBtn = document.getElementById('back-btn');
-            const fileViewer = document.querySelector('.file-viewer-section');
-            const viewerFilename = document.getElementById('viewer-filename');
-            const fileContent = document.getElementById('file-content');
+            const dataField = document.getElementById('data-field');
+            const exitBtn = document.getElementById('exit-btn');
+            
+            // NOUVEAU : Éléments d'authentification
+            const passwordOverlay = document.getElementById('password-overlay');
+            const passwordInput = document.getElementById('password-input');
+            const authSubmitBtn = document.getElementById('auth-submit-btn');
+            
+            // NOUVEAU: Éléments de la console étendue
+            const consoleWrapper = document.getElementById('console-wrapper');
+            const centralConsole = document.getElementById('central-console');
+            const expandBtn = document.getElementById('expand-console-btn');
+            const expandedFrame = document.getElementById('expanded-console-frame');
+            const consoleTitle = centralConsole.querySelector('h2');
+            const dropOverlay = document.getElementById('drop-overlay');
 
-            async function openFile(filename) {
-                viewerFilename.textContent = `Lecture de ${filename}...`;
-                fileContent.textContent = '';
-                fileContent.style.color = 'rgba(255, 255, 255, 0.8)'; // Reset color
-                fileViewer.style.display = 'block';
+            // NOUVEAU: État pour l'animation
+            let circles = [];
+            let animationFrameId = null;
+            let isDeleteMode = false;
+            let isRenameMode = false;
+            let currentPath = ''; // NOUVEAU: Pour suivre le chemin actuel
+            
+            // NOUVEAU: État pour l'effet de trace
+            let canCreateTrace = true;
+            const corruptedChars = ['☠', '☣', '☢', '感染', '警告', '0xDEAD', 'ERR', 'BREACH', '§', '±'];
 
-                try {
-                    const result = await window.pywebview.api.read_bunker_file(filename);
-                    if (result.status === 'success') {
-                        viewerFilename.textContent = filename;
-                        // Si le fichier est vide, afficher un message spécifique
-                        fileContent.textContent = result.content.trim() === '' ? '[ Fichier vide ]' : result.content;
-                    } else {
-                        viewerFilename.textContent = `Erreur - ${filename}`;
-                        fileContent.textContent = result.message;
-                        fileContent.style.color = '#ff5555';
-                    }
-                } catch (e) {
-                    viewerFilename.textContent = `Erreur Système`;
-                    fileContent.textContent = `Impossible de lire le fichier : ${e}`;
-                    fileContent.style.color = '#ff5555';
+            // NOUVEAU: Fonctions pour l'effet de trace
+            function createTraceElement(viewportX, viewportY) {
+                const fieldRect = dataField.getBoundingClientRect();
+                const x = viewportX - fieldRect.left;
+                const y = viewportY - fieldRect.top;
+
+                const trace = document.createElement('span');
+                trace.className = 'corrupted-trace';
+                trace.textContent = corruptedChars[Math.floor(Math.random() * corruptedChars.length)];
+                
+                trace.style.left = `${x + (Math.random() - 0.5) * 30}px`;
+                trace.style.top = `${y + (Math.random() - 0.5) * 30}px`;
+                
+                dataField.appendChild(trace);
+
+                setTimeout(() => { trace.remove(); }, 1500); // Nettoie l'élément après l'animation
+            }
+
+            function handleContaminatedMouseMove(e) {
+                if (!canCreateTrace) return;
+                canCreateTrace = false;
+                setTimeout(() => { canCreateTrace = true; }, 50); // Throttle pour éviter de surcharger
+                createTraceElement(e.clientX, e.clientY);
+            }
+
+            function handleContaminatedEnter(e) { e.currentTarget.addEventListener('mousemove', handleContaminatedMouseMove); }
+            function handleContaminatedLeave(e) { e.currentTarget.removeEventListener('mousemove', handleContaminatedMouseMove); }
+
+            // NOUVEAU: Fonction pour rendre les actions par défaut dans le cadre
+            function renderFrameActions() {
+                // NOUVEAU: Ajoute un bouton retour si on n'est pas à la racine
+                const backBtnHtml = currentPath ? `<div class="frame-action back-btn" id="action-back" title="Retour">↩</div>` : '';
+                
+                // NOUVEAU: Ajoute un bouton d'analyse si on est dans un dossier OSINT
+                const currentFolderName = currentPath.split('/').pop();
+                const analyzeBtnHtml = currentFolderName.startsWith('OSINT_') ? `<div class="frame-action analyze-btn" id="action-analyze" title="Analyser le Dossier">A</div>` : '';
+
+                expandedFrame.innerHTML = `
+                    <div class="frame-action action-top" id="action-add-file" title="Nouveau Fichier">+</div>
+                    <div class="frame-action action-right" id="action-rename" title="Renommer">R</div>
+                    <div class="frame-action action-bottom" id="action-delete" title="Supprimer">🗑</div>
+                    <div class="frame-action action-left" id="action-add-folder" title="Nouveau Dossier">○</div>
+                    <!-- Injection des boutons contextuels -->
+                    ${analyzeBtnHtml}
+                    ${backBtnHtml}
+                `;
+                if (currentPath) {
+                    document.getElementById('action-back').addEventListener('click', handleBackClick);
+                }
+                // Rattacher les listeners
+                document.getElementById('action-add-file').addEventListener('click', handleAddFileClick);
+                document.getElementById('action-add-folder').addEventListener('click', handleAddFolderClick);
+                document.getElementById('action-rename').addEventListener('click', handleRenameClick);
+                document.getElementById('action-delete').addEventListener('click', handleDeleteClick);
+                if (analyzeBtnHtml) {
+                    document.getElementById('action-analyze').addEventListener('click', handleAnalyzeFolderClick);
                 }
             }
 
-            async function loadBunkerContents() {
-                fileList.innerHTML = '<li>Analyse du secteur...</li>';
-                try {
-                    const result = await window.pywebview.api.list_bunker_files();
-                    fileList.innerHTML = ''; // Clear loading message
+            // NOUVEAU: Fonction pour afficher le contenu d'un fichier
+            function renderFileViewer(filename, content) {
+                expandedFrame.innerHTML = `
+                    <div class="file-viewer">
+                        <div class="file-viewer-header">
+                            <span>${filename}</span>
+                            <span class="close-viewer-btn" title="Fermer">×</span>
+                        </div>
+                        <pre class="file-viewer-content">${content}</pre>
+                    </div>
+                `;
+                document.querySelector('.close-viewer-btn').addEventListener('click', renderFrameActions);
+            }
 
-                    if (result.status === 'success') {
-                        if (result.files.length === 0) {
-                            fileList.innerHTML = '<li>Bunker vide. Aucune donnée détectée.</li>';
+            // NOUVEAU: Fonction pour basculer le cadre étendu
+            function toggleExpandedConsole() {
+                event.stopPropagation(); // Empêche le clic de se propager
+                const isExpanded = expandedFrame.classList.contains('visible');
+
+                if (isExpanded) {
+                    expandedFrame.classList.remove('visible');
+                    expandBtn.innerHTML = '<span>&raquo;</span>'; // Chevrons pour ouvrir
+                    if (isDeleteMode) toggleDeleteMode(); // Quitter les modes en fermant
+                    if (isRenameMode) toggleRenameMode();
+                } else {
+                    // Calculer la taille du cadre
+                    const consoleRect = centralConsole.getBoundingClientRect();
+                    const frameWidth = consoleRect.width + 40; // 20px de chaque côté
+                    const frameHeight = consoleRect.height + 40; // 20px de chaque côté
+
+                    expandedFrame.style.width = `${frameWidth}px`;
+                    expandedFrame.style.height = `${frameHeight}px`;
+
+                    renderFrameActions(); // Afficher les actions par défaut à l'ouverture
+                    expandedFrame.classList.add('visible');
+                    expandBtn.innerHTML = '<span>&laquo;</span>'; // Chevrons pour fermer
+                }
+            }
+
+            // NOUVEAU : Fonction pour créer les cercles de données
+            async function loadAndCreateCircles() {
+                // NOUVEAU: Passe le chemin actuel à l'API
+                const result = await window.pywebview.api.list_bunker_files(currentPath);
+                if (result.status !== 'success') {
+                    centralConsole.innerHTML += `<p style="color: #ff5555;">Erreur: ${result.message}</p>`;
+                    return;
+                }
+
+                // NOUVEAU: Créer des fichiers de test si le dossier est vide (uniquement à la racine)
+                if (currentPath === '' && result.files.length === 0) {
+                    console.log('Dossier vide détecté, création de fichiers de test...');
+                    await window.pywebview.api.create_bunker_file('notes.txt', '');
+                    await window.pywebview.api.create_bunker_file('config.json', '');
+                    await window.pywebview.api.create_bunker_folder('documents', '');
+                    // Recharger la liste après création
+                    const newResult = await window.pywebview.api.list_bunker_files(currentPath);
+                    if (newResult.status === 'success') {
+                        result.files = newResult.files;
+                    }
+                }
+
+                // NOUVEAU : Ajout de cercles factices pour l'ambiance, uniquement à la racine
+                if (currentPath === '') {
+                    const dummyFiles = [
+                        { name: 'data_frag.pak', type: 'file', state: 'inaccessible' },
+                        { name: 'mem_leak.log', type: 'file', state: 'contaminated' },
+                        { name: 'kernel_panic.dump', type: 'file', state: 'inaccessible' },
+                        { name: 'shadow_registry.hive', type: 'file', state: 'contaminated' },
+                        { name: 'node_771.ref', type: 'file', state: 'inaccessible' }
+                    ];
+                    // Éviter les doublons si un fichier réel a le même nom
+                    dummyFiles.forEach(dummy => {
+                        if (!result.files.some(realFile => realFile.name === dummy.name)) {
+                            result.files.push(dummy);
+                        }
+                    });
+                }
+
+                // Mettre à jour le titre de la console avec le chemin actuel
+                consoleTitle.textContent = currentPath ? `Dossier: /${currentPath}` : 'Dossier Utilisateur';
+
+                dataField.innerHTML = ''; // Nettoyer le champ
+                
+                console.log(`Création de ${result.files.length} cercles...`);
+
+                // Réinitialiser l'état de l'animation
+                circles = [];
+                if (animationFrameId) {
+                    cancelAnimationFrame(animationFrameId);
+                    animationFrameId = null;
+                }
+
+                result.files.forEach(item => {
+                    const circle = document.createElement('div');
+                    circle.classList.add('data-circle');
+                    circle.textContent = item.name;
+
+                    // NOUVEAU: Ajouter un listener de clic sur chaque cercle pour la suppression
+                    circle.addEventListener('click', () => handleCircleClick(circle, item.name, item.type));
+
+                    // --- Logique pour déterminer l'état du fichier ---
+                    if (item.type === 'folder') {
+                        circle.classList.add('folder');
+                    } else if (item.name === 'neural_ghost.py' || item.state === 'contaminated') {
+                        circle.classList.add('contaminated');
+                        // NOUVEAU: Ajouter les listeners pour l'effet de trace
+                        circle.addEventListener('mouseenter', handleContaminatedEnter);
+                        circle.addEventListener('mouseleave', handleContaminatedLeave);
+                    } else if (item.state === 'inaccessible' || Math.random() < 0.05) { // Ajout de l'état + réduction de l'aléatoire à 5%
+                        circle.classList.add('inaccessible');
+                    }
+
+                    // --- Positionnement et dimensionnement ---
+                    const fieldRect = dataField.getBoundingClientRect();
+                    // Taille fixe de 40px de diamètre (20px de rayon)
+                    const size = 40;
+                    circle.style.width = `${size}px`;
+                    circle.style.height = `${size}px`;
+
+                    // Position aléatoire, en s'assurant qu'il reste entièrement visible
+                    const x = Math.random() * (fieldRect.width - size);
+                    const y = Math.random() * (fieldRect.height - size);
+                    circle.style.left = `${x}px`;
+                    circle.style.top = `${y}px`;
+
+                    // NOUVEAU: Stocker l'état du cercle pour l'animation
+                    circles.push({
+                        el: circle,
+                        x: x,
+                        y: y,
+                        vx: (Math.random() - 0.5) * 0.4, // Vitesse lente et aléatoire
+                        vy: (Math.random() - 0.5) * 0.4,
+                        size: size,
+                        filename: item.name,
+                        type: item.type
+                    });
+
+                    dataField.appendChild(circle);
+                    console.log(`Cercle créé pour: ${item.name}`);
+                });
+
+                console.log(`${circles.length} cercles ajoutés au DOM`);
+                startAnimation(); // Démarrer la boucle d'animation
+            }
+
+            // NOUVEAU: Gère le clic sur un cercle
+            async function handleCircleClick(circleElement, filename, filetype) {
+                if (isDeleteMode) {
+                    // --- LOGIQUE DE SUPPRESSION ---
+                    if (circleElement.classList.contains('inaccessible')) return;
+                    if (confirm(`Voulez-vous vraiment supprimer "${filename}" ? Cette action est irréversible.`)) {
+                        const result = await window.pywebview.api.delete_bunker_file(filename, currentPath);
+                        if (result.status === 'success') {
+                            circleElement.remove();
+                            circles = circles.filter(c => c.el !== circleElement);
+                            if (isDeleteMode) toggleDeleteMode(); // Quitter le mode suppression
                         } else {
-                            result.files.forEach(file => {
-                                const li = document.createElement('li');
-                                li.textContent = file;
-                                li.addEventListener('click', () => openFile(file));
-                                fileList.appendChild(li);
-                            });
+                            alert(`Erreur: ${result.message}`);
+                        }
+                    }
+                } else if (isRenameMode) {
+                    // --- LOGIQUE DE RENOMMAGE ---
+                    if (circleElement.classList.contains('inaccessible')) return;
+                    const newFilename = prompt(`Entrez le nouveau nom pour "${filename}":`, filename);
+                    if (newFilename && newFilename !== filename) {
+                        const result = await window.pywebview.api.rename_bunker_file(filename, newFilename, currentPath);
+                        if (result.status === 'success') { await loadAndCreateCircles(); } else { alert(`Erreur: ${result.message}`); }
+                    }
+                    toggleRenameMode(); // Quitter le mode renommage
+                } else {
+                    // --- LOGIQUE DE LECTURE PAR DÉFAUT ---
+                    if (filetype === 'folder') {
+                        // --- NAVIGATION DANS UN DOSSIER ---
+                        currentPath = currentPath ? `${currentPath}/${filename}` : filename;
+                        await loadAndCreateCircles();
+                        // Si le panneau est ouvert, mettre à jour les actions (pour le bouton retour)
+                        if (expandedFrame.classList.contains('visible')) {
+                            renderFrameActions();
                         }
                     } else {
-                        fileList.innerHTML = `<li><span class="log-critical">ERREUR:</span> ${result.message}</li>`;
+                        // --- LECTURE D'UN FICHIER ---
+                        if (circleElement.classList.contains('inaccessible')) return;
+
+                        // Ouvrir le panneau s'il est fermé
+                        if (!expandedFrame.classList.contains('visible')) {
+                            toggleExpandedConsole();
+                        }
+
+                        renderFileViewer(filename, 'Chargement du contenu...');
+                        const relativePath = currentPath ? `${currentPath}/${filename}` : filename;
+                        const result = await window.pywebview.api.read_bunker_file(relativePath);
+                        const content = result.status === 'success' ? (result.content.trim() === '' ? '[ Fichier vide ]' : result.content) : `[ ERREUR: ${result.message} ]`;
+                        renderFileViewer(filename, content);
                     }
-                } catch (e) {
-                    console.error("Erreur lors du chargement du bunker:", e);
-                    fileList.innerHTML = `<li><span class="log-critical">ERREUR SYSTÈME:</span> Impossible de contacter le module de stockage.</li>`;
                 }
             }
 
-            backBtn.addEventListener('click', () => {
+            // NOUVEAU: Boucle d'animation principale
+            function animate() {
+                const fieldRect = dataField.getBoundingClientRect();
+
+                circles.forEach(circle => {
+                    // NOUVEAU : Logique de mouvement erratique pour les fichiers contaminés
+                    if (circle.el.classList.contains('contaminated')) {
+                        // Appliquer une "secousse" aléatoire à la vélocité à chaque image
+                        circle.vx += (Math.random() - 0.5) * 0.25; // Facteur de "secousse"
+                        circle.vy += (Math.random() - 0.5) * 0.25;
+
+                        // Limiter la vitesse maximale pour éviter qu'ils ne deviennent incontrôlables
+                        const maxSpeed = 1.0;
+                        circle.vx = Math.max(-maxSpeed, Math.min(maxSpeed, circle.vx));
+                        circle.vy = Math.max(-maxSpeed, Math.min(maxSpeed, circle.vy));
+                    }
+
+
+                    // Mettre à jour la position
+                    circle.x += circle.vx;
+                    circle.y += circle.vy;
+
+                    // Collision avec les murs de l'écran uniquement
+                    if (circle.x <= 0 || circle.x + circle.size >= fieldRect.width) {
+                        circle.vx *= -1;
+                        circle.x = Math.max(0, Math.min(circle.x, fieldRect.width - circle.size));
+                    }
+                    if (circle.y <= 0 || circle.y + circle.size >= fieldRect.height) {
+                        circle.vy *= -1;
+                        circle.y = Math.max(0, Math.min(circle.y, fieldRect.height - circle.size));
+                    }
+
+                    // Appliquer la nouvelle position à l'élément DOM
+                    circle.el.style.left = `${circle.x}px`;
+                    circle.el.style.top = `${circle.y}px`;
+                });
+
+                animationFrameId = requestAnimationFrame(animate);
+            }
+
+            function startAnimation() {
+                if (animationFrameId) cancelAnimationFrame(animationFrameId);
+                animate();
+            }
+
+            async function handleAuth() {
+                const password = passwordInput.value;
+                if (!password) return;
+
+                const result = await window.pywebview.api.check_bunker_password(password);
+                
+                if (result.status === 'success') {
+                    // Cacher l'overlay avec un fondu
+                    passwordOverlay.style.opacity = '0';
+                    passwordOverlay.addEventListener('transitionend', () => {
+                        passwordOverlay.style.display = 'none';
+                    });
+
+                    // Afficher le contenu principal
+                    dataField.classList.remove('hidden');
+                    consoleWrapper.classList.remove('hidden');
+                    
+                    console.log('Authentification réussie, éléments affichés');
+                    console.log('dataField visible:', !dataField.classList.contains('hidden'));
+                    console.log('consoleWrapper visible:', !consoleWrapper.classList.contains('hidden'));
+                    
+                    // Lancer la création des cercles
+                    setTimeout(() => {
+                        loadAndCreateCircles();
+                    }, 100); // Petit délai pour s'assurer que les éléments sont affichés
+                } else {
+                    const authBox = passwordOverlay.querySelector('.auth-box');
+                    authBox.classList.add('shake-effect');
+                    passwordInput.value = '';
+                    passwordInput.focus();
+                    setTimeout(() => authBox.classList.remove('shake-effect'), 500);
+                }
+            }
+
+            authSubmitBtn.addEventListener('click', handleAuth);
+            passwordInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault(); // Empêche le comportement par défaut du formulaire
+                    handleAuth();
+                }
+            });
+
+            // NOUVEAU: Listener pour le bouton d'expansion
+            expandBtn.addEventListener('click', toggleExpandedConsole);
+
+            // NOUVEAU: Fonction pour activer/désactiver le mode suppression
+            function toggleDeleteMode() {
+                if (!isDeleteMode && isRenameMode) toggleRenameMode(); // Désactiver l'autre mode
+                isDeleteMode = !isDeleteMode;
+                const deleteBtn = document.getElementById('action-delete');
+                deleteBtn.classList.toggle('delete-mode', isDeleteMode);
+                dataField.style.cursor = isDeleteMode ? 'crosshair' : 'default';
+                dataField.classList.toggle('delete-mode-active', isDeleteMode);
+            }
+
+            // NOUVEAU: Fonction pour activer/désactiver le mode renommage
+            function toggleRenameMode() {
+                if (!isRenameMode && isDeleteMode) toggleDeleteMode(); // Désactiver l'autre mode
+                isRenameMode = !isRenameMode;
+                const renameBtn = document.getElementById('action-rename');
+                renameBtn.classList.toggle('rename-mode', isRenameMode);
+                dataField.style.cursor = isRenameMode ? 'text' : 'default';
+            }
+
+            // NOUVEAU: Wrapper pour les clics sur les actions pour stopper la propagation
+            function handleAddFileClick(event) { event.stopPropagation(); handleAddFile(); }
+            function handleDeleteClick(event) { event.stopPropagation(); toggleDeleteMode(); }
+            function handleRenameClick(event) { event.stopPropagation(); toggleRenameMode(); }
+            function handleAddFolderClick(event) { event.stopPropagation(); handleAddFolder(); }
+            function handleBackClick(event) { event.stopPropagation(); handleGoBack(); }
+            function handleAnalyzeFolderClick(event) { event.stopPropagation(); handleAnalyzeFolder(); }
+
+            // NOUVEAU: Gère la création d'un nouveau fichier
+            async function handleAddFile() {
+                const filename = prompt("Entrez le nom du nouveau fichier (ex: notes.txt):");
+                if (!filename) return; // L'utilisateur a annulé
+
+                const result = await window.pywebview.api.create_bunker_file(filename, currentPath);
+                if (result.status === 'success') {
+                    if (!expandedFrame.classList.contains('visible')) {
+                        toggleExpandedConsole(); // Ouvre le panneau si fermé
+                    }
+                    await loadAndCreateCircles(); // Recharger la vue pour afficher le nouveau fichier
+                } else {
+                    alert(`Erreur: ${result.message}`);
+                }
+            }
+
+            // NOUVEAU: Gère la création d'un nouveau dossier
+            async function handleAddFolder() {
+                const foldername = prompt("Entrez le nom du nouveau dossier:");
+                if (!foldername) return; // L'utilisateur a annulé
+
+                const result = await window.pywebview.api.create_bunker_folder(foldername, currentPath);
+                if (result.status === 'success') {
+                    await loadAndCreateCircles(); // Recharger la vue
+                } else {
+                    alert(`Erreur: ${result.message}`);
+                }
+            }
+
+            // NOUVEAU: Gère le retour au dossier parent
+            async function handleGoBack() {
+                if (!currentPath) return;
+                const pathParts = currentPath.split('/');
+                pathParts.pop(); // Enlève le dernier dossier
+                currentPath = pathParts.join('/');
+                await loadAndCreateCircles();
+                renderFrameActions(); // Met à jour le panneau d'actions
+            }
+
+            // NOUVEAU: Gère l'analyse d'un dossier OSINT
+            async function handleAnalyzeFolder() {
+                if (!currentPath.split('/').pop().startsWith('OSINT_')) return;
+
+                // 1. Récupérer tous les fichiers du dossier actuel
+                const result = await window.pywebview.api.list_bunker_files(currentPath);
+                if (result.status !== 'success' || result.files.length === 0) {
+                    alert("Impossible de lire le contenu du dossier ou dossier vide.");
+                    return;
+                }
+
+                // 2. Concaténer le contenu de tous les fichiers
+                let fullContent = `Analyse du dossier OSINT : ${currentPath}\n\n`;
+                for (const file of result.files) {
+                    if (file.type === 'file') {
+                        const relativePath = `${currentPath}/${file.name}`;
+                        const fileResult = await window.pywebview.api.read_bunker_file(relativePath);
+                        if (fileResult.status === 'success') {
+                            fullContent += `--- Contenu de ${file.name} ---\n${fileResult.content}\n\n`;
+                        }
+                    }
+                }
+
+                // 3. Stocker le contenu pour le Logicateur et rediriger
+                sessionStorage.setItem('logicateur_prefill', fullContent);
+                alert("Les données du dossier ont été compilées. Redirection vers le Logicateur pour analyse...");
+                window.location.href = '/logicateur';
+            }
+
+
+            // --- NOUVEAU : Logique de Glisser-Déposer ---
+            function setupDragAndDrop() {
+                // Utiliser bunker-container pour que le drop fonctionne partout
+                const dropZone = document.querySelector('.bunker-container');
+
+                dropZone.addEventListener('dragover', (e) => {
+                    e.preventDefault(); // Nécessaire pour autoriser le 'drop'
+                    e.stopPropagation();
+                    dropOverlay.classList.remove('hidden');
+                });
+
+                dropZone.addEventListener('dragleave', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    // Cache l'overlay uniquement si on quitte vraiment la fenêtre
+                    if (!e.relatedTarget || e.relatedTarget.nodeName === "HTML") {
+                        dropOverlay.classList.add('hidden');
+                    }
+                });
+
+                dropZone.addEventListener('drop', async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropOverlay.classList.add('hidden');
+
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0) {
+                        for (const file of files) {
+                            // Dans pywebview, file.path est accessible et contient le chemin complet du fichier source
+                            const result = await window.pywebview.api.upload_file_to_bunker(file.path, currentPath);
+                            if (result.status !== 'success') {
+                                alert(`Erreur lors du téléversement de ${file.name}: ${result.message}`);
+                            }
+                        }
+                        await loadAndCreateCircles(); // Recharger la vue pour afficher les nouveaux fichiers
+                    }
+                });
+            }
+
+            exitBtn.addEventListener('click', () => {
                 window.location.href = '/terminaux.html';
             });
 
-            loadBunkerContents();
+            // Mettre le focus sur le champ de mot de passe au chargement
+            passwordInput.focus();
+            setupDragAndDrop(); // Initialiser les listeners
         });
     </script>
 </body>

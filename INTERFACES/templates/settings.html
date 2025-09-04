@@ -17,6 +17,7 @@
             background-color: #0d0d0d;
             color: #00ffcc;
             overflow: hidden;
+            overflow-y: auto; /* Permet le scroll si le contenu dépasse */
             font-size: 1rem;
         }
         .grime-Overlay, .moving-structure {
@@ -46,7 +47,6 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            overflow-y: auto;
         }
 
         h1 {
@@ -105,6 +105,145 @@
             box-shadow: 0 0 15px rgba(0, 255, 204, 0.5);
         }
 
+        /* --- NOUVEAU : Styles pour le Veilleur des Niveaux --- */
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 2.5fr; /* Colonne de statut plus petite */
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        
+        .status-panel, .analysis-container {
+            background-color: rgba(0, 10, 8, 0.6); /* Un peu plus sombre que le fond de section */
+            border: 1px solid rgba(0, 255, 204, 0.2);
+            border-radius: 0.25rem;
+            padding: 1.5rem;
+            box-shadow: inset 0 0 10px rgba(0, 255, 204, 0.05);
+        }
+        
+        .status-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(0, 255, 204, 0.2);
+        }
+        .status-header h2 { /* Cible le h2 à l'intérieur du status-header */
+            font-size: 1.2rem;
+            color: #ff33ff;
+            border-bottom: none; /* Annule le style h2 global */
+            margin: 0;
+            padding: 0;
+        }
+        
+        .refresh-btn {
+            background: transparent;
+            color: #00ffcc;
+            border: 1px solid #00ffcc;
+            padding: 0.5rem 1rem;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Share Tech Mono', monospace;
+        }
+        
+        .refresh-btn:hover {
+            background-color: rgba(0, 255, 204, 0.1);
+            box-shadow: 0 0 10px rgba(0, 255, 204, 0.3);
+        }
+        
+        .system-status {
+            margin-bottom: 1.5rem;
+        }
+        .system-status h3 {
+            font-size: 0.9rem;
+            color: rgba(0, 255, 204, 0.7);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+        }
+        
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.8rem;
+            padding: 0.5rem;
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 3px;
+            font-size: 0.9rem;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 10px;
+            align-self: center;
+        }
+        
+        .status-online {
+            background-color: #00ffcc;
+            box-shadow: 0 0 8px #00ffcc;
+        }
+        
+        .status-offline {
+            background-color: #ff5555;
+        }
+        
+        .analysis-container {
+            min-height: 400px;
+            overflow-y: auto;
+            max-height: 50vh; /* Limite la hauteur */
+        }
+        
+        .extension-card {
+            background-color: rgba(0, 0, 0, 0.3);
+            border-left: 3px solid #00ffcc;
+            border-radius: 3px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .extension-card:hover {
+            transform: translateX(5px);
+            border-left-color: #ff33ff;
+        }
+        
+        .extension-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.8rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .extension-name {
+            color: #00ffcc;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        
+        .extension-status {
+            font-size: 0.8rem;
+            padding: 0.3rem 0.8rem;
+            border-radius: 3px;
+            text-transform: uppercase;
+        }
+        
+        .status-active { background-color: rgba(0, 255, 204, 0.2); color: #00ffcc; }
+        .status-error { background-color: rgba(255, 85, 85, 0.2); color: #ff5555; }
+        .status-inactive { background-color: rgba(128, 128, 128, 0.2); color: #888; }
+        
+        .extension-details { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem; }
+        .detail-item { background-color: rgba(0, 0, 0, 0.3); padding: 0.8rem; border-radius: 3px; }
+        .detail-label { font-size: 0.8rem; color: rgba(0, 255, 204, 0.6); margin-bottom: 0.3rem; text-transform: capitalize; }
+        .detail-value { font-size: 0.9rem; word-break: break-all; }
+        .loading { text-align: center; padding: 2rem; color: rgba(0, 255, 204, 0.6); }
+        .veilleur-error { color: #ff5555; padding: 1rem; border-left: 3px solid #ff5555; background-color: rgba(255, 85, 85, 0.1); margin-bottom: 1rem; }
+
         /* --- General Input Styles --- */
         .input-group input, .input-group select {
             width: 100%;
@@ -133,6 +272,60 @@
             color: rgba(0, 255, 204, 0.6);
             font-size: 0.8rem;
         }
+        
+        /* --- NOUVEAU : Styles pour le panneau VPN --- */
+        .vpn-status-panel {
+            display: grid;
+            grid-template-columns: auto 1fr; /* Colonne label auto, valeur prend le reste */
+            gap: 0.5rem 1rem;
+            font-size: 0.9rem;
+            margin-top: 1.5rem;
+            padding: 1rem;
+            border: 1px solid rgba(0, 255, 204, 0.1);
+            background: rgba(0,0,0,0.2);
+        }
+        .vpn-status-panel .label {
+            color: rgba(0, 255, 204, 0.7);
+            text-align: right;
+        }
+        .vpn-status-panel .value {
+            color: #ffff00;
+            word-break: break-all;
+        }
+        .vpn-status-panel .value.connected { color: #00ff00; }
+        .vpn-status-panel .value.disconnected { color: #ff5555; }
+
+        .node-chain-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            font-size: 0.8rem;
+            color: #999;
+        }
+        .node-chain-list li {
+            padding-left: 1rem;
+            position: relative;
+        }
+        .node-chain-list li::before {
+            content: '->';
+            position: absolute;
+            left: 0;
+            color: #ff33ff;
+        }
+
+        #vpn-toggle-btn {
+            width: 100%;
+            margin-top: 1rem;
+            padding: 0.8rem 1rem;
+            font-family: inherit;
+            font-size: 1rem;
+            cursor: pointer;
+            border: 1px solid;
+            transition: all 0.2s ease;
+        }
+        #vpn-toggle-btn.active { background: #ff5555; color: white; border-color: #ff5555; }
+        #vpn-toggle-btn.inactive { background: #00ffcc; color: #0d0d0d; border-color: #00ffcc; }
+        #vpn-toggle-btn:disabled { background: #555; border-color: #555; color: #999; cursor: not-allowed; }
 
         .credits-content p {
             margin: 0 0 0.5rem 0;
@@ -271,6 +464,72 @@
             </div>
         </div>
 
+        <!-- NOUVEAU : Section VPN Vénère -->
+        <div class="settings-section">
+            <h2>VPN Vénère</h2>
+            <div class="input-group">
+                <label for="vpn-proxy-address-input">Adresse du Proxy</label>
+                <input type="text" id="vpn-proxy-address-input" placeholder="http://127.0.0.1:9050">
+            </div>
+            <button id="vpn-toggle-btn" class="inactive">Activer le VPN</button>
+
+            <div class="vpn-status-panel">
+                <div class="label">État :</div>
+                <div id="vpn-status-text" class="value disconnected">Déconnecté</div>
+
+                <div class="label">Message :</div>
+                <div id="vpn-message" class="value">Prêt à connecter.</div>
+
+                <div class="label">IP Virtuelle :</div>
+                <div id="vpn-virtual-ip" class="value">N/A</div>
+
+                <div class="label">Chaîne de Relais :</div>
+                <div class="value">
+                    <ul id="vpn-node-chain" class="node-chain-list">
+                        <li>N/A</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- NOUVEAU : Section Veilleur des Niveaux -->
+        <div class="settings-section">
+            <h2>Veilleur des Niveaux</h2>
+            <div class="dashboard">
+                <div class="status-panel">
+                    <div class="status-header">
+                        <h2>État du Système</h2>
+                        <button id="veilleur-refresh-btn" class="refresh-btn">Rafraîchir</button>
+                    </div>
+                    
+                    <div class="system-status">
+                        <h3>Services</h3>
+                        <div class="status-item">
+                            <span><span class="status-indicator status-online"></span>API Core</span>
+                            <span>En ligne</span>
+                        </div>
+                    </div>
+                    
+                    <div class="system-status">
+                        <h3>Statistiques Extensions</h3>
+                        <div class="status-item">
+                            <span>Total</span>
+                            <span id="veilleur-total-extensions">0</span>
+                        </div>
+                        <div class="status-item">
+                            <span>Actives</span>
+                            <span id="veilleur-active-extensions">0</span>
+                        </div>
+                        <div class="status-item">
+                            <span>Avec erreurs</span>
+                            <span id="veilleur-error-extensions">0</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="analysis-container" id="veilleur-analysis-container"><div class="loading"><p>// Initialisation de l'analyse...</p></div></div>
+            </div>
+        </div>
+
         <!-- User Profile Section -->
         <div class="settings-section">
             <h2>Profil Utilisateur</h2>
@@ -331,6 +590,23 @@
             const bunkerPasswordInput = document.getElementById('bunker-password-input');
             const saveBtn = document.getElementById('save-btn');
             const backBtn = document.getElementById('back-btn');
+            // NOUVEAU : Éléments VPN
+            const vpnProxyInput = document.getElementById('vpn-proxy-address-input');
+            const vpnToggleBtn = document.getElementById('vpn-toggle-btn');
+            const vpnStatusText = document.getElementById('vpn-status-text');
+            const vpnMessageText = document.getElementById('vpn-message');
+            const vpnVirtualIpText = document.getElementById('vpn-virtual-ip');
+            const vpnNodeChainList = document.getElementById('vpn-node-chain');
+            // NOUVEAU : Éléments du Veilleur
+            const veilleurContainer = document.getElementById('veilleur-analysis-container');
+            const veilleurRefreshBtn = document.getElementById('veilleur-refresh-btn');
+            const veilleurTotalEl = document.getElementById('veilleur-total-extensions');
+            const veilleurActiveEl = document.getElementById('veilleur-active-extensions');
+            const veilleurErrorEl = document.getElementById('veilleur-error-extensions');
+
+            // --- Fonctions ---
+
+            // ... (fonctions existantes : showNotification, loadAndApplySettings, etc.)
 
             // Fonction de notification (copiée depuis terminaux.html)
             function showNotification(message, type = 'info', duration = 4000) {
@@ -348,8 +624,6 @@
                     notif.addEventListener('transitionend', () => notif.remove());
                 }, duration);
             }
-
-            // --- Functions ---
 
             // 1. Charge les paramètres actuels depuis Python et met à jour l'interface.
             async function loadAndApplySettings() {
@@ -392,6 +666,9 @@
                     pseudoInput.value = currentSettings.user.pseudo;
                     userFolderPathDisplay.textContent = currentSettings.user.user_folder_path;
                     bunkerPasswordInput.value = currentSettings.user.password;
+                    
+                    // Applique les paramètres VPN
+                    vpnProxyInput.value = currentSettings.vpn.proxy_address;
 
                 } catch (e) {
                     console.error("Erreur lors du chargement des paramètres:", e);
@@ -403,6 +680,121 @@
                 displayModeButtons.forEach(btn => {
                     btn.classList.toggle('active', btn.dataset.value === activeMode);
                 });
+            }
+
+            // NOUVEAU : Met à jour l'UI du VPN
+            function updateVpnUI(data) {
+                const isConnected = data.is_connected;
+                vpnToggleBtn.disabled = false; // Réactiver le bouton
+                vpnToggleBtn.textContent = isConnected ? 'Désactiver le VPN' : 'Activer le VPN';
+                vpnToggleBtn.classList.toggle('active', isConnected);
+                vpnToggleBtn.classList.toggle('inactive', !isConnected);
+
+                vpnStatusText.textContent = isConnected ? 'Connecté' : 'Déconnecté';
+                vpnStatusText.classList.toggle('connected', isConnected);
+                vpnStatusText.classList.toggle('disconnected', !isConnected);
+
+                vpnMessageText.textContent = data.message || 'N/A';
+                vpnVirtualIpText.textContent = data.virtual_ip || 'N/A';
+
+                vpnNodeChainList.innerHTML = (data.node_chain && data.node_chain.length > 0)
+                    ? data.node_chain.map(node => `<li>${node}</li>`).join('')
+                    : '<li>N/A</li>';
+                
+                // Bloquer le champ proxy si le vpn est actif
+                vpnProxyInput.disabled = isConnected;
+            }
+
+            // NOUVEAU : Callback pour les actions VPN
+            function vpnStatusCallback(response) {
+                if (response.status === 'success') {
+                    updateVpnUI(response);
+                    window.pywebview.api.update_vpn_global_state(response);
+                } else {
+                    showNotification(response.message, 'error');
+                }
+            }
+
+            // --- NOUVEAU : Logique pour le Veilleur des Niveaux ---
+            function formatVeilleurValue(value) {
+                if (typeof value === 'boolean') return value ? 'OUI' : 'NON';
+                if (value === null || value === undefined) return 'N/A';
+                if (typeof value === 'object') return JSON.stringify(value);
+                return value;
+            }
+
+            function getVeilleurStatus(extData) {
+                if (extData.status === 'error') return 'error';
+                // Adaptons la logique au format de get_all_extensions_data
+                if (extData.status === 'running' || extData.status === 'Prêt' || extData.status === 'Actif') return 'active';
+                return 'inactive';
+            }
+
+            function renderVeilleurData(data) {
+                if (!data || Object.keys(data).length === 0) {
+                    veilleurContainer.innerHTML = `<div class="veilleur-error">// Aucune donnée d'extension n'a pu être récupérée.</div>`;
+                    return;
+                }
+
+                let activeCount = 0;
+                let errorCount = 0;
+                let content = '';
+
+                for (const extName in data) {
+                    const extData = data[extName];
+                    const status = getVeilleurStatus(extData);
+                    
+                    if (status === 'active') activeCount++;
+                    if (status === 'error') errorCount++;
+                    
+                    let statusText, statusClass;
+                    switch(status) {
+                        case 'active': statusText = 'ACTIF'; statusClass = 'status-active'; break;
+                        case 'error': statusText = 'ERREUR'; statusClass = 'status-error'; break;
+                        default: statusText = 'INACTIF'; statusClass = 'status-inactive'; break;
+                    }
+
+                    content += `
+                        <div class="extension-card">
+                            <div class="extension-header">
+                                <span class="extension-name">${extName}</span>
+                                <span class="extension-status ${statusClass}">${statusText}</span>
+                            </div>`;
+                    
+                    if (status === 'error') {
+                        content += `<div class="veilleur-error">Erreur: ${extData.message || 'Erreur inconnue'}</div>`;
+                    } else {
+                        content += `<div class="extension-details">`;
+                        for (const key in extData) {
+                            content += `
+                                <div class="detail-item">
+                                    <div class="detail-label">${key}</div>
+                                    <div class="detail-value">${formatVeilleurValue(extData[key])}</div>
+                                </div>`;
+                        }
+                        content += `</div>`;
+                    }
+                    content += `</div>`;
+                }
+                
+                veilleurContainer.innerHTML = content;
+                veilleurTotalEl.textContent = Object.keys(data).length;
+                veilleurActiveEl.textContent = activeCount;
+                veilleurErrorEl.textContent = errorCount;
+            }
+
+            async function fetchVeilleurData() {
+                veilleurContainer.innerHTML = `<div class="loading"><p>// Collecte des données en cours...</p></div>`;
+                try {
+                    const result = await window.pywebview.api.get_all_extensions_data();
+                    if (result.status === 'success') {
+                        renderVeilleurData(result.data);
+                    } else {
+                        veilleurContainer.innerHTML = `<div class="veilleur-error">// Erreur API: ${result.message}</div>`;
+                    }
+                } catch (e) {
+                    veilleurContainer.innerHTML = `<div class="veilleur-error">// Erreur de communication: ${e}</div>`;
+                }
             }
 
             // --- Event Listeners ---
@@ -434,7 +826,8 @@
 
                 currentSettings.navigation.start_level = parseInt(startLevelSelect.value, 10);
                 currentSettings.user.pseudo = pseudoInput.value;
-                currentSettings.user.password = bunkerPasswordInput.value || 'admin'; // S'assure qu'il y a toujours un mdp
+                currentSettings.user.password = bunkerPasswordInput.value; // Sauvegarde le mot de passe tel quel (peut être vide)
+                currentSettings.vpn.proxy_address = vpnProxyInput.value;
                 // Le chemin du dossier n'est pas modifiable depuis l'UI, donc on ne le met pas à jour.
 
                 const result = await window.pywebview.api.save_settings(currentSettings);
@@ -447,8 +840,31 @@
                 }
             });
 
+            // NOUVEAU : Listener pour le bouton VPN
+            vpnToggleBtn.addEventListener('click', async () => {
+                vpnToggleBtn.disabled = true;
+                vpnMessageText.textContent = 'Initialisation...';
+                // Sauvegarder l'adresse du proxy avant de tenter la connexion
+                currentSettings.vpn.proxy_address = vpnProxyInput.value;
+                await window.pywebview.api.save_settings(currentSettings);
+                // Lancer l'action
+                window.pywebview.api.toggle_vpn();
+            });
+
+            // NOUVEAU : Listener pour le bouton de rafraîchissement du Veilleur
+            veilleurRefreshBtn.addEventListener('click', fetchVeilleurData);
+
+
             // --- Initialisation ---
             loadAndApplySettings();
+            // Récupérer l'état initial du VPN au chargement
+            window.pywebview.api.get_vpn_status().then(updateVpnUI);
+
+            // NOUVEAU : Écouter l'événement de mise à jour du VPN depuis le backend
+            window.pywebview.events.vpn_status_update.connect(vpnStatusCallback);
+
+            // NOUVEAU : Charger les données du Veilleur au démarrage
+            fetchVeilleurData();
         });
     </script>
 </body>

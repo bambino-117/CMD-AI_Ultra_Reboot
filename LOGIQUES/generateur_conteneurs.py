@@ -2,6 +2,11 @@ import os
 import json
 import random
 
+# --- NOUVEAU : Importation des classes d'extension pour garantir la cohérence ---
+from .EXTENSIONS.OSINT.osint_aggregator import OsintExtension
+from .EXTENSIONS.PLATEFORMES.universal_loader import UniversalLoaderExtension
+from .EXTENSIONS.diagnostique_systeme import DiagnostiqueSysteme
+
 # --- Configuration ---
 TOTAL_CONTENEURS = 64
 CONTENEURS_SPECIAUX = 16
@@ -32,17 +37,46 @@ def generer_conteneurs():
     # --- Définition des conteneurs statiques/spécifiques ---
     osint_extension_data = {
         "id": 17,
-        "name": "OSINT Aggregator",
+        "name": OsintExtension.NAME,
         "version": "1.0.0",
         "author": "Anonyme",
         "type": "extension",
         "status": "actif",
-        "description": "Un outil puissant pour agréger des informations open-source sur une cible donnée. Combine plusieurs moteurs de recherche et analyse les résultats.",
+        "description": OsintExtension.DESCRIPTION,
         "payload": {
             "entry_point_template": "osint_tool.html"
         }
     }
-    STATIC_CONTAINERS = {17: osint_extension_data}
+    # NOUVEAU : Conteneur pour le Chargeur Universel
+    universal_loader_data = {
+        "id": 9,
+        "name": UniversalLoaderExtension.NAME,
+        "version": "0.1.0",
+        "author": "Anonyme",
+        "type": "extension",
+        "status": "actif",
+        "description": UniversalLoaderExtension.DESCRIPTION,
+        "payload": {
+            "entry_point_template": "universal_loader.html"
+        }
+    }
+    system_diagnostic_data = {
+        "id": 42,
+        "name": DiagnostiqueSysteme.NAME,
+        "version": "1.0.0",
+        "author": "Anonyme",
+        "type": "extension",
+        "status": "actif",
+        "description": DiagnostiqueSysteme.DESCRIPTION,
+        "payload": {
+            "entry_point_template": "system_diagnostic.html"
+        }
+    }
+    STATIC_CONTAINERS = {
+        9: universal_loader_data,
+        17: osint_extension_data,
+        42: system_diagnostic_data
+    }
 
     # 2. Sélectionner aléatoirement les IDs pour les conteneurs spéciaux
     # On exclut les IDs des conteneurs statiques pour ne pas leur assigner un type aléatoire.

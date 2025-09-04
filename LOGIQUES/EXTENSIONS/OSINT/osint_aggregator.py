@@ -5,7 +5,9 @@ from datetime import datetime
 import os
 
 from LOGIQUES.EXTENSIONS.base_extension import BaseExtension
-from .deep_social import search_social_media
+from LOGIQUES.EXTENSIONS.OSINT.deep_social import search_social_media
+from LOGIQUES.EXTENSIONS.OSINT.database_search import search_leaked_databases
+from LOGIQUES.utils import secure_path
 
 class OsintExtension(BaseExtension):
     """
@@ -25,27 +27,48 @@ class OsintExtension(BaseExtension):
             "message": "L'interface de l'extension OSINT est gérée par son point d'entrée. Aucune action directe à exécuter ici."
         }
 
-    def execute_scan(self, target, callback, config):
+    def execute_scan(self, target, modules, callback, config):
         """
-        Orchestre le scan OSINT sur plusieurs sources.
+        Orchestre le scan OSINT sur plusieurs sources, en fonction des modules sélectionnés.
         """
         if not target:
             callback({'status': 'error', 'message': 'Aucune cible spécifiée.'})
             return
 
-        callback({'status': 'log', 'message': f'// Initialisation du scan OSINT complet pour : {target}...'})
+        if not modules:
+            callback({'status': 'log', 'message': '// Avertissement : Aucun module de scan sélectionné. Lancement du scan complet par défaut.'})
+            modules = ['web', 'social', 'leaks'] # Par défaut, on lance tout
+
+        callback({'status': 'log', 'message': f'// Initialisation du scan OSINT pour : {target}...'})
+        callback({'status': 'log', 'message': f'// Modules activés : {", ".join(modules)}'})
+
+        web_results = []
+        social_results = []
+        leak_results = []
 
         # 1. Lancer le scan web
-        web_results = self._search_duckduckgo(target, callback)
+        if 'web' in modules:
+            web_results = self._search_duckduckgo(target, callback)
 
         # 2. Lancer le scan des réseaux sociaux
-        callback({'status': 'log', 'message': '// [SOCIAL] Lancement du scan des réseaux sociaux...'})
-        social_results = search_social_media(target, callback) # La fonction gère son propre log de fin
+        if 'social' in modules:
+            callback({'status': 'log', 'message': '// [SOCIAL] Lancement du scan des réseaux sociaux...'})
+            social_results = search_social_media(target, callback) # La fonction gère son propre log de fin
+        
+        # 3. Lancer la recherche de fuites de données
+        if 'leaks' in modules:
+            callback({'status': 'log', 'message': '// [HIBP] Interrogation des bases de données de fuites...'})
+            hibp_api_key = config.get('user', {}).get('api_keys', {}).get('hibp_api_key')
+            leak_results = search_leaked_databases(target, hibp_api_key)
+            # N'afficher le message de fin que si la recherche n'a pas retourné d'erreur
+            if not isinstance(leak_results, dict) or 'error' not in leak_results:
+                callback({'status': 'log', 'message': '// [HIBP] Recherche terminée.'})
 
-        # 3. Agréger et envoyer les résultats finaux
+        # 4. Agréger et envoyer les résultats finaux
         final_results = {
             "web": web_results,
-            "social": social_results
+            "social": social_results,
+            "leaks": leak_results
         }
         callback({'status': 'success', 'results': final_results})
 
@@ -84,12 +107,9 @@ class OsintExtension(BaseExtension):
             return []
 
     def _secure_path(self, filename, config):
+        """Utilise la fonction de chemin sécurisé partagée."""
         user_path = config.get('user', {}).get('user_folder_path')
-        if not user_path: return None, "Le dossier utilisateur n'est pas configuré."
-        clean_filename = os.path.basename(filename)
-        full_path = os.path.normpath(os.path.join(user_path, clean_filename))
-        if not full_path.startswith(os.path.normpath(user_path)): return None, "Accès refusé : tentative de sortie du répertoire autorisé."
-        return full_path, None
+        return secure_path(filename, user_path)
 
     def save_report(self, target, results, config):
         try:
@@ -97,6 +117,7 @@ class OsintExtension(BaseExtension):
             
             web_results = results.get('web', [])
             social_results = results.get('social', {})
+            leak_results = results.get('leaks', [])
             ai_analysis = results.get('ai_analysis') # Récupère l'analyse IA
             
             report_content = f"# Rapport OSINT : {target}\n## Généré le {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
@@ -116,13 +137,34 @@ class OsintExtension(BaseExtension):
             else:
                 report_content += "**Profils trouvés via Sherlock:**\n\n"
                 for profile in social_results:
-                    report_content += f"- **{profile.get('site')}**: {profile.get('url')}})\n"
+                    report_content += f"- **{profile.get('site')}**: {profile.get('url')}\n"
+            
+            report_content += "\n### Analyse des Fuites de Données (Have I Been Pwned)\n\n---\n\n"
+            if isinstance(leak_results, dict) and 'error' in leak_results:
+                report_content += f"Erreur lors de la recherche : {leak_results['error']}\n"
+            elif not leak_results:
+                report_content += "Aucune fuite de données trouvée pour cette cible.\n"
+            else:
+                report_content += f"La cible a été trouvée dans **{len(leak_results)}** fuite(s) de données :\n\n"
+                for leak in leak_results:
+                    report_content += f"- **Site :** {leak.get('Name')}\n  - **Date de la fuite :** {leak.get('BreachDate')}\n  - **Données compromises :** {', '.join(leak.get('DataClasses', []))}\n\n"
 
+            # Créer un nom de dossier sécurisé pour la cible
             safe_target_name = "".join(c for c in target if c.isalnum() or c in (' ', '_')).rstrip().replace(' ', '_')
-            filename = f"osint_report_{safe_target_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
-            full_path, error = self._secure_path(filename, config)
+            folder_name = f"OSINT_{safe_target_name}"
+            
+            # Créer le dossier dans le Bunker s'il n'existe pas
+            folder_path, error = self._secure_path(folder_name, config)
             if error: return {'status': 'error', 'message': error}
-            with open(full_path, 'w', encoding='utf-8') as f: f.write(report_content)
-            return {'status': 'success', 'message': f"Rapport '{filename}' sauvegardé dans le Bunker."}
+            os.makedirs(folder_path, exist_ok=True)
+
+            # Créer le nom du fichier de rapport
+            report_filename = f"report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
+            
+            # Construire le chemin complet du fichier à l'intérieur du nouveau dossier
+            full_report_path = os.path.join(folder_path, report_filename)
+
+            with open(full_report_path, 'w', encoding='utf-8') as f: f.write(report_content)
+            return {'status': 'success', 'message': f"Rapport '{report_filename}' sauvegardé dans le dossier '{folder_name}'."}
         except Exception as e:
             return {'status': 'error', 'message': f"Erreur lors de la sauvegarde du rapport : {e}"}

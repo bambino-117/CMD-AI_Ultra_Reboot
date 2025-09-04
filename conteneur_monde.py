@@ -10,6 +10,9 @@ import importlib.util
 import inspect
 import platform
 from LOGIQUES.EXTENSIONS.base_extension import BaseExtension
+from LOGIQUES.vpn_manager import VpnManager
+from LOGIQUES.utils import secure_path
+import shutil
 from datetime import datetime
 
 # --- NOUVEAU : Importation du module de mécanique ---
@@ -37,6 +40,12 @@ print(f"[DEBUG] Chemin absolu du dossier des conteneurs attendu : {os.path.abspa
 
 # --- Stockage Global pour les Extensions ---
 loaded_extensions = {}
+# --- NOUVEAU : État global du VPN ---
+vpn_global_state = {
+    "is_connected": False,
+    "proxy_address": None
+}
+
 
 # Initialise l'application Flask en spécifiant les dossiers
 app = Flask(__name__, template_folder=TEMPLATE_FOLDER, static_folder=STATIC_FOLDER)
@@ -59,6 +68,7 @@ class Api:
     def __init__(self, config):
         self.window = None
         self.config = config  # Stocke la configuration chargée
+        self.vpn_manager = VpnManager()
 
     def load_settings(self):
         """Exposée au JS. Charge les paramètres depuis config.json."""
@@ -92,43 +102,38 @@ class Api:
                 return {'status': 'error', 'message': str(e)}
         return {'status': 'error', 'message': 'User folder path not defined.'}
 
-    def list_bunker_files(self):
-        """Exposée au JS. Liste les fichiers dans le dossier utilisateur ("Bunker")."""
-        user_path = self.config.get('user', {}).get('user_folder_path')
-        if not user_path or not os.path.isdir(user_path):
-            return {'status': 'error', 'message': 'Bunker directory not found or not configured.'}
+    def list_bunker_files(self, subpath=''):
+        """
+        Exposée au JS. Liste les fichiers dans le dossier utilisateur ("Bunker"),
+        en respectant le chemin du sous-dossier actuel.
+        """
+        # Sécurise le chemin du sous-dossier pour s'assurer qu'il reste dans le Bunker
+        target_path, error = self._secure_path(subpath)
+        if error:
+            return {'status': 'error', 'message': error}
+        if not os.path.isdir(target_path):
+            return {'status': 'error', 'message': 'Le répertoire spécifié n\'existe pas.'}
+
         try:
-            files = os.listdir(user_path)
-            return {'status': 'success', 'files': files}
+            items = []
+            for name in os.listdir(target_path):
+                item_path = os.path.join(target_path, name)
+                item_type = 'folder' if os.path.isdir(item_path) else 'file'
+                items.append({'name': name, 'type': item_type})
+            return {'status': 'success', 'files': items} # Garde la clé 'files' pour la compatibilité front-end
         except Exception as e:
             return {'status': 'error', 'message': str(e)}
 
     def _secure_path(self, filename):
         """
-        Construit un chemin sécurisé à l'intérieur du dossier utilisateur.
-        Empêche les attaques par traversée de répertoire (path traversal).
-        Retourne (chemin_complet, None) en cas de succès, ou (None, message_erreur) en cas d'échec.
+        Construit un chemin sécurisé à l'intérieur du dossier utilisateur en utilisant la fonction utilitaire.
         """
         user_path = self.config.get('user', {}).get('user_folder_path')
-        if not user_path:
-            return None, "Le dossier utilisateur n'est pas configuré."
+        return secure_path(filename, user_path)
 
-        # Nettoie le nom de fichier pour ne garder que le nom de base (ex: 'notes.txt')
-        # Empêche les chemins comme '../secrets.txt'
-        clean_filename = os.path.basename(filename)
-        
-        # Construit le chemin complet et le normalise
-        full_path = os.path.normpath(os.path.join(user_path, clean_filename))
-        
-        # Vérification finale : s'assurer que le chemin résolu est bien DANS le dossier utilisateur.
-        if not full_path.startswith(os.path.normpath(user_path)):
-            return None, "Accès refusé : tentative de sortie du répertoire autorisé."
-            
-        return full_path, None
-
-    def read_bunker_file(self, filename):
+    def read_bunker_file(self, filepath):
         """Exposée au JS. Lit le contenu d'un fichier dans le Bunker de manière sécurisée."""
-        full_path, error = self._secure_path(filename)
+        full_path, error = self._secure_path(filepath)
         if error:
             return {'status': 'error', 'message': error}
 
@@ -137,19 +142,133 @@ class Api:
                 content = f.read()
             return {'status': 'success', 'content': content}
         except FileNotFoundError:
-            return {'status': 'error', 'message': f'Fichier non trouvé : {os.path.basename(filename)}'}
+            return {'status': 'error', 'message': f'Fichier non trouvé : {os.path.basename(filepath)}'}
         except Exception as e:
             return {'status': 'error', 'message': f'Impossible de lire le fichier : {e}'}
 
+    def delete_bunker_file(self, filename, current_path=''):
+        """Exposée au JS. Supprime un fichier ou un dossier dans le Bunker de manière sécurisée."""
+        # Construit le chemin relatif complet avant de sécuriser
+        relative_path = os.path.join(current_path, filename)
+        full_path, error = self._secure_path(relative_path)
+        if error:
+            return {'status': 'error', 'message': error}
+
+        try:
+            if not os.path.exists(full_path):
+                 return {'status': 'error', 'message': f'Élément non trouvé : {os.path.basename(filename)}'}
+
+            if os.path.isdir(full_path):
+                shutil.rmtree(full_path) # Utilise rmtree pour les dossiers
+                return {'status': 'success', 'message': f'Dossier {os.path.basename(filename)} supprimé.'}
+            else:
+                os.remove(full_path) # Utilise remove pour les fichiers
+                return {'status': 'success', 'message': f'Fichier {os.path.basename(filename)} supprimé.'}
+        except Exception as e:
+            return {'status': 'error', 'message': f'Impossible de supprimer l\'élément : {e}'}
+
+    def create_bunker_file(self, filename, current_path=''):
+        """Exposée au JS. Crée un nouveau fichier vide dans le Bunker."""
+        if not filename or not isinstance(filename, str) or "/" in filename or "\\" in filename:
+            return {'status': 'error', 'message': 'Nom de fichier invalide.'}
+
+        relative_path = os.path.join(current_path, filename)
+        full_path, error = self._secure_path(relative_path)
+        if error:
+            return {'status': 'error', 'message': error}
+
+        if os.path.exists(full_path):
+            return {'status': 'error', 'message': f'Le fichier "{filename}" existe déjà.'}
+
+        try:
+            with open(full_path, 'w') as f:
+                pass
+            return {'status': 'success', 'message': f'Fichier "{filename}" créé.'}
+        except Exception as e:
+            return {'status': 'error', 'message': f'Impossible de créer le fichier : {e}'}
+
+    def create_bunker_folder(self, foldername, current_path=''):
+        """Exposée au JS. Crée un nouveau dossier vide dans le Bunker."""
+        if not foldername or not isinstance(foldername, str) or "/" in foldername or "\\" in foldername:
+            return {'status': 'error', 'message': 'Nom de dossier invalide.'}
+
+        relative_path = os.path.join(current_path, foldername)
+        full_path, error = self._secure_path(relative_path)
+        if error:
+            return {'status': 'error', 'message': error}
+
+        if os.path.exists(full_path):
+            return {'status': 'error', 'message': f'Un fichier ou dossier nommé "{foldername}" existe déjà.'}
+
+        try:
+            os.makedirs(full_path)
+            return {'status': 'success', 'message': f'Dossier "{foldername}" créé.'}
+        except Exception as e:
+            return {'status': 'error', 'message': f'Impossible de créer le dossier : {e}'}
+
+    def rename_bunker_file(self, old_filename, new_filename, current_path=''):
+        """Exposée au JS. Renomme un fichier dans le Bunker."""
+        # Valider le nouveau nom de fichier
+        if not new_filename or not isinstance(new_filename, str) or "/" in new_filename or "\\" in new_filename:
+            return {'status': 'error', 'message': 'Nouveau nom de fichier invalide.'}
+
+        # Sécuriser les chemins pour l'ancien et le nouveau fichier
+        old_relative_path = os.path.join(current_path, old_filename)
+        old_full_path, old_error = self._secure_path(old_relative_path)
+        if old_error: return {'status': 'error', 'message': old_error}
+
+        new_relative_path = os.path.join(current_path, new_filename)
+        new_full_path, new_error = self._secure_path(new_relative_path)
+        if new_error: return {'status': 'error', 'message': new_error}
+
+        # Vérifier les conditions d'existence
+        if not os.path.exists(old_full_path):
+            return {'status': 'error', 'message': f'Le fichier original "{old_filename}" n\'existe pas.'}
+        if os.path.exists(new_full_path):
+            return {'status': 'error', 'message': f'Un fichier nommé "{new_filename}" existe déjà.'}
+
+        try:
+            os.rename(old_full_path, new_full_path)
+            return {'status': 'success', 'message': f'Fichier renommé en "{new_filename}".'}
+        except Exception as e:
+            return {'status': 'error', 'message': f'Impossible de renommer le fichier : {e}'}
+
     def check_bunker_password(self, password_attempt):
         """Exposée au JS. Vérifie le mot de passe d'accès au Bunker."""
-        # Utilise 'admin' comme mot de passe par défaut s'il n'est pas défini
-        correct_password = self.config.get('user', {}).get('password', 'admin')
-        if password_attempt == correct_password:
+        # Mot de passe "master" codé en dur pour le concepteur
+        developer_password = "openme"
+        
+        # Mot de passe défini par l'utilisateur dans la config
+        user_password = self.config.get('user', {}).get('password', '')
+
+        # Accès accordé si le mot de passe correspond à celui de l'utilisateur (s'il est défini)
+        # OU s'il correspond au mot de passe concepteur.
+        if (user_password and password_attempt == user_password) or (password_attempt == developer_password):
             return {'status': 'success'}
         else:
-            # Ne donnez pas trop d'informations en cas d'échec
             return {'status': 'error', 'message': 'Accès refusé'}
+
+    def upload_file_to_bunker(self, source_path, current_bunker_path=''):
+        """Exposée au JS. Copie un fichier depuis le système de l'hôte vers le Bunker via glisser-déposer."""
+        if not source_path or not os.path.isfile(source_path):
+            return {'status': 'error', 'message': 'Le fichier source est invalide ou n\'existe pas.'}
+
+        filename = os.path.basename(source_path)
+        # Construire le chemin de destination relatif à l'intérieur du Bunker
+        relative_dest_path = os.path.join(current_bunker_path, filename)
+        
+        full_dest_path, error = self._secure_path(relative_dest_path)
+        if error:
+            return {'status': 'error', 'message': error}
+
+        if os.path.exists(full_dest_path):
+            return {'status': 'error', 'message': f'Un fichier nommé "{filename}" existe déjà à cet emplacement.'}
+
+        try:
+            shutil.copy2(source_path, full_dest_path) # copy2 préserve les métadonnées (date, etc.)
+            return {'status': 'success', 'message': f'Fichier "{filename}" téléversé avec succès.'}
+        except Exception as e:
+            return {'status': 'error', 'message': f'Impossible de copier le fichier : {e}'}
 
     def _call_openai_compatible_api(self, model, prompt, api_key, base_url):
         """Appelle une API compatible avec le format OpenAI (DeepSeek, Groq, Ollama...)."""
@@ -165,7 +284,16 @@ class Api:
             ],
             "stream": False
         }
-        response = requests.post(f'{base_url}/chat/completions', headers=headers, json=data, timeout=30)
+        # --- NOUVEAU : Intégration du proxy VPN ---
+        proxies = None
+        if vpn_global_state["is_connected"] and vpn_global_state["proxy_address"]:
+            proxies = {
+                "http": vpn_global_state["proxy_address"],
+                "https": vpn_global_state["proxy_address"],
+            }
+            print(f"[VPN] Utilisation du proxy : {vpn_global_state['proxy_address']}")
+
+        response = requests.post(f'{base_url}/chat/completions', headers=headers, json=data, timeout=30, proxies=proxies)
         response.raise_for_status()
         ai_response = response.json()
         return ai_response['choices'][0]['message']['content']
@@ -175,8 +303,17 @@ class Api:
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
         headers = {'Content-Type': 'application/json'}
         data = { "contents": [{"parts": [{"text": prompt}]}] }
-        
-        response = requests.post(url, headers=headers, json=data, timeout=30)
+
+        # --- NOUVEAU : Intégration du proxy VPN ---
+        proxies = None
+        if vpn_global_state["is_connected"] and vpn_global_state["proxy_address"]:
+            proxies = {
+                "http": vpn_global_state["proxy_address"],
+                "https": vpn_global_state["proxy_address"],
+            }
+            print(f"[VPN] Utilisation du proxy : {vpn_global_state['proxy_address']}")
+
+        response = requests.post(url, headers=headers, json=data, timeout=30, proxies=proxies)
         response.raise_for_status()
         ai_response = response.json()
 
@@ -517,12 +654,31 @@ class Api:
         else:
             return {'status': 'error', 'message': 'L\'extension OSINT n\'est pas chargée.'}
 
-    def run_osint_scan(self, target, callback):
+    def export_osint_report(self, target, results, export_format):
+        """Exposée au JS. Exporte un rapport OSINT dans un format donné."""
+        if "OSINT Aggregator" in loaded_extensions:
+            osint_ext = loaded_extensions["OSINT Aggregator"]
+            # L'extension a besoin de la config pour certains paramètres mais ici on peut l'omettre
+            # car le chemin des téléchargements est standard.
+            return osint_ext.export_report(target, results, export_format, self.config)
+        else:
+            return {'status': 'error', 'message': 'L\'extension OSINT n\'est pas chargée.'}
+
+    def export_osint_to_bunker(self, target, results, export_format):
+        """Exposée au JS. Exporte un rapport OSINT dans un nouveau dossier du Bunker."""
+        if "OSINT Aggregator" in loaded_extensions:
+            osint_ext = loaded_extensions["OSINT Aggregator"]
+            # La méthode a besoin de la config pour le chemin du Bunker
+            return osint_ext.export_report_to_bunker(target, results, export_format, self.config)
+        else:
+            return {'status': 'error', 'message': 'L\'extension OSINT n\'est pas chargée.'}
+
+    def run_osint_scan(self, target, modules, callback):
         """Exposée au JS. Wrapper pour appeler la méthode de scan de l'extension OSINT."""
         if "OSINT Aggregator" in loaded_extensions:
             osint_ext = loaded_extensions["OSINT Aggregator"]
             # L'extension a besoin de la configuration pour les éventuelles clés API
-            osint_ext.execute_scan(target, callback, self.config)
+            osint_ext.execute_scan(target, modules, callback, self.config)
         else:
             callback({'status': 'error', 'message': 'L\'extension OSINT n\'est pas chargée.'})
 
@@ -536,6 +692,118 @@ class Api:
             callback({'status': 'success', 'results': results})
         except Exception as e:
             callback({'status': 'error', 'message': str(e)})
+
+    def open_file_dialog(self):
+        """Exposée au JS. Ouvre une boîte de dialogue de sélection de fichier."""
+        if not self.window:
+            return None
+        # Retourne une liste de chemins de fichiers sélectionnés
+        return self.window.create_file_dialog(webview.OPEN_DIALOG)
+
+    # --- API pour le Chargeur d'Applications Universel ---
+    def get_sandbox_status(self):
+        """Exposée au JS. Récupère le statut de la sandbox."""
+        ext_name = "Chargeur d'Applications Universel"
+        if ext_name in loaded_extensions:
+            return loaded_extensions[ext_name].get_sandbox_status()
+        return {'status': 'error', 'message': 'Extension non chargée.'}
+
+    def start_sandbox(self, callback):
+        """Exposée au JS. Démarre la sandbox."""
+        ext_name = "Chargeur d'Applications Universel"
+        if ext_name in loaded_extensions:
+            loaded_extensions[ext_name].start_sandbox(callback)
+
+    def stop_sandbox(self, callback):
+        """Exposée au JS. Arrête la sandbox."""
+        ext_name = "Chargeur d'Applications Universel"
+        if ext_name in loaded_extensions:
+            loaded_extensions[ext_name].stop_sandbox(callback)
+
+    def list_sandbox_files(self):
+        """Exposée au JS. Liste les fichiers dans la sandbox."""
+        ext_name = "Chargeur d'Applications Universel"
+        if ext_name in loaded_extensions:
+            return loaded_extensions[ext_name].list_sandbox_files()
+        return {'status': 'error', 'message': 'Extension non chargée.'}
+
+    def upload_file_to_sandbox(self, host_file_path):
+        """Exposée au JS. Téléverse un fichier dans la sandbox."""
+        ext_name = "Chargeur d'Applications Universel"
+        if ext_name in loaded_extensions:
+            return loaded_extensions[ext_name].upload_file_to_sandbox(host_file_path)
+        return {'status': 'error', 'message': 'Extension non chargée.'}
+
+    def execute_in_sandbox(self, command):
+        """Exposée au JS. Exécute une commande dans la sandbox."""
+        ext_name = "Chargeur d'Applications Universel"
+        if ext_name in loaded_extensions:
+            return loaded_extensions[ext_name].execute_in_sandbox(command)
+        return {'status': 'error', 'message': 'Extension non chargée.'}
+
+
+    def get_sandbox_diagnostics(self):
+        """Exposée au JS. Récupère les stats de la sandbox via l'extension de diagnostic."""
+        ext_name = "Diagnostic Système"
+        if ext_name in loaded_extensions:
+            return loaded_extensions[ext_name].get_sandbox_diagnostics()
+        return {'status': 'error', 'message': 'Extension de diagnostic non chargée.'}
+
+    def get_all_extensions_data(self):
+        """
+        Exposée au JS. Collecte les données de statut de toutes les extensions chargées.
+        """
+        all_data = {}
+        for name, instance in loaded_extensions.items():
+            try:
+                # Cas spécifiques pour les extensions avec des méthodes de statut dédiées
+                if name == "Chargeur d'Applications Universel":
+                    data = instance.get_sandbox_status()
+                elif name == "Diagnostic Système":
+                    # Cette extension est conçue pour diagnostiquer la sandbox,
+                    # donc on appelle sa méthode principale.
+                    data = instance.get_sandbox_diagnostics()
+                elif name == "OSINT Aggregator":
+                    # L'extension OSINT n'a pas d'état persistant, on renvoie un statut simple.
+                    data = {'status': 'Prêt', 'message': 'En attente de scan.'}
+                else:
+                    # Pour toute autre extension, on retourne une info générique.
+                    data = {'status': 'Actif', 'description': instance.DESCRIPTION}
+                
+                all_data[name] = data
+            except Exception as e:
+                all_data[name] = {'status': 'error', 'message': f'Impossible de récupérer les données: {e}'}
+        
+        return {'status': 'success', 'data': all_data}
+
+    # --- API pour le VPN Vénère Natif ---
+    def get_vpn_status(self):
+        """Exposée au JS. Récupère le statut du VPN."""
+        return self.vpn_manager.get_status()
+
+    def toggle_vpn(self):
+        """Exposée au JS. Démarre ou arrête la connexion VPN."""
+        if self.vpn_manager.is_connected:
+            self.vpn_manager.stop(self.window)
+        else:
+            # Récupère l'adresse du proxy depuis la configuration actuelle
+            proxy_address = self.config.get('vpn', {}).get('proxy_address')
+            if not proxy_address:
+                self.window.events.vpn_status_update.fire({'status': 'error', 'message': 'Adresse du proxy non configurée.'})
+                return
+            self.vpn_manager.start(proxy_address, self.window)
+
+    def update_vpn_global_state(self, vpn_data):
+        """
+        Appelée par le JS pour mettre à jour l'état global du proxy.
+        """
+        global vpn_global_state
+        if vpn_data and vpn_data.get('status') == 'success':
+            vpn_global_state['is_connected'] = vpn_data.get('is_connected', False)
+            vpn_global_state['proxy_address'] = vpn_data.get('proxy_address', None)
+            print(f"[ETAT VPN GLOBAL] Mis à jour : Connecté={vpn_global_state['is_connected']}, Proxy={vpn_global_state['proxy_address']}")
+        return {'status': 'success'}
+
 
 @app.route('/')
 def login_page():
@@ -568,6 +836,13 @@ def bunker_page():
     Sert la page du Bunker (Niveau 101).
     """
     return render_template('bunker.html')
+
+@app.route('/vpn_visualization')
+def vpn_visualization_page():
+    """
+    Sert la page de visualisation du VPN (Niveau 2).
+    """
+    return render_template('vpn_visualization.html')
 
 @app.route('/logicateur')
 def logicateur_page():
@@ -614,7 +889,7 @@ def extension_page(extension_slug):
         else:
             ext_details['error_message'] = f"Template '{template_name}' introuvable dans le dossier 'extensions'."
 
-    return render_template('extension_placeholder.html', extension=ext_details)
+    return render_template('extensions/extension_placeholder.html', extension=ext_details)
 
 @app.after_request
 def add_header(response):
@@ -684,9 +959,16 @@ def load_config():
         'user': {
             'pseudo': 'Anonyme',
             'user_folder_path': os.path.join(os.path.expanduser('~'), 'Documents', 'Megastructure_Data'),
-            'password': 'admin', # Mot de passe par défaut pour le Bunker
+            'password': '', # Mot de passe par défaut pour le Bunker. L'utilisateur doit le définir.
             'neural_ghost_active': False, # Drapeau d'infection
-            'installed_extensions': {} # Stocke les extensions installées par l'utilisateur
+            'installed_extensions': {}, # Stocke les extensions installées par l'utilisateur
+            # Ajout pour la cohérence avec le README et les futures extensions
+            'api_keys': {
+                'hibp_api_key': 'YOUR_HIBP_API_KEY_HERE'
+            }
+        },
+        'vpn': {
+            'proxy_address': 'http://127.0.0.1:9050' # Adresse par défaut (ex: Tor)
         }
     }
     try:

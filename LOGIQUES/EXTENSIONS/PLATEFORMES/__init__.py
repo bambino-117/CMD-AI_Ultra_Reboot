@@ -1,0 +1,1 @@
+# Ce fichier rend le dossier PLATEFORMES importable en tant que package.

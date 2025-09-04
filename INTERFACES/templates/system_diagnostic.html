@@ -1,0 +1,174 @@
+{% extends "extensions/extension_base.html" %}
+
+{% block extension_title %}{{ extension.name }}{% endblock %}
+
+{% block extension_content %}
+<div class="diagnostic-container">
+    <h2 class="diagnostic-header">Diagnostic de la Sandbox</h2>
+    <p class="diagnostic-description">{{ extension.description }}</p>
+
+    <div id="diagnostic-status" class="status-bar">
+        Statut : <span id="status-text">En attente...</span>
+    </div>
+
+    <div class="diagnostic-grid">
+        <div class="diagnostic-panel">
+            <h3>Utilisation CPU</h3>
+            <div class="progress-bar-container">
+                <div id="cpu-progress-bar" class="progress-bar"></div>
+            </div>
+            <p id="cpu-usage">--</p>
+        </div>
+        <div class="diagnostic-panel">
+            <h3>Utilisation Mémoire</h3>
+            <div class="progress-bar-container">
+                <div id="memory-progress-bar" class="progress-bar"></div>
+            </div>
+            <p id="memory-usage">--</p>
+        </div>
+        <div class="diagnostic-panel">
+            <h3>Réseau (Entrée/Sortie)</h3>
+            <p id="network-io">--</p>
+        </div>
+        <div class="diagnostic-panel">
+            <h3>ID du Conteneur</h3>
+            <p id="container-id">--</p>
+        </div>
+    </div>
+
+    <div class="diagnostic-controls">
+        <button id="refresh-diagnostics-btn" class="cybr-btn">
+            Rafraîchir
+            <span aria-hidden class="cybr-btn__glitch">Rafraîchir</span>
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extension_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const refreshBtn = document.getElementById('refresh-diagnostics-btn');
+    const statusText = document.getElementById('status-text');
+    const cpuUsageEl = document.getElementById('cpu-usage');
+    const memoryUsageEl = document.getElementById('memory-usage');
+    const networkIoEl = document.getElementById('network-io');
+    const containerIdEl = document.getElementById('container-id');
+    const cpuProgressBar = document.getElementById('cpu-progress-bar');
+    const memoryProgressBar = document.getElementById('memory-progress-bar');
+    
+    let isFetching = false;
+    let autoRefreshInterval = null;
+    const REFRESH_RATE_MS = 3000; // Rafraîchir toutes les 3 secondes
+
+    async function fetchDiagnostics() {
+        if (isFetching) return; // Empêche les appels concurrents
+        isFetching = true;
+
+        statusText.textContent = 'Mise à jour...';
+        statusText.parentElement.classList.remove('status-error', 'status-running', 'status-stopped');
+        statusText.parentElement.classList.add('status-loading');
+
+        try {
+            const response = await window.pywebview.api.get_sandbox_diagnostics();
+            // Petite pause pour que l'indicateur "Mise à jour..." soit visible
+            await new Promise(resolve => setTimeout(resolve, 200));
+
+            if (response.status === 'success' || response.status === 'stopped') {
+                const data = response.data;
+                statusText.textContent = response.message || `Statut : ${data.status}`;
+                cpuUsageEl.textContent = data.cpu_usage;
+                memoryUsageEl.textContent = data.memory_usage;
+                networkIoEl.textContent = data.network_io;
+                containerIdEl.textContent = data.id;
+
+                // Mettre à jour les barres de progression
+                const cpuPercent = data.cpu_percent || 0;
+                cpuProgressBar.style.width = `${Math.min(100, cpuPercent)}%`;
+
+                const memPercent = data.mem_percent || 0;
+                memoryProgressBar.style.width = `${Math.min(100, memPercent)}%`;
+
+                if (response.status === 'stopped') {
+                    statusText.parentElement.classList.add('status-stopped');
+                } else {
+                    statusText.parentElement.classList.add('status-running');
+                }
+
+            } else {
+                statusText.textContent = `Erreur : ${response.message}`;
+                statusText.parentElement.classList.add('status-error');
+                cpuUsageEl.textContent = '--';
+                memoryUsageEl.textContent = '--';
+                networkIoEl.textContent = '--';
+                containerIdEl.textContent = '--';
+                cpuProgressBar.style.width = '0%';
+                memoryProgressBar.style.width = '0%';
+            }
+        } catch (error) {
+            console.error('Erreur lors de l\'appel à get_sandbox_diagnostics:', error);
+            statusText.textContent = 'Erreur de communication avec le backend.';
+            statusText.parentElement.classList.add('status-error');
+        } finally {
+            isFetching = false;
+            statusText.parentElement.classList.remove('status-loading');
+        }
+    }
+
+    refreshBtn.addEventListener('click', fetchDiagnostics);
+
+    function startAutoRefresh() {
+        if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+        fetchDiagnostics(); // Lancement immédiat
+        autoRefreshInterval = setInterval(fetchDiagnostics, REFRESH_RATE_MS);
+        console.log("Diagnostic auto-refresh started.");
+    }
+
+    function stopAutoRefresh() {
+        clearInterval(autoRefreshInterval);
+        autoRefreshInterval = null;
+        console.log("Diagnostic auto-refresh stopped.");
+    }
+
+    // Démarrer le rafraîchissement automatique
+    startAutoRefresh();
+
+    // Optimisation : Arrêter le rafraîchissement si la fenêtre n'est pas visible
+    // pour économiser les ressources.
+    window.addEventListener('blur', stopAutoRefresh);
+    window.addEventListener('focus', startAutoRefresh);
+});
+</script>
+{% endblock %}
+
+{% block extension_styles %}
+<style>
+    .diagnostic-container { padding: 20px; color: var(--main-text-color); }
+    .diagnostic-header { font-family: var(--font-accent); color: var(--accent-color); border-bottom: 1px solid var(--accent-color-translucent); padding-bottom: 10px; margin-bottom: 20px; }
+    .status-bar { padding: 10px; margin-bottom: 20px; border: 1px solid var(--border-color); background-color: rgba(0, 255, 255, 0.05); }
+    .status-bar.status-running { border-color: var(--success-color); }
+    .status-bar.status-stopped { border-color: var(--warning-color); }
+    .status-bar.status-error { border-color: var(--error-color); }
+    .diagnostic-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 20px; }
+    .diagnostic-panel { background-color: var(--background-color-darker); border: 1px solid var(--border-color); padding: 15px; }
+    .diagnostic-panel h3 { margin-top: 0; font-family: var(--font-accent); color: var(--accent-color-light); font-size: 1.1em; }
+    .diagnostic-panel p { font-family: var(--font-mono); font-size: 1rem; color: var(--main-text-color); margin: 0; }
+    .diagnostic-controls { text-align: right; }
+
+    .progress-bar-container {
+        width: 100%;
+        height: 10px;
+        background-color: rgba(0, 0, 0, 0.3);
+        border: 1px solid var(--border-color);
+        border-radius: 5px;
+        margin-bottom: 8px;
+        overflow: hidden;
+    }
+    .progress-bar {
+        height: 100%;
+        width: 0%; /* Largeur initiale */
+        background: linear-gradient(90deg, var(--accent-color-light), var(--error-color));
+        transition: width 0.5s ease-out;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,66 @@
+{
+  // 1. THÈME et APPEARANCE
+  // -------------------------------
+  "workbench.colorTheme": "JellyFish",
+  "workbench.iconTheme": "material-icon-theme",
+  "window.zoomLevel": 0,
+  // 2. EDITOR - Comportement de l'éditeur
+  // -------------------------------
+  "editor.fontSize": 14,
+  "editor.lineHeight": 1.5,
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "editor.detectIndentation": true,
+  "editor.wordWrap": "on",
+  "editor.minimap.enabled": true, // Active la minimap
+  "editor.formatOnSave": true, // Formate automatiquement le code à l'enregistrement
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": "explicit"
+  },
+  // 3. AI - Configuration des fonctionnalités d'IA (le cœur de Cursor !)
+  // -------------------------------
+  // Ces paramètres peuvent varier selon la version de Cursor.
+  "aicompletion.enable": true, // Active l'auto-complétion IA
+  "aicompletion.triggerMode": "automatic", // 'automatic' ou 'manual'
+  "ai.chat.enable": true, // Active le chat
+  // --- Configuration pour DeepSeek ---
+  // 1. Définir le fournisseur comme "deepseek"
+  "llm.provider": "deepseek",
+  // 2. Spécifier l'URL de l'API de DeepSeek
+  "llm.apiBaseUrl": "https://api.deepseek.com/v1",
+  // 3. Remplacer par votre clé d'API DeepSeek
+  "llm.apiKey": "sk-66bf8b87f54747c98f9ada820443cbc9",
+  // 4. Choisir le modèle DeepSeek à utiliser (deepseek-coder est excellent pour le code)
+  "llm.model": "deepseek/deepseek-coder",
+  // 4. TERMINAL
+  // -------------------------------
+  "terminal.integrated.fontSize": 13,
+  "terminal.integrated.profiles.windows": {
+    "PowerShell": {
+      "path": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+      "args": []
+    }
+  },
+  "terminal.integrated.defaultProfile.windows": "PowerShell",
+  // 5. EXTLENSIONS et LANGAGES
+  // -------------------------------
+  "emmet.includeLanguages": {
+    "javascript": "javascriptreact"
+  },
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.autopep8"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[html]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[css]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  }
+  // Vous pouvez ajouter tous vos paramètres personnels ci-dessous.
+}

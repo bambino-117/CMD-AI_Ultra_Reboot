@@ -1,0 +1,54 @@
+{
+  "display_mode": "fullscreen",
+  "navigation": {
+    "start_level": 404
+  },
+  "ai": {
+    "providers": {
+      "openai": {
+        "api_key": "YOUR_OPENAI_API_KEY_HERE",
+        "base_url": "https://api.openai.com/v1"
+      },
+      "deepseek": {
+        "api_key": "YOUR_DEEPSEEK_API_KEY_HERE",
+        "base_url": "https://api.deepseek.com/v1"
+      },
+      "google": {
+        "api_key": "YOUR_GEMINI_API_KEY_HERE"
+      },
+      "groq": {
+        "api_key": "YOUR_GROQ_API_KEY_HERE",
+        "base_url": "https://api.groq.com/openai/v1"
+      },
+      "ollama": {
+        "base_url": "http://127.0.0.1:11434"
+      }
+    },
+    "model": "deepseek-coder",
+    "api_key": "YOUR_DEEPSEEK_API_KEY_HERE",
+    "api_base_url": "https://api.deepseek.com/v1"
+  },
+  "user": {
+    "pseudo": "Anonyme",
+    "user_folder_path": "/Users/boris/Documents/Megastructure_Data",
+    "password": "admin",
+    "neural_ghost_active": true,
+    "installed_extensions": {
+      "OSINT Aggregator": {
+        "name": "OSINT Aggregator",
+        "description": "Un outil puissant pour agr\u00e9ger des informations open-source sur une cible donn\u00e9e. Combine plusieurs moteurs de recherche et analyse les r\u00e9sultats.",
+        "level": 360,
+        "url": "/extension/osint_aggregator",
+        "payload": {
+          "entry_point_template": "osint_tool.html"
+        }
+      }
+    },
+    "api_keys": {
+      "hibp_api_key": "YOUR_HIBP_API_KEY_HERE"
+    }
+  },
+  "vpn": {
+    "proxy_address": "http://127.0.0.1:9050"
+  }
+}
