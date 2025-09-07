@@ -276,6 +276,26 @@
             color: #ff33ff;
             animation: pulse-contaminated 2s infinite;
         }
+        .data-circle.blocked {
+            border-color: #ff9900; /* Orange */
+            color: #ff9900;
+            box-shadow: inset 0 0 10px rgba(255, 153, 0, 0.2);
+            animation: pulse-blocked 3s infinite;
+        }
+        .data-circle.keylogger {
+            border-color: #aa0000;
+            color: #ffaaaa;
+            box-shadow: inset 0 0 10px rgba(170, 0, 0, 0.5);
+            animation: pulse-keylogger 1s infinite;
+        }
+        .data-circle.processing {
+            cursor: wait;
+            animation: processing-spin 1.5s linear infinite;
+        }
+        @keyframes processing-spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
         @keyframes pulse-contaminated { 0%, 100% { box-shadow: inset 0 0 10px rgba(255, 51, 255, 0.2), 0 0 5px rgba(255, 51, 255, 0.2); } 50% { box-shadow: inset 0 0 15px rgba(255, 51, 255, 0.4), 0 0 15px rgba(255, 51, 255, 0.4); } }
 
         /* --- NOUVEAU : Styles pour la trace vérolée --- */
@@ -299,6 +319,11 @@
                 transform: translateY(20px) scale(0.8); /* Tombe et rétrécit en disparaissant */
             }
         }
+        @keyframes pulse-blocked { 
+            0%, 100% { box-shadow: inset 0 0 10px rgba(255, 153, 0, 0.2), 0 0 5px rgba(255, 153, 0, 0.2); } 
+            50% { box-shadow: inset 0 0 15px rgba(255, 153, 0, 0.4), 0 0 15px rgba(255, 153, 0, 0.4); } 
+        }
+        @keyframes pulse-keylogger { 0%, 100% { border-style: solid; } 50% { border-style: dashed; } }
 
         /* --- NOUVEAU : Styles pour l'authentification --- */
         .auth-overlay {
@@ -326,6 +351,12 @@
         .auth-box.shake-effect { animation: shake 0.4s; }
         @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
         @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        /* NOUVEAU : Animation de secousse pour le body */
+        @keyframes screen-shake {
+            0%, 100% { transform: translate(0, 0); }
+            10%, 30%, 50%, 70%, 90% { transform: translate(-2px, 2px); }
+            20%, 40%, 60%, 80% { transform: translate(2px, -2px); }
+        }
 
         .auth-box h2 { color: #ff33ff; margin-top: 0; }
         .auth-box p { color: rgba(0, 255, 204, 0.8); }
@@ -372,7 +403,8 @@
             <div class="auth-box">
                 <h2>Authentification Requise</h2>
                 <p>NIVEAU 101 // BUNKER</p>
-                <input type="password" id="password-input" placeholder="Mot de passe...">
+                <input type="text" id="username-input" placeholder="Identifiant..." autocomplete="username">
+                <input type="password" id="password-input" placeholder="Mot de passe..." autocomplete="current-password">
                 <div class="auth-actions">
                     <button id="auth-submit-btn" class="action-btn">Valider</button>
                 </div>
@@ -409,6 +441,7 @@
             
             // NOUVEAU : Éléments d'authentification
             const passwordOverlay = document.getElementById('password-overlay');
+            const usernameInput = document.getElementById('username-input');
             const passwordInput = document.getElementById('password-input');
             const authSubmitBtn = document.getElementById('auth-submit-btn');
             
@@ -558,7 +591,9 @@
                         { name: 'mem_leak.log', type: 'file', state: 'contaminated' },
                         { name: 'kernel_panic.dump', type: 'file', state: 'inaccessible' },
                         { name: 'shadow_registry.hive', type: 'file', state: 'contaminated' },
-                        { name: 'node_771.ref', type: 'file', state: 'inaccessible' }
+                        { name: 'node_771.ref', type: 'file', state: 'inaccessible' },
+                        { name: 'access_codes.dat.bkc', type: 'file', state: 'blocked' },
+                        { name: 'svchost.exe.bak', type: 'file', state: 'keylogger' }
                     ];
                     // Éviter les doublons si un fichier réel a le même nom
                     dummyFiles.forEach(dummy => {
@@ -598,7 +633,11 @@
                         // NOUVEAU: Ajouter les listeners pour l'effet de trace
                         circle.addEventListener('mouseenter', handleContaminatedEnter);
                         circle.addEventListener('mouseleave', handleContaminatedLeave);
-                    } else if (item.state === 'inaccessible' || Math.random() < 0.05) { // Ajout de l'état + réduction de l'aléatoire à 5%
+                    } else if (item.state === 'blocked') {
+                        circle.classList.add('blocked');
+                    } else if (item.state === 'keylogger') {
+                        circle.classList.add('keylogger');
+                    } else if (item.state === 'inaccessible' || (item.type === 'file' && !item.state && Math.random() < 0.05)) {
                         circle.classList.add('inaccessible');
                     }
 
@@ -623,6 +662,8 @@
                         vx: (Math.random() - 0.5) * 0.4, // Vitesse lente et aléatoire
                         vy: (Math.random() - 0.5) * 0.4,
                         size: size,
+                        radius: size / 2,
+                        mass: size * size, // Masse proportionnelle à l'aire pour la physique
                         filename: item.name,
                         type: item.type
                     });
@@ -661,6 +702,35 @@
                     toggleRenameMode(); // Quitter le mode renommage
                 } else {
                     // --- LOGIQUE DE LECTURE PAR DÉFAUT ---
+
+                    // NOUVEAU : Gérer le cas spécial du fichier d'infection
+                    if (filename === 'neural_ghost.py') {
+                        if (confirm("Ce fichier semble instable et corrompu. L'exécuter pourrait avoir des conséquences imprévisibles sur le système. Voulez-vous continuer ?")) {
+                            const result = await window.pywebview.api.trigger_infection();
+                            if (result.status === 'success') {
+                                alert("INJECTION RÉUSSIE. Le système est compromis. Déconnexion forcée du Bunker.");
+                                document.body.style.animation = "screen-shake 0.5s";
+                                setTimeout(() => { window.location.href = '/terminaux.html'; }, 1000);
+                            } else {
+                                alert(`ERREUR D'INJECTION: ${result.message}`);
+                            }
+                        }
+                        return; // Arrêter le traitement ici pour ne pas essayer de lire le fichier
+                    }
+
+                    // NOUVEAU: Gérer le cas des fichiers bloqués
+                    if (circleElement.classList.contains('blocked')) {
+                        handleBlockedFileClick(circleElement, filename);
+                        return;
+                    }
+
+                    // NOUVEAU: Gérer le cas des fichiers keylogger
+                    if (circleElement.classList.contains('keylogger')) {
+                        handleKeyloggerFileClick(circleElement, filename);
+                        return;
+                    }
+
+
                     if (filetype === 'folder') {
                         // --- NAVIGATION DANS UN DOSSIER ---
                         currentPath = currentPath ? `${currentPath}/${filename}` : filename;
@@ -687,29 +757,70 @@
                 }
             }
 
-            // NOUVEAU: Boucle d'animation principale
+            // NOUVEAU: Gère la collision entre un cercle et une boîte (AABB)
+            function handleAABBCollision(circle, rect) {
+                if (!rect) return;
+
+                const circle_cx = circle.x + circle.radius;
+                const circle_cy = circle.y + circle.radius;
+
+                const rect_cx = rect.left + (rect.right - rect.left) / 2;
+                const rect_cy = rect.top + (rect.bottom - rect.top) / 2;
+                const rect_half_width = (rect.right - rect.left) / 2;
+                const rect_half_height = (rect.bottom - rect.top) / 2;
+
+                const dx = circle_cx - rect_cx;
+                const dy = circle_cy - rect_cy;
+
+                const overlapX = (circle.radius + rect_half_width) - Math.abs(dx);
+                const overlapY = (circle.radius + rect_half_height) - Math.abs(dy);
+
+                if (overlapX > 0 && overlapY > 0) {
+                    // Collision détectée
+                    if (overlapX < overlapY) {
+                        // Collision horizontale
+                        circle.vx *= -1;
+                        circle.x += Math.sign(dx) * overlapX; // Pousser hors de la boîte
+                    } else {
+                        // Collision verticale
+                        circle.vy *= -1;
+                        circle.y += Math.sign(dy) * overlapY; // Pousser hors de la boîte
+                    }
+                }
+            }
+
+            // NOUVEAU: Boucle d'animation principale avec gestion des collisions
             function animate() {
                 const fieldRect = dataField.getBoundingClientRect();
 
-                circles.forEach(circle => {
-                    // NOUVEAU : Logique de mouvement erratique pour les fichiers contaminés
-                    if (circle.el.classList.contains('contaminated')) {
-                        // Appliquer une "secousse" aléatoire à la vélocité à chaque image
-                        circle.vx += (Math.random() - 0.5) * 0.25; // Facteur de "secousse"
-                        circle.vy += (Math.random() - 0.5) * 0.25;
+                // Récupérer les boîtes de collision des obstacles statiques
+                const consoleRect = centralConsole.getBoundingClientRect();
+                const expandedRect = expandedFrame.classList.contains('visible') ? expandedFrame.getBoundingClientRect() : null;
 
-                        // Limiter la vitesse maximale pour éviter qu'ils ne deviennent incontrôlables
+                const consoleObstacle = {
+                    left: consoleRect.left - fieldRect.left, right: consoleRect.right - fieldRect.left,
+                    top: consoleRect.top - fieldRect.top, bottom: consoleRect.bottom - fieldRect.top,
+                };
+                const expandedObstacle = expandedRect ? {
+                    left: expandedRect.left - fieldRect.left, right: expandedRect.right - fieldRect.left,
+                    top: expandedRect.top - fieldRect.top, bottom: expandedRect.bottom - fieldRect.top,
+                } : null;
+
+                circles.forEach((circle, i) => {
+                    // --- Mouvement spécial pour les fichiers contaminés ---
+                    if (circle.el.classList.contains('contaminated')) {
+                        circle.vx += (Math.random() - 0.5) * 0.25;
+                        circle.vy += (Math.random() - 0.5) * 0.25;
                         const maxSpeed = 1.0;
                         circle.vx = Math.max(-maxSpeed, Math.min(maxSpeed, circle.vx));
                         circle.vy = Math.max(-maxSpeed, Math.min(maxSpeed, circle.vy));
                     }
 
-
-                    // Mettre à jour la position
+                    // --- Mise à jour de la position ---
                     circle.x += circle.vx;
                     circle.y += circle.vy;
 
-                    // Collision avec les murs de l'écran uniquement
+                    // --- Collisions avec les murs ---
                     if (circle.x <= 0 || circle.x + circle.size >= fieldRect.width) {
                         circle.vx *= -1;
                         circle.x = Math.max(0, Math.min(circle.x, fieldRect.width - circle.size));
@@ -717,6 +828,36 @@
                     if (circle.y <= 0 || circle.y + circle.size >= fieldRect.height) {
                         circle.vy *= -1;
                         circle.y = Math.max(0, Math.min(circle.y, fieldRect.height - circle.size));
+                    }
+
+                    // --- Collisions avec les obstacles (console, etc.) ---
+                    handleAABBCollision(circle, consoleObstacle);
+                    if (expandedObstacle) handleAABBCollision(circle, expandedObstacle);
+
+                    // --- Collisions entre cercles ---
+                    for (let j = i + 1; j < circles.length; j++) {
+                        const other = circles[j];
+                        const dx = other.x - circle.x;
+                        const dy = other.y - circle.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        const minDistance = circle.radius + other.radius;
+
+                        if (distance < minDistance) {
+                            // Résoudre la superposition
+                            const overlap = 0.5 * (minDistance - distance);
+                            circle.x -= overlap * (dx / distance);
+                            circle.y -= overlap * (dy / distance);
+                            other.x += overlap * (dx / distance);
+                            other.y += overlap * (dy / distance);
+
+                            // Réponse à la collision (élastique)
+                            const nx = dx / distance, ny = dy / distance;
+                            const k = -2 * ((other.vx - circle.vx) * nx + (other.vy - circle.vy) * ny) / (1 / circle.mass + 1 / other.mass);
+                            circle.vx -= k / circle.mass * nx;
+                            circle.vy -= k / circle.mass * ny;
+                            other.vx += k / other.mass * nx;
+                            other.vy += k / other.mass * ny;
+                        }
                     }
 
                     // Appliquer la nouvelle position à l'élément DOM
@@ -732,13 +873,75 @@
                 animate();
             }
 
-            async function handleAuth() {
-                const password = passwordInput.value;
-                if (!password) return;
+            // NOUVEAU: Gère le clic sur un fichier bloqué
+            async function handleBlockedFileClick(circleElement, filename) {
+                if (!confirm(`Le fichier "${filename}" est chiffré. Tenter de forcer le déchiffrement pourrait alerter les systèmes de sécurité de l'hôte. Continuer ?`)) {
+                    return;
+                }
 
-                const result = await window.pywebview.api.check_bunker_password(password);
+                // Animation de traitement
+                circleElement.classList.add('processing');
+                circleElement.textContent = ''; // Vider le texte pendant l'animation
+
+                const result = await window.pywebview.api.handle_blocked_file(filename);
+
+                // Fin de l'animation
+                circleElement.classList.remove('processing');
+                circleElement.textContent = filename; // Restaurer le texte
+
+                if (result.status === 'success') {
+                    alert(result.message); // Affiche le message "Host security policy modified..."
+                    
+                    // Afficher le contenu déchiffré
+                    if (!expandedFrame.classList.contains('visible')) {
+                        toggleExpandedConsole();
+                    }
+                    renderFileViewer(filename, result.content);
+                } else {
+                    alert(`Erreur de déchiffrement : ${result.message}`);
+                }
+            }
+
+            // NOUVEAU: Gère le clic sur un fichier keylogger
+            async function handleKeyloggerFileClick(circleElement, filename) {
+                if (!confirm(`Le fichier "${filename}" semble être un composant système critique. L'exécuter est risqué et pourrait installer un logiciel de surveillance persistant. Continuer ?`)) {
+                    return;
+                }
+                circleElement.classList.add('processing');
+                circleElement.textContent = '';
+                const result = await window.pywebview.api.deploy_keylogger();
+                circleElement.classList.remove('processing');
+                circleElement.textContent = filename;
+                alert(result.message);
+                if (result.status === 'success') {
+                    circleElement.className = 'data-circle';
+                }
+            }
+
+            async function handleAuth() {
+                const username = usernameInput.value;
+                const password = passwordInput.value;
+                if (!username || !password) {
+                    alert("L'identifiant et le mot de passe sont requis.");
+                    return;
+                }
+
+                const result = await window.pywebview.api.check_bunker_password(username, password);
                 
                 if (result.status === 'success') {
+                    // NOUVEAU: Si un message spécial est renvoyé (cas de l'infection), l'afficher.
+                    if (result.message) {
+                        const authBox = passwordOverlay.querySelector('.auth-box');
+                        authBox.querySelector('h2').textContent = "PORTE DÉROBÉE ACTIVE";
+                        authBox.querySelector('p').textContent = result.message;
+                        authBox.querySelector('p').style.color = "#ff33ff";
+                        usernameInput.style.display = 'none';
+                        passwordInput.style.display = 'none';
+                        authSubmitBtn.style.display = 'none';
+                        // Attendre un peu avant de continuer pour que l'utilisateur voie le message.
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                    }
+
                     // Cacher l'overlay avec un fondu
                     passwordOverlay.style.opacity = '0';
                     passwordOverlay.addEventListener('transitionend', () => {
@@ -760,6 +963,7 @@
                 } else {
                     const authBox = passwordOverlay.querySelector('.auth-box');
                     authBox.classList.add('shake-effect');
+                    usernameInput.select();
                     passwordInput.value = '';
                     passwordInput.focus();
                     setTimeout(() => authBox.classList.remove('shake-effect'), 500);
@@ -771,6 +975,11 @@
                 if (e.key === 'Enter') {
                     e.preventDefault(); // Empêche le comportement par défaut du formulaire
                     handleAuth();
+                }
+            });
+            usernameInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    passwordInput.focus();
                 }
             });
 
@@ -916,8 +1125,8 @@
                 window.location.href = '/terminaux.html';
             });
 
-            // Mettre le focus sur le champ de mot de passe au chargement
-            passwordInput.focus();
+            // Mettre le focus sur le champ d'identifiant au chargement
+            usernameInput.focus();
             setupDragAndDrop(); // Initialiser les listeners
         });
     </script>

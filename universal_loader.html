@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Extension : {{ extension.name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}">
+    <style>
+        body {
+            background-color: #0a0a0a;
+            color: #e0e0e0;
+            font-family: 'Courier New', Courier, monospace;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+        .loader-container {
+            border: 1px solid #ff4500;
+            padding: 1rem;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        .controls button, .command-line button {
+            background-color: #333;
+            border: 1px solid #ff4500;
+            color: #ff4500;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .controls button:hover, .command-line button:hover {
+            background-color: #ff4500;
+            color: #0a0a0a;
+        }
+        #sandbox-status {
+            margin-left: auto;
+            padding: 5px 10px;
+            border: 1px solid #555;
+        }
+        .terminal-output {
+            background-color: #000;
+            border: 1px solid #333;
+            padding: 10px;
+            flex-grow: 1;
+            overflow-y: auto;
+            white-space: pre-wrap; /* Important pour les sauts de ligne */
+            word-wrap: break-word;
+        }
+        .command-line {
+            display: flex;
+            margin-top: 1rem;
+        }
+        .command-line input {
+            flex-grow: 1;
+            background-color: #111;
+            border: 1px solid #333;
+            color: #e0e0e0;
+            padding: 5px;
+            font-family: inherit;
+        }
+        .command-line input:focus {
+            outline: none;
+            border-color: #ff4500;
+        }
+    </style>
+</head>
+<body>
+    <div class="loader-container">
+        <h1>{{ extension.name }}</h1>
+        <p>{{ extension.description }}</p>
+        
+        <div class="controls">
+            <button id="start-btn">Démarrer Sandbox</button>
+            <button id="stop-btn">Arrêter Sandbox</button>
+            <button id="status-btn">Statut</button>
+            <button id="upload-btn">Téléverser Fichier</button>
+            <div id="sandbox-status">Statut: Inconnu</div>
+        </div>
+
+        <div class="terminal-output" id="sandbox-terminal"></div>
+
+        <div class="command-line">
+            <input type="text" id="command-input" placeholder="Entrez une commande à exécuter dans la sandbox...">
+            <button id="send-command-btn">Envoyer</button>
+        </div>
+    </div>
+
+    <script>
+        const terminal = document.getElementById('sandbox-terminal');
+        const statusDiv = document.getElementById('sandbox-status');
+        const commandInput = document.getElementById('command-input');
+
+        // --- La fonction clé pour recevoir les logs du backend ---
+        window.logToSandboxTerminal = function(logText) {
+            const textNode = document.createTextNode(logText);
+            terminal.appendChild(textNode);
+            terminal.scrollTop = terminal.scrollHeight; // Fait défiler automatiquement vers le bas
+        };
+
+        function updateStatus(statusData) {
+            if (statusData && statusData.status === 'success') {
+                statusDiv.textContent = `Statut: ${statusData.sandbox_status}`;
+                statusDiv.style.color = statusData.sandbox_status === 'running' ? '#00ff00' : '#ff6b6b';
+            } else {
+                statusDiv.textContent = `Statut: Erreur`;
+                statusDiv.style.color = '#ff6b6b';
+                if (statusData && statusData.message) logToSandboxTerminal(`[ERREUR] ${statusData.message}\n`);
+            }
+        }
+
+        document.getElementById('start-btn').addEventListener('click', () => {
+            logToSandboxTerminal('[HOST] Tentative de démarrage de la sandbox...\n');
+            window.pywebview.api.start_sandbox(updateStatus);
+        });
+
+        document.getElementById('stop-btn').addEventListener('click', () => {
+            logToSandboxTerminal('[HOST] Tentative d\'arrêt de la sandbox...\n');
+            window.pywebview.api.stop_sandbox(updateStatus);
+        });
+
+        document.getElementById('status-btn').addEventListener('click', () => {
+            window.pywebview.api.get_sandbox_status().then(updateStatus);
+        });
+
+        document.getElementById('upload-btn').addEventListener('click', () => {
+            logToSandboxTerminal('[HOST] Ouverture de la boîte de dialogue de téléversement...\n');
+            window.pywebview.api.trigger_sandbox_upload().then((result) => {
+                if (result && result.message) {
+                    if (result.status === 'success') {
+                        logToSandboxTerminal(`[HOST] ${result.message}\n`);
+                    } else {
+                        logToSandboxTerminal(`[ERREUR] ${result.message}\n`);
+                    }
+                }
+            });
+        });
+
+        function sendCommand() {
+            const command = commandInput.value;
+            if (command.trim() === '') return;
+            
+            logToSandboxTerminal(`> ${command}\n`);
+            window.pywebview.api.execute_in_sandbox(command);
+            commandInput.value = '';
+        }
+
+        document.getElementById('send-command-btn').addEventListener('click', sendCommand);
+        commandInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') sendCommand();
+        });
+
+        // Récupérer le statut initial au chargement de la page
+        window.pywebview.api.get_sandbox_status().then(updateStatus);
+    </script>
+</body>
+</html>

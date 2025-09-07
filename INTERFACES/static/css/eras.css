@@ -1,0 +1,317 @@
+/* ==========================================================================
+   Fichier des Ères Technologiques pour settings.html
+   Phase 6.1, 6.4 & 11 du ROADMAP.md
+   ========================================================================== */
+
+/* --- Base & Transitions --- */
+body {
+    /* Ajoute une transition douce pour tous les changements de propriétés */
+    transition: background-color 0.8s ease-in-out, color 0.8s ease-in-out;
+}
+
+.settings-group, .actions, .form-field input, .form-field select, .btn, .provider-card, h1, h2 {
+    /* Transition pour les éléments qui changent de style */
+    transition: all 0.8s ease-in-out;
+}
+
+/* ==========================================================================
+   Finition : Effet de transition "Glitch"
+   ========================================================================== */
+#glitch-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: #0d0d0d;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0;
+    display: none; /* Caché par défaut */
+}
+
+#glitch-overlay.active {
+    display: block;
+    animation: glitch-transition 0.4s steps(2, end) forwards;
+}
+
+@keyframes glitch-transition {
+    0% { opacity: 0; transform: translate(0, 0); }
+    10% { opacity: 1; transform: translate(5px, -5px); text-shadow: 5px 0 red, -5px 0 blue; }
+    20% { opacity: 0; }
+    30% { opacity: 1; transform: translate(-5px, 5px); }
+    40% { opacity: 0; }
+    50% { opacity: 1; transform: skewX(-15deg); }
+    60% { opacity: 0; }
+    70% { opacity: 1; transform: skewX(15deg); }
+    80% { opacity: 0; }
+    90% { opacity: 1; transform: translate(0, 0); }
+    100% { opacity: 0; }
+}
+
+/* ==========================================================================
+   Ère 1 : Cyberpunk (V4) - Style par défaut, mais formalisé ici
+   ========================================================================== */
+body.era-cyberpunk {
+    font-family: 'Share Tech Mono', monospace;
+    background-color: #0d0d0d;
+    color: #00ffcc;
+}
+
+.era-cyberpunk h1 {
+    animation: glitch 2s infinite;
+    color: #00ffcc;
+    text-shadow: 0.05em 0 red, -0.05em 0 blue;
+    border-bottom-color: rgba(0, 255, 204, 0.3);
+}
+
+.era-cyberpunk .settings-group {
+    background: rgba(0, 10, 8, 0.6);
+    border: 1px solid rgba(0, 255, 204, 0.3);
+    backdrop-filter: blur(5px);
+    box-shadow: 0 0 25px rgba(0, 255, 204, 0.1);
+}
+
+.era-cyberpunk .settings-group h2 {
+    color: #ff33ff;
+    border-bottom-color: rgba(255, 51, 255, 0.2);
+}
+
+.era-cyberpunk .form-field label {
+    color: rgba(0, 255, 204, 0.8);
+}
+
+.era-cyberpunk .form-field input,
+.era-cyberpunk .form-field select {
+    background: transparent;
+    border: 1px solid #00ffcc;
+    color: #00ffcc;
+}
+
+.era-cyberpunk .form-field input:focus, 
+.era-cyberpunk .form-field select:focus {
+    box-shadow: 0 0 10px rgba(0, 255, 204, 0.5);
+}
+
+.era-cyberpunk .form-field select option {
+    background-color: #0d0d0d;
+    color: #00ffcc;
+}
+
+.era-cyberpunk .btn-primary {
+    background: #00ffcc;
+    border-color: #00ffcc;
+    color: #0d0d0d;
+}
+.era-cyberpunk .btn-primary:hover { box-shadow: 0 0 15px rgba(0, 255, 204, 0.7); }
+
+.era-cyberpunk .btn-secondary {
+    background: transparent;
+    border-color: #ff33ff;
+    color: #ff33ff;
+}
+.era-cyberpunk .btn-secondary:hover { background: rgba(255, 51, 255, 0.1); }
+
+.era-cyberpunk .btn-danger {
+    background: transparent;
+    border-color: #ff5555;
+    color: #ff5555;
+}
+.era-cyberpunk .btn-danger:hover { background: rgba(255, 85, 85, 0.1); }
+
+.era-cyberpunk .provider-card {
+    border-color: rgba(0, 255, 204, 0.2);
+}
+.era-cyberpunk .provider-card h3 {
+    color: #ffff00;
+}
+/* Finition : Scrollbar stylisée */
+body.era-cyberpunk::-webkit-scrollbar { width: 8px; }
+body.era-cyberpunk::-webkit-scrollbar-track { background: #0d0d0d; }
+body.era-cyberpunk::-webkit-scrollbar-thumb { background-color: #00ffcc; border-radius: 4px; border: 1px solid #0d0d0d; }
+body.era-cyberpunk::-webkit-scrollbar-thumb:hover { background-color: #ff33ff; box-shadow: 0 0 8px #ff33ff; }
+
+/* ==========================================================================
+   Ère 2 : Classic OS (V0.99) - Style "WinXP/2000"
+   ========================================================================== */
+body.era-classic {
+    font-family: 'Segoe UI', 'Tahoma', 'Geneva', 'Verdana', sans-serif;
+    background-color: #ece9d8; /* Fond beige classique */
+    color: #000;
+}
+
+.era-classic h1 {
+    font-size: 1.8rem;
+    color: #000;
+    border-bottom: 1px solid #aaa;
+    animation: none; /* Désactiver le glitch */
+    text-shadow: none;
+}
+
+.era-classic .settings-group {
+    background-color: #f0f0f0;
+    border: 1px solid #aaa;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    backdrop-filter: none;
+}
+
+.era-classic .settings-group h2 {
+    font-size: 1.2rem;
+    color: #005a9e; /* Bleu classique */
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 0.5rem;
+}
+
+.era-classic .form-field label {
+    color: #000;
+}
+
+.era-classic .form-field input,
+.era-classic .form-field select {
+    background: #fff;
+    border: 1px solid #7f9db9;
+    color: #000;
+    border-radius: 3px;
+    padding: 0.5rem;
+}
+
+.era-classic .form-field input:focus, 
+.era-classic .form-field select:focus {
+    outline: 1px dotted #000;
+    box-shadow: none;
+}
+
+.era-classic .form-field select option {
+    background-color: #fff;
+    color: #000;
+}
+
+.era-classic .btn {
+    border-radius: 3px;
+    border: 1px solid #7f9db9;
+    background: #f0f0f0;
+}
+
+.era-classic .btn-primary {
+    background: #0078d7;
+    border-color: #005a9e;
+    color: #fff;
+}
+.era-classic .btn-primary:hover { background-color: #005a9e; box-shadow: none; }
+
+.era-classic .btn-secondary, .era-classic .btn-danger {
+    background: #f0f0f0;
+    border-color: #7f9db9;
+    color: #000;
+}
+.era-classic .btn-secondary:hover, .era-classic .btn-danger:hover { background: #e1e1e1; }
+
+.era-classic .provider-card {
+    border: 1px solid #ccc;
+    background: #fff;
+}
+.era-classic .provider-card h3 {
+    color: #005a9e;
+}
+/* Finition : Scrollbar stylisée */
+body.era-classic::-webkit-scrollbar { width: 16px; }
+body.era-classic::-webkit-scrollbar-track { background: #f0f0f0; border-left: 1px solid #aaa; }
+body.era-classic::-webkit-scrollbar-thumb { background-color: #d4d0c8; border: 1px outset #fff; }
+body.era-classic::-webkit-scrollbar-thumb:hover { background-color: #c0c0c0; }
+
+/* ==========================================================================
+   Ère 3 : DOS / CLI (V1) - Style Terminal Brut
+   ========================================================================== */
+body.era-dos {
+    font-family: 'Courier New', Courier, monospace;
+    background-color: #0000aa; /* Fond bleu DOS */
+    color: #fff;
+}
+
+.era-dos h1 {
+    font-size: 1.5rem;
+    color: #ffff00; /* Jaune */
+    animation: none;
+    text-shadow: none;
+    border: none;
+}
+
+.era-dos .settings-group {
+    background: #c0c0c0; /* Fond gris clair */
+    color: #000;
+    border-top: 2px solid #fff;
+    border-left: 2px solid #fff;
+    border-right: 2px solid #000;
+    border-bottom: 2px solid #000;
+    box-shadow: none;
+    border-radius: 0;
+    padding: 1rem;
+    backdrop-filter: none;
+}
+
+.era-dos .settings-group h2 {
+    background: #0000aa;
+    color: #fff;
+    padding: 0.2rem 0.5rem;
+    margin: -1rem -1rem 1rem -1rem;
+    font-size: 1.1rem;
+    border: none;
+}
+
+.era-dos .form-field label {
+    color: #000;
+}
+
+.era-dos .form-field input,
+.era-dos .form-field select {
+    background: #fff;
+    border: 1px solid #000;
+    color: #000;
+    border-radius: 0;
+    padding: 0.2rem;
+    font-family: inherit;
+}
+
+.era-dos .form-field input:focus, 
+.era-dos .form-field select:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+.era-dos .form-field select option {
+    background-color: #fff;
+    color: #000;
+}
+
+.era-dos .btn {
+    border-top: 1px solid #fff;
+    border-left: 1px solid #fff;
+    border-right: 1px solid #000;
+    border-bottom: 1px solid #000;
+    background: #c0c0c0;
+    color: #000;
+    border-radius: 0;
+    padding: 0.5rem 1rem;
+}
+.era-dos .btn:hover { box-shadow: none; }
+.era-dos .btn:active {
+    border-top: 1px solid #000;
+    border-left: 1px solid #000;
+    border-right: 1px solid #fff;
+    border-bottom: 1px solid #fff;
+}
+
+.era-dos .provider-card {
+    border: 1px solid #000;
+    background: #c0c0c0;
+}
+.era-dos .provider-card h3 {
+    color: #000;
+}
+/* Finition : Scrollbar stylisée */
+body.era-dos::-webkit-scrollbar { width: 16px; }
+body.era-dos::-webkit-scrollbar-track { background: repeating-linear-gradient(45deg, #0000aa, #0000aa 2px, #000088 2px, #000088 4px); }
+body.era-dos::-webkit-scrollbar-thumb { background-color: #c0c0c0; border-top: 2px solid #fff; border-left: 2px solid #fff; border-right: 2px solid #000; border-bottom: 2px solid #000; }
+body.era-dos::-webkit-scrollbar-thumb:active { border-top: 2px solid #000; border-left: 2px solid #000; border-right: 2px solid #fff; border-bottom: 2px solid #fff; }

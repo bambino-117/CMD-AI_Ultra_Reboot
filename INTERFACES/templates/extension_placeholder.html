@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Mégastructure // Extension : {{ extension.name }}</title>
+    <title>Mégastructure // Erreur Extension</title>
     <link rel="icon" href="data:;base64,iVBORw0KGgo=">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
@@ -21,6 +22,34 @@
         h1 { font-size: clamp(1.8rem, 4vw, 3.5rem); margin-bottom: 1.25rem; animation: glitch 2s infinite; }
         p { color: rgba(0, 255, 204, 0.8); max-width: 600px; }
         #back-btn { position: fixed; bottom: 2vh; right: 2vw; color: rgba(0, 255, 204, 0.6); font-size: 0.8rem; cursor: pointer; transition: all 0.3s ease; z-index: 10; letter-spacing: 0.1em; }
+        .main-container {
+            position: relative; z-index: 4; padding: 3vh 4vw; box-sizing: border-box;
+            height: 100vh; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; text-align: center;
+        }
+        h1 {
+            font-size: clamp(1.5rem, 3vw, 2.5rem); margin: 0 0 1.5rem 0;
+            animation: glitch 2s infinite;
+        }
+        .error-box {
+            background: rgba(10, 0, 0, 0.4);
+            border: 1px solid rgba(255, 85, 85, 0.5);
+            padding: 2rem;
+            max-width: 800px;
+        }
+        .error-box h2 {
+            color: #ff5555;
+            margin: 0 0 1rem 0;
+        }
+        .error-box p {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        #back-btn {
+            position: fixed; bottom: 2vh; right: 2vw;
+            color: rgba(0, 255, 204, 0.6); font-size: 0.8rem;
+            cursor: pointer; transition: all 0.3s ease; z-index: 10;
+        }
         #back-btn:hover { color: #ff33ff; text-shadow: 0 0 8px #ff33ff; }
     </style>
 </head>
@@ -36,9 +65,32 @@
         {% if extension.error_message %}
         <p style="color: #ff5555; margin-top: 1rem;">// ERREUR SYSTÈME : {{ extension.error_message }} //</p>
         {% endif %}
+    <div class="main-container">
+        <h1>[ ERREUR DE CHARGEMENT // NIVEAU {{ extension.level }} ]</h1>
+        <div class="error-box">
+            <h2>Extension: {{ extension.name }}</h2>
+            <p>
+                Impossible de charger l'interface de l'extension.
+                {% if extension.error_message %}
+                    <br>Détail de l'erreur : {{ extension.error_message }}
+                {% else %}
+                    <br>Le point d'entrée de l'interface est manquant ou corrompu.
+                {% endif %}
+            </p>
+        </div>
     </div>
 
     <div id="back-btn" onclick="window.location.href='/terminaux.html'">[ RETOUR ]</div>
 
 </body>
 </html>
+```
+
+Avec ces fichiers en place, les extensions installées via le "Portail Conteneur" seront désormais accessibles et fonctionnelles depuis le menu de navigation. Nous avons bien avancé sur la roadmap.
+
+Prêt pour la suite ?
+
+<!--
+[PROMPT_SUGGESTION]Comment pourrions-nous améliorer la sécurité de l'API en validant les entrées ?[/PROMPT_SUGGESTION]
+[PROMPT_SUGGESTION]Pouvons-nous ajouter une fonctionnalité pour sauvegarder l'état du terminal (logs) entre les sessions ?[/PROMPT_SUGGESTION]
+-->

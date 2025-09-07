@@ -1,0 +1,12 @@
+[
+    {
+        "code": "ALPHA-TEST-777",
+        "description": "Accès testeur de base, usages illimités.",
+        "uses_left": -1
+    },
+    {
+        "code": "BETA-PROMO-42",
+        "description": "Code promotionnel pour béta-testeurs, 1 usage.",
+        "uses_left": 1
+    }
+]

@@ -1,6 +1,13 @@
 {
     "id": 63,
-    "nom": "Conteneur #63",
-    "type": "standard",
-    "status": "actif"
+    "type": "extension",
+    "name": "Database Search Engine",
+    "description": "Recherche dans les bases de données administratives et portails gouvernementaux.",
+    "version": "1.0.0",
+    "author": "Cygnus X-1",
+    "status": "actif",
+    "dependencies": [],
+    "payload": {
+        "entry_point_template": "database_search.html"
+    }
 }

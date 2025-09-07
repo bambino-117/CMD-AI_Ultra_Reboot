@@ -29,10 +29,10 @@
     "api_base_url": "https://api.deepseek.com/v1"
   },
   "user": {
-    "pseudo": "Anonyme",
     "user_folder_path": "/Users/boris/Documents/Megastructure_Data",
     "password": "admin",
     "neural_ghost_active": true,
+    "pseudo": "Anonyme",
     "installed_extensions": {
       "OSINT Aggregator": {
         "name": "OSINT Aggregator",
@@ -41,6 +41,51 @@
         "url": "/extension/osint_aggregator",
         "payload": {
           "entry_point_template": "osint_tool.html"
+        }
+      },
+      "Centre d'Analyse": {
+        "name": "Centre d'Analyse",
+        "description": "Espace d\u00e9di\u00e9 \u00e0 la consultation de rapports d'OSINT et de pentesting avec interface \u00e0 deux panneaux.",
+        "level": 461,
+        "url": "/extension/centre_d'analyse",
+        "payload": {
+          "entry_point_template": "centre_analyse.html"
+        }
+      },
+      "Chargeur d'Applications Universel": {
+        "name": "Chargeur d'Applications Universel",
+        "description": "Sandbox Docker pour ex\u00e9cuter des applications dans un environnement isol\u00e9 avec streaming vid\u00e9o.",
+        "level": 319,
+        "url": "/extension/chargeur_d'applications_universel",
+        "payload": {
+          "entry_point_template": "universal_loader.html"
+        }
+      },
+      "Diagnostic Syst\u00e8me": {
+        "name": "Diagnostic Syst\u00e8me",
+        "description": "Monitore les performances et l'\u00e9tat de la sandbox Docker en temps r\u00e9el.",
+        "level": 457,
+        "url": "/extension/diagnostic_syst\u00e8me",
+        "payload": {
+          "entry_point_template": "diagnostic_systeme.html"
+        }
+      },
+      "Deep Social Scanner": {
+        "name": "Deep Social Scanner",
+        "description": "Analyse approfondie des r\u00e9seaux sociaux et recherche de profils associ\u00e9s.",
+        "level": 78,
+        "url": "/extension/deep_social_scanner",
+        "payload": {
+          "entry_point_template": "deep_social.html"
+        }
+      },
+      "Database Search Engine": {
+        "name": "Database Search Engine",
+        "description": "Recherche dans les bases de donn\u00e9es administratives et portails gouvernementaux.",
+        "level": 178,
+        "url": "/extension/database_search_engine",
+        "payload": {
+          "entry_point_template": "database_search.html"
         }
       }
     },

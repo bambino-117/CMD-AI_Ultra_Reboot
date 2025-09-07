@@ -1,6 +1,13 @@
 {
     "id": 62,
-    "nom": "Conteneur #62",
-    "type": "standard",
-    "status": "actif"
+    "type": "extension",
+    "name": "Deep Social Scanner",
+    "description": "Analyse approfondie des réseaux sociaux et recherche de profils associés.",
+    "version": "1.0.0",
+    "author": "Cygnus X-1",
+    "status": "actif",
+    "dependencies": [],
+    "payload": {
+        "entry_point_template": "deep_social.html"
+    }
 }

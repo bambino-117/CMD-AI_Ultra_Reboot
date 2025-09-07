@@ -6,10 +6,7 @@
     <link rel="icon" href="data:;base64,iVBORw0KGgo=">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
-    <!-- NOUVEAU : Ajout de la CSS de Leaflet -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <style>
-        /* --- Base Styles (copied for consistency) --- */
         html { font-size: calc(14px + 0.2vw); }
         body { margin: 0; font-family: 'Share Tech Mono', monospace; background-color: #0d0d0d; color: #00ffcc; overflow: hidden; font-size: 1rem; }
         .grime-Overlay, .moving-structure { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; }
@@ -18,102 +15,44 @@
         @keyframes drift { 0% { transform: translate(0, 0) scale(1); } 50% { transform: translate(-1vw, 0.5vh) scale(1.05); } 100% { transform: translate(0, 0) scale(1); } }
         @keyframes glitch { 0%, 100% { text-shadow: 0.05em 0 red, -0.05em 0 blue; } 50% { text-shadow: -0.05em 0 red, 0.05em 0 blue; } }
 
-        /* --- Page Specific Styles --- */
         .main-container {
-            position: relative;
-            z-index: 4;
-            padding: 3vh 4vw;
-            box-sizing: border-box;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
+            position: relative; z-index: 4; padding: 3vh 4vw; box-sizing: border-box;
+            height: 100vh; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; text-align: center;
         }
         h1 {
-            font-size: clamp(1.5rem, 3vw, 2.5rem);
-            margin: 0 0 1.5rem 0;
+            font-size: clamp(1.5rem, 3vw, 2.5rem); margin: 0 0 1.5rem 0;
             animation: glitch 2s infinite;
-            text-align: center;
         }
-        /* MODIFICATION : Nouvelle grille pour la carte et le panneau latéral */
-        .dashboard {
-            flex-grow: 1;
-            display: grid;
-            grid-template-columns: 350px 1fr; /* Panneau de contrôle à gauche, carte à droite */
-            gap: 1.5rem;
-            height: calc(100% - 8rem);
+        #vpn-display {
+            background: rgba(0, 10, 8, 0.4); border: 1px solid rgba(0, 255, 204, 0.2);
+            padding: 2rem; border-radius: 0.25rem; width: 80%; max-width: 600px;
         }
-        /* MODIFICATION : Panneau de la carte */
-        .map-panel {
-            background: rgba(0, 10, 8, 0.4);
-            border: 1px solid rgba(0, 255, 204, 0.2);
-            border-radius: 0.25rem;
-            overflow: hidden; /* Important pour que la carte ne dépasse pas */
+        #status-text {
+            font-size: 1.5rem; margin-bottom: 1rem;
+            transition: color 0.5s ease;
         }
-        #world-map {
-            width: 100%;
-            height: 100%;
-            background-color: #0d0d0d; /* Fond sombre pour la carte */
-        }
-        /* MODIFICATION : Style pour les tuiles de la carte Leaflet */
-        .leaflet-tile-pane {
-            filter: grayscale(1) brightness(0.5) contrast(1.2);
-        }
-        /* MODIFICATION : Style pour les lignes de connexion */
-        .connection-line {
-            stroke-dasharray: 4, 8;
-            animation: dash 2s linear infinite;
-        }
-        @keyframes dash {
-            to { stroke-dashoffset: -12; }
-        }
+        #status-text.connected { color: #00ffcc; text-shadow: 0 0 8px #00ffcc; }
+        #status-text.disconnected { color: #ff5555; }
+        #status-text.error { color: #ffcc00; }
 
-        .side-panel {
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-            overflow-y: auto; /* Permet le scroll si le contenu dépasse */
-            padding-right: 0.5rem;
+        #details-text { font-size: 0.9rem; color: rgba(255,255,255,0.7); }
+
+        #toggle-btn {
+            margin-top: 2rem;
+            padding: 0.75rem 1.5rem; font-family: inherit; font-size: 1rem;
+            cursor: pointer; border-radius: 0.25rem; transition: all 0.2s ease;
+            background: transparent; border: 1px solid #ff33ff; color: #ff33ff;
         }
-        .info-panel, .logs-panel {
-            background: rgba(0, 10, 8, 0.4);
-            border: 1px solid rgba(0, 255, 204, 0.2);
-            border-radius: 0.25rem;
-            padding: 1.5rem;
-        }
-        .logs-panel {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-        }
-        h2 {
-            font-size: 1.2rem;
-            color: #ff33ff;
-            margin: 0 0 1rem 0;
+        #toggle-btn:hover { background: rgba(255, 51, 255, 0.1); box-shadow: 0 0 15px rgba(255, 51, 255, 0.4); }
+        #toggle-btn:disabled { background: #555; border-color: #555; color: #888; cursor: not-allowed; }
+
+        #back-btn {
+            position: fixed; bottom: 2vh; right: 2vw;
+            color: rgba(0, 255, 204, 0.6); font-size: 0.8rem;
+            cursor: pointer; transition: all 0.3s ease; z-index: 10;
             letter-spacing: 0.1em;
-            border-bottom: 1px solid rgba(255, 51, 255, 0.3);
-            padding-bottom: 0.5rem;
         }
-        .info-grid {
-            display: grid;
-            grid-template-columns: auto 1fr;
-            gap: 0.5rem 1rem;
-            font-size: 0.9rem;
-        }
-        .info-grid .label { color: rgba(0, 255, 204, 0.7); text-align: right; }
-        .info-grid .value { color: #ffff00; word-break: break-all; }
-        .info-grid .value.connected { color: #00ff00; }
-        .info-grid .value.disconnected { color: #ff5555; }
-
-        #logs-content {
-            flex-grow: 1;
-            overflow-y: auto;
-            font-size: 0.8rem;
-            padding-right: 0.5rem;
-        }
-        #logs-content p { margin: 0 0 0.5rem 0; }
-        #logs-content p .timestamp { color: #ff33ff; margin-right: 0.5em; }
-
-        #back-btn { position: fixed; bottom: 2vh; right: 2vw; color: rgba(0, 255, 204, 0.6); font-size: 0.8rem; cursor: pointer; transition: all 0.3s ease; z-index: 10; letter-spacing: 0.1em; }
         #back-btn:hover { color: #ff33ff; text-shadow: 0 0 8px #ff33ff; }
     </style>
 </head>
@@ -123,237 +62,70 @@
 
     <div class="main-container">
         <h1>[ NIVEAU 2 // VISUALISEUR VPN ]</h1>
-        <div class="dashboard">
-            <!-- MODIFICATION : Panneau latéral à gauche -->
-            <div class="side-panel">
-                <div class="info-panel">
-                    <h2>STATUT RÉSEAU</h2>
-                    <div class="info-grid">
-                        <div class="label">État:</div>
-                        <div id="vpn-status" class="value disconnected">Déconnecté</div>
-                        <div class="label">IP Virtuelle:</div>
-                        <div id="vpn-ip" class="value">N/A</div>
-                    </div>
-                </div>
-                <div class="logs-panel">
-                    <h2>JOURNAL D'ACTIVITÉ</h2>
-                    <div id="logs-content">
-                        <p><span class="timestamp">[...]</span> Attente de connexion au gestionnaire VPN...</p>
-                    </div>
-                </div>
-            </div>
-            <!-- MODIFICATION : Panneau de la carte à droite -->
-            <div class="map-panel">
-                <div id="world-map"></div>
-            </div>
+        <div id="vpn-display">
+            <div id="status-text">Synchronisation...</div>
+            <div id="details-text">En attente du statut du réseau privé virtuel...</div>
         </div>
+        <button id="toggle-btn">Activer / Désactiver</button>
     </div>
 
     <div id="back-btn" onclick="window.location.href='/terminaux.html'">[ RETOUR ]</div>
 
-    <!-- NOUVEAU : Ajout de la librairie Leaflet -->
-    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <script>
         window.addEventListener('pywebviewready', () => {
-            // Éléments de l'UI
-            const statusEl = document.getElementById('vpn-status');
-            const ipEl = document.getElementById('vpn-ip');
-            const logsContent = document.getElementById('logs-content');
+            const statusText = document.getElementById('status-text');
+            const detailsText = document.getElementById('details-text');
+            const toggleBtn = document.getElementById('toggle-btn');
 
-            // Variables d'état
-            let lastStatusMessage = "";
-            let map;
-            let mapLayers = {
-                nodes: L.layerGroup(),
-                lines: L.layerGroup(),
-                packet: L.layerGroup()
-            };
-            let packetAnimation = { id: null, progress: 0, path: [] };
+            function updateDisplay(data) {
+                if (!data) return;
 
-            // Coordonnées prédéfinies pour un look crédible
-            const locations = {
-                user: [48.85, 2.35], // Paris
-                dest: [34.05, -118.24], // Los Angeles
-                nodes: [
-                    [51.50, -0.12],   // Londres
-                    [40.71, -74.00],   // New York
-                    [41.90, 12.49],    // Rome
-                    [52.52, 13.40],    // Berlin
-                    [35.68, 139.76],   // Tokyo
-                    [-33.86, 151.20],  // Sydney
-                    [4.71, -74.07],    // Bogota
-                    [19.43, -99.13],   // Mexico City
-                    [55.75, 37.61]     // Moscou
-                ]
-            };
-
-            function initMap() {
-                map = L.map('world-map', {
-                    center: [25, 10],
-                    zoom: 2,
-                    minZoom: 2,
-                    maxZoom: 6,
-                    zoomControl: false,
-                    attributionControl: false
-                });
-
-                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
-
-                for (const layer in mapLayers) {
-                    mapLayers[layer].addTo(map);
-                }
-            }
-
-            function addLog(message) {
-                if (message === lastStatusMessage) return;
-                lastStatusMessage = message;
-                const time = new Date().toLocaleTimeString();
-                const p = document.createElement('p');
-                p.innerHTML = `<span class="timestamp">[${time}]</span> ${message}`;
-                logsContent.appendChild(p);
-                logsContent.scrollTop = logsContent.scrollHeight;
-            }
-
-            function updateMap(nodeChain) {
-                // Nettoyer les couches
-                Object.values(mapLayers).forEach(layer => layer.clearLayers());
-                if (packetAnimation.id) cancelAnimationFrame(packetAnimation.id);
-
-                // 1. Placer le marqueur utilisateur
-                const userIcon = L.divIcon({
-                    html: '★',
-                    className: 'leaflet-div-icon user-icon',
-                    iconSize: [20, 20],
-                    iconAnchor: [10, 10]
-                });
-                L.marker(locations.user, { icon: userIcon }).addTo(mapLayers.nodes).bindPopup("Vous");
-
-                // 2. Sélectionner et placer les nœuds
-                let pathPoints = [locations.user];
-                const shuffledNodes = [...locations.nodes].sort(() => 0.5 - Math.random());
-                const activeNodes = shuffledNodes.slice(0, nodeChain.length);
-
-                activeNodes.forEach((coords, i) => {
-                    const nodeIcon = L.divIcon({
-                        html: `⬢`,
-                        className: 'leaflet-div-icon node-icon',
-                        iconSize: [20, 20],
-                        iconAnchor: [10, 10]
-                    });
-                    L.marker(coords, { icon: nodeIcon }).addTo(mapLayers.nodes).bindPopup(nodeChain[i]);
-                    pathPoints.push(coords);
-                });
-
-                // 3. Placer la destination
-                const destIcon = L.divIcon({
-                    html: '◎',
-                    className: 'leaflet-div-icon dest-icon',
-                    iconSize: [20, 20],
-                    iconAnchor: [10, 10]
-                });
-                L.marker(locations.dest, { icon: destIcon }).addTo(mapLayers.nodes).bindPopup("Destination");
-                pathPoints.push(locations.dest);
-
-                // 4. Dessiner les lignes
-                L.polyline(pathPoints, { color: '#ff33ff', weight: 1, opacity: 0.5 }).addTo(mapLayers.lines);
-
-                // 5. Lancer l'animation du paquet
-                startPacketAnimation(pathPoints);
-            }
-
-            function startPacketAnimation(path) {
-                packetAnimation.path = path;
-                packetAnimation.progress = 0;
-
-                const packetMarker = L.circleMarker(path[0], {
-                    radius: 5,
-                    color: '#ffff00',
-                    fillColor: '#ffff00',
-                    fillOpacity: 1
-                }).addTo(mapLayers.packet);
-
-                function animate() {
-                    packetAnimation.progress += 0.005; // Vitesse de l'animation
-                    if (packetAnimation.progress > 1) {
-                        packetAnimation.progress = 0; // Recommencer
-                    }
-
-                    const currentPoint = getPointOnPath(packetAnimation.path, packetAnimation.progress);
-                    packetMarker.setLatLng(currentPoint);
-
-                    packetAnimation.id = requestAnimationFrame(animate);
-                }
-                animate();
-            }
-
-            function getPointOnPath(path, progress) {
-                const totalLength = path.length - 1;
-                const segment = Math.floor(progress * totalLength);
-                const segmentProgress = (progress * totalLength) - segment;
-
-                const start = path[segment];
-                const end = path[segment + 1];
-
-                if (!end) return L.latLng(start);
-
-                const lat = start[0] + (end[0] - start[0]) * segmentProgress;
-                const lng = start[1] + (end[1] - start[1]) * segmentProgress;
-
-                return L.latLng(lat, lng);
-            }
-
-            function updateUI(data) {
+                statusText.className = ''; // Reset classes
                 if (data.is_connected) {
-                    statusEl.textContent = 'Connecté';
-                    statusEl.className = 'value connected';
-                    ipEl.textContent = data.virtual_ip || 'N/A';
-
-                    // Mettre à jour la carte uniquement si la chaîne de nœuds change
-                    const currentChain = JSON.stringify(data.node_chain);
-                    if (statusEl.dataset.lastChain !== currentChain) {
-                        statusEl.dataset.lastChain = currentChain;
-                        updateMap(data.node_chain);
-                    }
-
+                    statusText.textContent = 'VPN CONNECTÉ';
+                    statusText.classList.add('connected');
+                    detailsText.textContent = `Routage via ${data.proxy_address}. L'adresse IP virtuelle est ${data.virtual_ip}.`;
+                } else if (data.status === 'error') {
+                    statusText.textContent = 'ERREUR VPN';
+                    statusText.classList.add('error');
+                    detailsText.textContent = `Message: ${data.message}`;
                 } else {
-                    statusEl.textContent = 'Déconnecté';
-                    statusEl.className = 'value disconnected';
-                    ipEl.textContent = 'N/A';
-                    statusEl.dataset.lastChain = '';
-                    Object.values(mapLayers).forEach(layer => layer.clearLayers());
-                    if (packetAnimation.id) cancelAnimationFrame(packetAnimation.id);
+                    statusText.textContent = 'VPN DÉCONNECTÉ';
+                    statusText.classList.add('disconnected');
+                    detailsText.textContent = 'Le trafic n\'est pas sécurisé. Activez le VPN pour chiffrer la connexion.';
                 }
-                addLog(data.message);
+                // Mettre à jour l'état global pour les autres parties de l'app
+                window.pywebview.api.update_vpn_global_state(data);
             }
 
-            async function pollVpnStatus() {
-                try {
-                    const result = await window.pywebview.api.get_vpn_status();
-                    if (result.status === 'success') {
-                        updateUI(result);
-                    } else {
-                        addLog(`Erreur: ${result.message}`);
-                    }
-                } catch (e) {
-                    addLog(`Erreur de communication avec le backend: ${e}`);
-                }
-            }
+            toggleBtn.addEventListener('click', async () => {
+                toggleBtn.disabled = true;
+                detailsText.textContent = 'Opération en cours...';
+                await window.pywebview.api.toggle_vpn();
+                // Le statut sera mis à jour par l'événementiel, mais on peut forcer un refresh
+                setTimeout(async () => {
+                    const status = await window.pywebview.api.get_vpn_status();
+                    updateDisplay(status);
+                    toggleBtn.disabled = false;
+                }, 1000); // Laisse le temps à l'opération de se terminer
+            });
 
-            // Initial setup
-            initMap();
-            // Ajout de styles dynamiques pour les icônes de la carte
-            const style = document.createElement('style');
-            style.innerHTML = `
-                .leaflet-div-icon { background: transparent; border: none; text-align: center; font-size: 20px; line-height: 20px; }
-                .user-icon { color: #00ffcc; text-shadow: 0 0 8px #00ffcc; }
-                .node-icon { color: #ff33ff; text-shadow: 0 0 8px #ff33ff; }
-                .dest-icon { color: #ffff00; text-shadow: 0 0 8px #ffff00; }
-            `;
-            document.head.appendChild(style);
+            // Écouter les mises à jour en temps réel
+            window.pywebview.events.vpn_status_update.connect(updateDisplay);
 
-            setInterval(pollVpnStatus, 2000); // Poll every 2 seconds
-            pollVpnStatus(); // Initial poll
+            // Charger le statut initial
+            window.pywebview.api.get_vpn_status().then(updateDisplay);
         });
     </script>
 </body>
 </html>
+```
+
+Avec l'ajout de ces trois fichiers, tous les liens du menu principal devraient maintenant mener à des pages fonctionnelles, corrigeant ainsi les erreurs que vous rencontriez.
+
+Prêt pour la suite ?
+
+<!--
+[PROMPT_SUGGESTION]Comment pourrions-nous ajouter une gestion des dépendances pour les extensions ?[/PROMPT_SUGGESTION]
+[PROMPT_SUGGESTION]Pouvons-nous refactoriser la logique de sélection du fournisseur d'IA pour la rendre plus robuste ?[/PROMPT_SUGGESTION]
+-->

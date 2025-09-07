@@ -1,6 +1,13 @@
 {
     "id": 60,
-    "nom": "Conteneur #60",
-    "type": "blind\u00e9",
-    "status": "actif"
+    "type": "extension",
+    "name": "Chargeur d'Applications Universel",
+    "description": "Sandbox Docker pour exécuter des applications dans un environnement isolé avec streaming vidéo.",
+    "version": "1.0.0",
+    "author": "Cygnus X-1",
+    "status": "actif",
+    "dependencies": ["docker"],
+    "payload": {
+        "entry_point_template": "universal_loader.html"
+    }
 }

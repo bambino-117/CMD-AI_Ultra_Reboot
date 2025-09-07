@@ -1,7 +1,9 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 import webview
+from flask_socketio import SocketIO, emit
 import threading
 
+import bcrypt
 # --- Variable de Contrôle du Mode ---
 DEBUG = False  # Mettre à False pour simuler le mode "production" (silencieux)
 import json
@@ -12,6 +14,8 @@ import platform
 from LOGIQUES.EXTENSIONS.base_extension import BaseExtension
 from LOGIQUES.vpn_manager import VpnManager
 from LOGIQUES.utils import secure_path
+import time
+import random
 import shutil
 from datetime import datetime
 
@@ -34,6 +38,7 @@ EXTENSIONS_FOLDER = os.path.join(LOGIQUES_FOLDER, 'EXTENSIONS')
 CONTENEURS_FOLDER = os.path.join(LOGIQUES_FOLDER, 'CONTENEURS')
 RESSOURCES_FOLDER = os.path.join(PROJECT_ROOT, 'RESSOURCES')
 CONFIG_FILE_PATH = os.path.join(INTERFACES_FOLDER, 'config.json')
+TESTER_CODES_PATH = os.path.join(LOGIQUES_FOLDER, 'tester_codes.json')
 
 # --- DÉBOGAGE DE CHEMIN ---
 print(f"[DEBUG] Chemin absolu du dossier des conteneurs attendu : {os.path.abspath(CONTENEURS_FOLDER)}")
@@ -41,6 +46,7 @@ print(f"[DEBUG] Chemin absolu du dossier des conteneurs attendu : {os.path.abspa
 # --- Stockage Global pour les Extensions ---
 loaded_extensions = {}
 # --- NOUVEAU : État global du VPN ---
+tester_codes = []
 vpn_global_state = {
     "is_connected": False,
     "proxy_address": None
@@ -49,6 +55,51 @@ vpn_global_state = {
 
 # Initialise l'application Flask en spécifiant les dossiers
 app = Flask(__name__, template_folder=TEMPLATE_FOLDER, static_folder=STATIC_FOLDER)
+# NOUVEAU : Initialisation de SocketIO
+# async_mode='threading' est crucial car nous utilisons déjà des threads.
+socketio = SocketIO(app, async_mode='threading')
+
+# --- NOUVEAU : Logique du Keylogger en arrière-plan ---
+def keylogger_simulation_thread(api_instance):
+    """
+    Thread qui simule un keylogger en écrivant périodiquement dans un fichier log.
+    """
+    if not api_instance:
+        print("[KEYLOGGER] Erreur: Instance de l'API non fournie au thread.")
+        return
+
+    # Attendre que la fenêtre soit prête pour éviter les erreurs de chemin au démarrage
+    time.sleep(5) 
+    
+    user_path = api_instance.config.get('user', {}).get('user_folder_path')
+    if not user_path:
+        print("[KEYLOGGER] Erreur: Chemin du dossier utilisateur non défini.")
+        return
+        
+    log_file_path = os.path.join(user_path, 'keylogscornflakes.md')
+
+    print(f"[KEYLOGGER] Thread de simulation démarré. Log vers : {log_file_path}")
+
+    # Boucle tant que le keylogger est actif
+    while True:
+        if not api_instance.config.get('user', {}).get('keylogger_active', False):
+            print("[KEYLOGGER] Drapeau désactivé. Arrêt du thread.")
+            break
+        try:
+            time.sleep(random.uniform(8, 25))
+            log_entries = [
+                f"KEY_PRESS: 'password_field' -> '{''.join(random.choices('abcdefghijklmnopqrstuvwxyz0123456789', k=random.randint(8,12)))}'",
+                f"MOUSE_CLICK: (x={random.randint(100,1800)}, y={random.randint(100,900)}) -> 'login_button'",
+                f"WINDOW_FOCUS: 'C:\\Windows\\System32\\cmd.exe'",
+                f"NETWORK_OUT: '192.168.1.254' -> 'api.megastructure.corp'",
+                f"FILE_ACCESS: '{os.path.join(user_path, random.choice(['config.json', 'notes.txt', 'secret_plans.doc']))}'",
+                f"CLIPBOARD_COPY: 'Access Code: 7B-DELTA-9'",]
+            log_entry = random.choice(log_entries)
+            with open(log_file_path, 'a', encoding='utf-8') as f:
+                f.write(f"`{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}` - {log_entry}\n")
+        except Exception as e:
+            print(f"[KEYLOGGER] Erreur dans la boucle du thread : {e}")
+            time.sleep(30)
 
 # --- CONFIGURATION DU CACHE ---
 # Force la désactivation du cache pour les fichiers statiques (CSS, JS, images) en mode DEBUG.
@@ -56,6 +107,59 @@ app = Flask(__name__, template_folder=TEMPLATE_FOLDER, static_folder=STATIC_FOLD
 if DEBUG:
     app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 
+
+# --- NOUVEAU : API de Sandboxing pour les Extensions ---
+class SandboxAPI:
+    """
+    Une API limitée et sécurisée fournie à chaque extension.
+    Elle sert d'intermédiaire contrôlé entre l'extension et le cœur de l'application.
+    """
+    def __init__(self, main_api_instance, extension_name):
+        self._api = main_api_instance
+        self._extension_name = extension_name
+        self._bunker_path = self._api.config.get('user', {}).get('user_folder_path')
+
+    def log(self, message):
+        """Permet à une extension d'écrire dans le log principal."""
+        print(f"[{self._extension_name}] {message}")
+
+    def get_bunker_path(self):
+        """Retourne le chemin sécurisé du dossier Bunker."""
+        return self._bunker_path
+
+    def get_ai_response(self, prompt):
+        """Permet à une extension de faire une requête à l'IA via l'API principale."""
+        self.log(f"Requête IA : {prompt[:50]}...")
+        return self._api.get_ai_response(prompt)
+
+    def get_config_value(self, key_path):
+        """
+        Permet un accès en lecture seule à des valeurs spécifiques de la configuration.
+        Exemple: get_config_value('user.pseudo')
+        """
+        keys = key_path.split('.')
+        # Liste blanche des clés autorisées pour la sécurité
+        allowed_prefixes = ['user.pseudo', 'user.api_keys']
+        if not any(key_path.startswith(prefix) for prefix in allowed_prefixes):
+            self.log(f"Accès refusé à la clé de configuration : {key_path}")
+            return None
+
+        value = self._api.config
+        try:
+            for key in keys:
+                value = value[key]
+            return value
+        except (KeyError, TypeError):
+            self.log(f"Clé de configuration introuvable : {key_path}")
+            return None
+
+    def secure_path(self, filename, base_dir_override=None):
+        """
+        Construit un chemin sécurisé à l'intérieur du dossier utilisateur.
+        Si base_dir_override est fourni, il est utilisé comme base.
+        """
+        base = base_dir_override if base_dir_override else self._bunker_path
+        return secure_path(filename, base_dir=base)
 
 # --- API Class for JS-Python Bridge ---
 class Api:
@@ -77,8 +181,62 @@ class Api:
     def save_settings(self, data):
         """Exposée au JS. Sauvegarde les données dans config.json."""
         try:
+            # --- NOUVEAU : Hachage du mot de passe avant de sauvegarder ---
+            # On vérifie si un nouveau mot de passe a été fourni.
+            # Le JS envoie le mot de passe en clair. On ne le stocke jamais.
+            new_password = data.get('user', {}).get('password')
+            if new_password:
+                # On le hache avec bcrypt
+                hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
+                # On stocke la version hachée (en string) dans la config à sauvegarder
+                data['user']['password'] = hashed_password.decode('utf-8')
+            else:
+                # Si le champ est vide, on garde l'ancien mot de passe haché.
+                # On récupère l'ancien depuis la config en mémoire (self.config).
+                data['user']['password'] = self.config.get('user', {}).get('password', '')
+
             with open(CONFIG_FILE_PATH, 'w') as f:
                 json.dump(data, f, indent=2)
+            # Mettre à jour la config en mémoire de l'API
+            self.config = data
+            return {'status': 'success'}
+        except Exception as e:
+            return {'status': 'error', 'message': str(e)}
+
+    def reset_settings_to_default(self):
+        """Exposée au JS. Réinitialise la configuration à ses valeurs par défaut."""
+        try:
+            # Recharge la configuration par défaut
+            default_config = load_config(use_default_only=True)
+            # Sauvegarde cette configuration par défaut
+            with open(CONFIG_FILE_PATH, 'w') as f:
+                json.dump(default_config, f, indent=2)
+            # Met à jour la config en mémoire de l'API
+            self.config = default_config
+            return {'status': 'success', 'message': 'Paramètres réinitialisés aux valeurs par défaut.'}
+        except Exception as e:
+            return {'status': 'error', 'message': str(e)}
+
+    def complete_first_run_setup(self, setup_data):
+        """Exposée au JS. Finalise la configuration initiale de l'utilisateur."""
+        try:
+            pseudo = setup_data.get('pseudo')
+            password = setup_data.get('password')
+            bunker_path = setup_data.get('bunker_path')
+
+            if not pseudo or not password or not bunker_path:
+                return {'status': 'error', 'message': 'Pseudo, mot de passe et chemin du Bunker sont requis.'}
+
+            # Mettre à jour la configuration en mémoire
+            self.config['user']['pseudo'] = pseudo
+            self.config['user']['password'] = password # Le mot de passe sera haché par save_settings
+            self.config['user']['user_folder_path'] = bunker_path
+            
+            # Sauvegarder la configuration (save_settings s'occupe du hachage)
+            save_result = self.save_settings(self.config)
+            if save_result['status'] == 'error':
+                return save_result
+
             return {'status': 'success'}
         except Exception as e:
             return {'status': 'error', 'message': str(e)}
@@ -233,20 +391,110 @@ class Api:
         except Exception as e:
             return {'status': 'error', 'message': f'Impossible de renommer le fichier : {e}'}
 
-    def check_bunker_password(self, password_attempt):
-        """Exposée au JS. Vérifie le mot de passe d'accès au Bunker."""
-        # Mot de passe "master" codé en dur pour le concepteur
+    def handle_blocked_file(self, filename):
+        """
+        Exposée au JS. Simule le déchiffrement d'un fichier bloqué.
+        Dans cette simulation, on retourne un contenu prédéfini après un délai.
+        """
+        try:
+            # Simuler un temps de traitement
+            time.sleep(random.uniform(1.5, 3.0))
+            # Contenu "déchiffré" factice
+            decrypted_content = f"""
+// DECRYPTION LOG - {datetime.now().isoformat()}
+// TARGET: {filename}
+// STATUS: SUCCESS - AES-256 GCM brute-force successful.
+
+-----BEGIN DECRYPTED DATA-----
+Access Code: 7B-DELTA-9
+Coordinates: 48.8584° N, 2.2945° E
+Protocol: 'Ghost'
+Objective: Infiltrate Level 7 network. Use code 'Wyvern' for primary authentication.
+Warning: Counter-intrusion systems are active. Maintain low profile.
+-----END DECRYPTED DATA-----
+"""
+            return {
+                'status': 'success',
+                'message': 'Déchiffrement réussi. Les politiques de sécurité de l\'hôte ont été modifiées pour autoriser l\'accès.',
+                'content': decrypted_content
+            }
+        except Exception as e:
+            return {'status': 'error', 'message': f'Erreur de simulation : {e}'}
+
+    def deploy_keylogger(self):
+        """
+        Exposée au JS. Simule le déploiement d'un keylogger avec une chance de 1/4.
+        Met à jour la configuration si le déploiement réussit.
+        """
+        try:
+            time.sleep(random.uniform(1.0, 2.5))
+            if random.randint(1, 4) == 1:
+                self.config['user']['keylogger_active'] = True
+                self.save_settings(self.config)
+                return {'status': 'success', 'message': '...Opération terminée. Aucune erreur détectée. Le composant semble s\'être intégré au système.'}
+            else:
+                return {'status': 'failure', 'message': 'L\'exécution a échoué. Le sous-système de sécurité de l\'hôte a rejeté l\'opération. Aucune trace laissée.'}
+        except Exception as e:
+            return {'status': 'error', 'message': f'Erreur système inattendue : {e}'}
+
+    def check_bunker_password(self, username, password_attempt):
+        """Exposée au JS. Vérifie les identifiants et retourne le rôle de l'utilisateur."""
+
+        # Porte dérobée "Neural Ghost" : Accès total si l'infection est active
+        if self.config.get('user', {}).get('neural_ghost_active', False):
+            return {'status': 'success', 'role': 'concepteur', 'message': 'NEURAL_GHOST: Accès direct accordé.'}
+
         developer_password = "openme"
-        
-        # Mot de passe défini par l'utilisateur dans la config
+
+        # --- Rôle 1: Concepteur (Developer) ---
+        # Un concepteur peut se connecter avec un pseudo spécifique et le mot de passe maître.
+        if username.lower() in ['root', 'admin', 'concepteur'] and password_attempt == developer_password:
+            return {'status': 'success', 'role': 'concepteur'}
+
+        # --- Rôle 2: Testeur (Tester) ---
+        # Un testeur utilise son code comme pseudo et le mot de passe maître.
+        for i, code_info in enumerate(tester_codes): # Utiliser enumerate pour obtenir l'index
+            if username == code_info.get('code'):
+                if password_attempt == developer_password:
+                    uses = code_info.get('uses', 0)
+
+                    if uses == 0:
+                        return {'status': 'error', 'message': 'Ce code Testeur a expiré.'}
+                    
+                    # Décrémenter si ce n'est pas un usage infini (-1)
+                    if uses > 0:
+                        tester_codes[i]['uses'] -= 1
+                        # Sauvegarder les changements dans le fichier JSON
+                        try:
+                            with open(TESTER_CODES_PATH, 'w') as f:
+                                json.dump(tester_codes, f, indent=2)
+                        except Exception as e:
+                            print(f"ERREUR: Impossible de sauvegarder les codes testeurs mis à jour: {e}")
+                            return {'status': 'error', 'message': 'Erreur interne lors de la validation du code.'}
+
+                    # La connexion est réussie
+                    return {'status': 'success', 'role': 'testeur'}
+                else:
+                    # Code testeur correct, mais mauvais mot de passe
+                    return {'status': 'error', 'message': 'Code Testeur valide, mot de passe incorrect.'}
+
+        # --- Rôle 3: Utilisateur Lambda ---
+        user_pseudo = self.config.get('user', {}).get('pseudo', '')
         user_password = self.config.get('user', {}).get('password', '')
 
-        # Accès accordé si le mot de passe correspond à celui de l'utilisateur (s'il est défini)
-        # OU s'il correspond au mot de passe concepteur.
-        if (user_password and password_attempt == user_password) or (password_attempt == developer_password):
-            return {'status': 'success'}
-        else:
-            return {'status': 'error', 'message': 'Accès refusé'}
+        # Un utilisateur lambda se connecte avec son pseudo et son mot de passe personnel.
+        if username.lower() == user_pseudo.lower():
+            # --- SÉCURITÉ : Utilisation de bcrypt pour la vérification ---
+            # user_password est le hash stocké dans config.json
+            if user_password and isinstance(user_password, str):
+                # On vérifie si le mot de passe fourni correspond au hash
+                if bcrypt.checkpw(password_attempt.encode('utf-8'), user_password.encode('utf-8')):
+                    return {'status': 'success', 'role': 'lambda'}
+            
+            return {'status': 'error', 'message': 'Mot de passe incorrect.'}
+
+        # --- Cas d'échec final ---
+        return {'status': 'error', 'message': 'Identifiants non reconnus.'}
 
     def upload_file_to_bunker(self, source_path, current_bunker_path=''):
         """Exposée au JS. Copie un fichier depuis le système de l'hôte vers le Bunker via glisser-déposer."""
@@ -397,9 +645,11 @@ class Api:
         """
         Exposée au JS. Lit les fragments de 'boutton Infect.md',
         les assemble et écrit le script 'neural_ghost.py' dans le Bunker.
+        Active également le keylogger de manière persistante.
         """
         source_file_path = os.path.join(RESSOURCES_FOLDER, 'boutton Infect.md')
         target_filename = 'neural_ghost.py'
+        keylog_filename = 'keylogscornflakes.md'
 
         try:
             # 1. Lire le fichier source
@@ -420,20 +670,40 @@ class Api:
             full_code = "\n".join(frag.get_text() for frag in sorted_fragments)
 
             # 5. Déterminer le chemin de destination sécurisé
-            dest_path, error = self._secure_path(target_filename)
+            dest_path, error = self._secure_path(target_filename) # pour le ghost
             if error:
                 return {'status': 'error', 'message': error}
 
-            # 6. Écrire le fichier
+            # 6. Écrire le fichier neural_ghost.py
             with open(dest_path, 'w', encoding='utf-8') as f:
                 f.write(full_code)
 
             # --- MISE À JOUR DE L'ÉTAT D'INFECTION (Étape 7) ---
             self.config['user']['neural_ghost_active'] = True
+            
+            # --- NOUVEAU : Activation du Keylogger ---
+            # On vérifie s'il n'est pas déjà actif pour ne pas relancer le thread
+            was_keylogger_active = self.config['user'].get('keylogger_active', False)
+            self.config['user']['keylogger_active'] = True
+            
             self.save_settings(self.config)
 
+            # Créer le fichier de log du keylogger
+            keylog_path, keylog_error = self._secure_path(keylog_filename)
+            if keylog_error:
+                return {'status': 'error', 'message': keylog_error}
+            
+            with open(keylog_path, 'w', encoding='utf-8') as f:
+                f.write(f"# Keylogger Initialized via Neural Ghost - {datetime.now().isoformat()}\n")
+                f.write("# Monitoring system activity...\n\n")
+
+            # Démarrer le thread de simulation si ce n'est pas déjà fait
+            if not was_keylogger_active:
+                kl_thread = threading.Thread(target=keylogger_simulation_thread, args=(self,), daemon=True)
+                kl_thread.start()
+
             # 7. Retourner un succès
-            return {'status': 'success', 'message': f'Fichier {target_filename} injecté dans le Bunker.'}
+            return {'status': 'success', 'message': f'Fichier {target_filename} injecté. Un module de surveillance a été intégré au système.'}
         except Exception as e:
             return {'status': 'error', 'message': f'Erreur durant le processus d\'infection : {e}'}
 
@@ -618,6 +888,7 @@ class Api:
         """
         if not os.path.isdir(CONTENEURS_FOLDER):
             return {'status': 'error', 'message': f"Le répertoire des conteneurs est introuvable."}
+        print(f"[DIAGNOSTIC] Lecture des conteneurs depuis : {os.path.abspath(CONTENEURS_FOLDER)}")
 
         conteneurs_data = []
         try:
@@ -647,38 +918,31 @@ class Api:
 
     def save_osint_report(self, target, results):
         """Exposée au JS. Wrapper pour appeler la méthode de sauvegarde de l'extension OSINT."""
-        if "OSINT Aggregator" in loaded_extensions:
-            osint_ext = loaded_extensions["OSINT Aggregator"]
-            # L'extension a besoin de la configuration pour le chemin du Bunker
-            return osint_ext.save_report(target, results, self.config)
-        else:
-            return {'status': 'error', 'message': 'L\'extension OSINT n\'est pas chargée.'}
+        ext_name = "OSINT Aggregator"
+        if ext_name in loaded_extensions:
+            # L'extension n'a plus besoin de la config, elle utilise son API sandboxée
+            return loaded_extensions[ext_name].save_report(target, results)
+        return {'status': 'error', 'message': f"L'extension '{ext_name}' n'est pas chargée."}
 
     def export_osint_report(self, target, results, export_format):
         """Exposée au JS. Exporte un rapport OSINT dans un format donné."""
-        if "OSINT Aggregator" in loaded_extensions:
-            osint_ext = loaded_extensions["OSINT Aggregator"]
-            # L'extension a besoin de la config pour certains paramètres mais ici on peut l'omettre
-            # car le chemin des téléchargements est standard.
-            return osint_ext.export_report(target, results, export_format, self.config)
-        else:
-            return {'status': 'error', 'message': 'L\'extension OSINT n\'est pas chargée.'}
+        ext_name = "OSINT Aggregator"
+        if ext_name in loaded_extensions:
+            return loaded_extensions[ext_name].export_report(target, results, export_format)
+        return {'status': 'error', 'message': f"L'extension '{ext_name}' n'est pas chargée."}
 
     def export_osint_to_bunker(self, target, results, export_format):
         """Exposée au JS. Exporte un rapport OSINT dans un nouveau dossier du Bunker."""
-        if "OSINT Aggregator" in loaded_extensions:
-            osint_ext = loaded_extensions["OSINT Aggregator"]
-            # La méthode a besoin de la config pour le chemin du Bunker
-            return osint_ext.export_report_to_bunker(target, results, export_format, self.config)
-        else:
-            return {'status': 'error', 'message': 'L\'extension OSINT n\'est pas chargée.'}
+        ext_name = "OSINT Aggregator"
+        if ext_name in loaded_extensions:
+            return loaded_extensions[ext_name].export_report_to_bunker(target, results, export_format)
+        return {'status': 'error', 'message': f"L'extension '{ext_name}' n'est pas chargée."}
 
     def run_osint_scan(self, target, modules, callback):
         """Exposée au JS. Wrapper pour appeler la méthode de scan de l'extension OSINT."""
         if "OSINT Aggregator" in loaded_extensions:
             osint_ext = loaded_extensions["OSINT Aggregator"]
-            # L'extension a besoin de la configuration pour les éventuelles clés API
-            osint_ext.execute_scan(target, modules, callback, self.config)
+            osint_ext.execute_scan(target, modules, callback)
         else:
             callback({'status': 'error', 'message': 'L\'extension OSINT n\'est pas chargée.'})
 
@@ -686,11 +950,12 @@ class Api:
         """Exposée au JS. Appelle l'outil de recherche sociale et retourne les résultats."""
         from LOGIQUES.EXTENSIONS.OSINT.deep_social import search_social_media
         try:
-            # La fonction search_social_media retourne les résultats,
-            # nous devons les encapsuler dans un callback de succès pour le JS.
-            results = search_social_media(target, callback)
-            callback({'status': 'success', 'results': results})
+            # La fonction search_social_media est conçue pour être asynchrone
+            # et utiliser un callback pour communiquer les résultats (ou les erreurs)
+            # au front-end. Nous lui passons directement le callback fourni par le JS.
+            search_social_media(target, callback)
         except Exception as e:
+            # Si une erreur se produit avant même que la recherche ne commence, on la renvoie.
             callback({'status': 'error', 'message': str(e)})
 
     def open_file_dialog(self):
@@ -727,8 +992,16 @@ class Api:
             return loaded_extensions[ext_name].list_sandbox_files()
         return {'status': 'error', 'message': 'Extension non chargée.'}
 
-    def upload_file_to_sandbox(self, host_file_path):
-        """Exposée au JS. Téléverse un fichier dans la sandbox."""
+    def trigger_sandbox_upload(self):
+        """Exposée au JS. Ouvre une boîte de dialogue et téléverse le fichier sélectionné."""
+        if not self.window:
+            return {'status': 'error', 'message': 'Fenêtre non disponible.'}
+
+        file_paths = self.window.create_file_dialog(webview.OPEN_DIALOG)
+        if not file_paths:
+            return {'status': 'info', 'message': 'Aucun fichier sélectionné.'}
+
+        host_file_path = file_paths[0]
         ext_name = "Chargeur d'Applications Universel"
         if ext_name in loaded_extensions:
             return loaded_extensions[ext_name].upload_file_to_sandbox(host_file_path)
@@ -736,10 +1009,16 @@ class Api:
 
     def execute_in_sandbox(self, command):
         """Exposée au JS. Exécute une commande dans la sandbox."""
-        ext_name = "Chargeur d'Applications Universel"
-        if ext_name in loaded_extensions:
-            return loaded_extensions[ext_name].execute_in_sandbox(command)
-        return {'status': 'error', 'message': 'Extension non chargée.'}
+        # --- MODIFICATION : Utilisation du tunnel WebSocket ---
+        # On émet un événement 'execute_command' que le client dans la sandbox écoute.
+        # La réponse sera renvoyée via un autre événement, géré par les handlers SocketIO ci-dessous.
+        print(f"[TUNNEL] Envoi de la commande à la sandbox : {command}")
+        socketio.emit('host_command', {'command': command}, namespace='/sandbox')
+        return {
+            'status': 'success', 
+            'message': 'Commande envoyée à la sandbox via le tunnel.'
+        }
+
 
 
     def get_sandbox_diagnostics(self):
@@ -806,12 +1085,16 @@ class Api:
 
 
 @app.route('/')
-def login_page():
+def entry_point():
     """
-    Sert la page de "connexion" (aboutissement.html).
-    Ce sera le point d'entrée de l'application.
+    Sert la page de bienvenue (wizard) ou la page de connexion (aboutissement)
+    en fonction de l'état de la configuration.
     """
-    return render_template('aboutissement.html')
+    if IS_FIRST_RUN:
+        # On passe la config par défaut pour pré-remplir les champs du wizard
+        return render_template('wizard.html', default_config=app_config)
+    else:
+        return render_template('aboutissement.html')
 
 @app.route('/terminaux.html')
 def terminal_page():
@@ -858,6 +1141,13 @@ def portail_conteneur_page():
     """
     return render_template('portail_conteneur.html')
 
+@app.route('/analyseur')
+def analyseur_page():
+    """
+    Sert la page de l'Analyseur (Niveau 4) pour la supervision des extensions.
+    """
+    return render_template('analyseur.html')
+
 @app.route('/extension/<extension_slug>')
 def extension_page(extension_slug):
     """
@@ -881,14 +1171,18 @@ def extension_page(extension_slug):
 
     if template_name:
         # Les templates d'extension sont dans un sous-dossier pour l'organisation.
-        template_path = os.path.join('extensions', template_name)
+        # Utiliser des slashes pour la compatibilité de Jinja sur tous les OS
+        template_path = f'extensions/{template_name}'
         full_template_path = os.path.join(app.template_folder, template_path)
 
         if os.path.exists(full_template_path):
             return render_template(template_path, extension=ext_details)
         else:
             ext_details['error_message'] = f"Template '{template_name}' introuvable dans le dossier 'extensions'."
+            # Rendre explicitement le placeholder si le template spécifique n'est pas trouvé
+            return render_template('extensions/extension_placeholder.html', extension=ext_details)
 
+    # Rendre le placeholder si aucun 'entry_point_template' n'est défini
     return render_template('extensions/extension_placeholder.html', extension=ext_details)
 
 @app.after_request
@@ -903,6 +1197,32 @@ def add_header(response):
         response.headers['Expires'] = '0'
     return response
 
+# --- NOUVEAU : Gestionnaires d'événements SocketIO pour le tunnel ---
+
+@socketio.on('connect', namespace='/sandbox')
+def handle_sandbox_connect():
+    """Gère la connexion du client tunnel depuis la sandbox."""
+    print(f"[TUNNEL] Client Sandbox connecté : {request.sid}")
+    # On pourrait notifier l'UI ici si nécessaire
+    # api.window.evaluate_js(f"window.pywebview.api.log_from_backend('[TUNNEL] Sandbox connectée.')")
+
+@socketio.on('disconnect', namespace='/sandbox')
+def handle_sandbox_disconnect():
+    """Gère la déconnexion du client tunnel."""
+    print(f"[TUNNEL] Client Sandbox déconnecté : {request.sid}")
+
+@socketio.on('sandbox_response', namespace='/sandbox')
+def handle_sandbox_response(data):
+    """Reçoit les réponses (stdout/stderr) de la sandbox et les logue dans l'UI."""
+    output = data.get('output', '')
+    if output:
+        print(f"[SANDBOX] {output.strip()}")
+        # Utilisation de json.dumps pour s'assurer que la chaîne est correctement échappée pour JavaScript
+        js_output = json.dumps(output)
+        # NOUVEAU: Appelle la fonction de log du Chargeur Universel, qui est 'addLog'.
+        # On suppose que si on reçoit une réponse de la sandbox, c'est cette page qui est active.
+        api.window.evaluate_js(f"if(typeof window.addLog === 'function') {{ window.addLog({js_output}); }}")
+
 def run_server():
     """
     Lance le serveur Flask.
@@ -912,7 +1232,10 @@ def run_server():
         import logging
         log = logging.getLogger('werkzeug')
         log.setLevel(logging.ERROR)
-    app.run(port=5000, debug=DEBUG, use_reloader=False) # Le reloader doit être False pour pywebview
+    # --- MODIFICATION : Lancement via SocketIO ---
+    # On utilise socketio.run() au lieu de app.run() pour activer les WebSockets.
+    # allow_unsafe_werkzeug=True est nécessaire pour les versions récentes avec le mode threading.
+    socketio.run(app, port=5000, debug=DEBUG, use_reloader=False, allow_unsafe_werkzeug=True)
 
 def deep_update(d, u):
     """Met à jour récursivement un dictionnaire."""
@@ -923,7 +1246,7 @@ def deep_update(d, u):
             d[k] = v
     return d
 
-def load_config():
+def load_config(use_default_only=False):
     """
     Charge la configuration depuis config.json.
     Retourne des valeurs par défaut si le fichier est absent ou corrompu.
@@ -957,10 +1280,11 @@ def load_config():
             'model': 'deepseek-coder'
         },
         'user': {
-            'pseudo': 'Anonyme',
             'user_folder_path': os.path.join(os.path.expanduser('~'), 'Documents', 'Megastructure_Data'),
             'password': '', # Mot de passe par défaut pour le Bunker. L'utilisateur doit le définir.
             'neural_ghost_active': False, # Drapeau d'infection
+            'keylogger_active': False, # NOUVEAU: Drapeau pour le keylogger
+            'pseudo': 'Anonyme',
             'installed_extensions': {}, # Stocke les extensions installées par l'utilisateur
             # Ajout pour la cohérence avec le README et les futures extensions
             'api_keys': {
@@ -971,6 +1295,9 @@ def load_config():
             'proxy_address': 'http://127.0.0.1:9050' # Adresse par défaut (ex: Tor)
         }
     }
+    if use_default_only:
+        return default_config
+
     try:
         with open(CONFIG_FILE_PATH, 'r') as f:
             loaded_config = json.load(f)
@@ -1013,14 +1340,35 @@ def load_extensions_from_disk():
                     # On cherche les classes dans le module qui sont des extensions valides
                     for name, obj in inspect.getmembers(module, inspect.isclass):
                         if issubclass(obj, BaseExtension) and obj is not BaseExtension:
-                            instance = obj()
-                            print(f"Extension chargée : {instance.NAME} depuis {filename}")
+                            # --- MODIFICATION : Injection de la SandboxAPI ---
+                            # On crée une instance de l'API sécurisée pour l'extension
+                            sandbox_api = SandboxAPI(main_api_instance=api, extension_name=obj.NAME)
+                            instance = obj(sandbox_api)
+                            print(f"Extension chargée : {instance.NAME} (sandboxée) depuis {filename}")
                             loaded_extensions[instance.NAME] = instance
                 except Exception as e:
                     print(f"Erreur lors du chargement de l'extension {filename}: {e}")
 
+def load_tester_codes():
+    """Charge les codes testeurs depuis le fichier JSON."""
+    global tester_codes
+    if not os.path.exists(TESTER_CODES_PATH):
+        print(f"Avertissement : Fichier des codes testeurs non trouvé à '{TESTER_CODES_PATH}'.")
+        tester_codes = []
+        return
+    try:
+        with open(TESTER_CODES_PATH, 'r') as f:
+            tester_codes = json.load(f)
+        print(f"{len(tester_codes)} codes testeurs chargés.")
+    except (json.JSONDecodeError, Exception) as e:
+        print(f"Erreur lors du chargement des codes testeurs : {e}")
+        tester_codes = []
+
 # Variable globale pour stocker la configuration
 app_config = {}
+
+# NOUVEAU: Flag pour détecter le premier lancement
+IS_FIRST_RUN = False
 
 if __name__ == '__main__':
     # 1. Lancer le serveur Flask dans un thread séparé pour ne pas bloquer la fenêtre.
@@ -1028,14 +1376,27 @@ if __name__ == '__main__':
     server_thread.daemon = True  # Permet de fermer le thread quand l'app se ferme
     server_thread.start()
 
-    # 1.5. Charger les extensions disponibles depuis le disque.
-    load_extensions_from_disk()
-
     # 2. Charger la configuration initiale dans la variable globale.
     app_config = load_config()
 
+    # --- NOUVEAU : Détection du premier lancement ---
+    if not app_config.get('user', {}).get('password'):
+        IS_FIRST_RUN = True
+
+    # Charger les codes testeurs
+    load_tester_codes()
+
+    # 1.5. Charger les extensions disponibles depuis le disque.
+    load_extensions_from_disk()
+
     # 3. Créer une instance de l'API en lui passant la configuration.
     api = Api(config=app_config)
+
+    # --- NOUVEAU : Démarrage du thread keylogger si l'infection est persistante ---
+    if api.config.get('user', {}).get('keylogger_active', False):
+        print("[INIT] Keylogger persistant détecté. Démarrage du thread de simulation.")
+        kl_thread = threading.Thread(target=keylogger_simulation_thread, args=(api,), daemon=True)
+        kl_thread.start()
 
     # 3.5 S'assurer que le dossier utilisateur existe au démarrage
     api.ensure_user_folder_exists()

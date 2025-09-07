@@ -11,18 +11,21 @@ Ce projet est une application de bureau qui simule une interface informatique d'
 -   **Interface Immersive**: Une UI inspirée du cyberpunk avec des animations, des effets sonores et une typographie stylisée.
 -   **Logicateur (IA)**: Intégration avec plusieurs fournisseurs d'IA (DeepSeek, OpenAI, Google, Groq, Ollama) pour une assistance conversationnelle.
 -   **Bunker Sécurisé**: Un espace utilisateur local pour stocker, créer, renommer et supprimer des fichiers/dossiers, avec une gestion par glisser-déposer.
+    -   Interface physique avec des "cercles de données" qui flottent et entrent en collision.
+    -   Mécaniques de gameplay avec des fichiers spéciaux (contaminés, bloqués, keyloggers simulés).
 -   **Système d'Extensions Modulaire**: Une architecture robuste permettant d'installer et de désinstaller des fonctionnalités via le "Portail Conteneur".
+-   **Système d'Authentification Avancé**: Gestion de 3 rôles (Concepteur, Testeur, Utilisateur) avec des privilèges distincts et mots de passe hachés (bcrypt).
 -   **Extension OSINT Aggregator**: Un outil puissant pour mener des enquêtes en sources ouvertes, avec sélection de modules, export de rapports et analyse par l'IA.
 -   **Chargeur d'Applications Universel (en développement)**: Une sandbox basée sur Docker pour exécuter des applications dans un environnement isolé.
 -   **VPN Vénère Natif**: Un visualiseur de connexion VPN avec une intégration de proxy pour les requêtes externes.
 -   **Éléments Narratifs**: Des secrets et des événements scriptés, comme le mot de passe "infect" qui déclenche une prise de contrôle simulée.
+-   **Interface de Configuration "Palimpseste"**: Une interface de paramètres unique qui évolue visuellement en remontant le temps technologique.
 
 ## Roadmap / Plan d'Action
 
-Le projet évolue constamment. Les fonctionnalités de l'extension **OSINT Aggregator** sont maintenant matures. Le développement se concentre sur :
--   La finalisation du **Chargeur d'Applications Universel** (Phase 4 : streaming vidéo).
--   La création de l'extension **Diagnostic Système** pour monitorer la sandbox.
--   L'implémentation des mécaniques de gameplay avancées dans le **Bunker** (fichiers contaminés, bloqués, etc.).
+Le projet est très avancé. Les fonctionnalités majeures comme le système d'extensions, le Bunker interactif, le Chargeur d'Applications et l'authentification par rôles sont en place. Le développement se concentre sur :
+-   La finalisation de la **Phase 7**, avec l'ajout des boutons de sécurité dans les paramètres.
+-   L'implémentation de la **Phase 8**, une session de première utilisation guidée pour améliorer l'accueil des nouveaux utilisateurs.
 
 Pour une liste complète des fonctionnalités terminées, en cours et planifiées, avec les détails de chaque phase de développement, veuillez consulter notre **Roadmap détaillée**.
 

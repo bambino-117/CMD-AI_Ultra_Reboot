@@ -1,6 +1,8 @@
 Flask>=2.0
 pywebview>=4.0
 requests>=2.25
-beautifulsoup4>=4.9
-sherlock-project
-docker
+beautifulsoup4>=4.9 
+sherlock-project 
+docker 
+Flask-SocketIO
+bcrypt

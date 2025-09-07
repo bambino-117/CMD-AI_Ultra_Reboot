@@ -1,6 +1,13 @@
 {
     "id": 61,
-    "nom": "Conteneur #61",
-    "type": "standard",
-    "status": "actif"
+    "type": "extension",
+    "name": "Diagnostic Système",
+    "description": "Monitore les performances et l'état de la sandbox Docker en temps réel.",
+    "version": "1.0.0",
+    "author": "Cygnus X-1",
+    "status": "actif",
+    "dependencies": [],
+    "payload": {
+        "entry_point_template": "diagnostic_systeme.html"
+    }
 }

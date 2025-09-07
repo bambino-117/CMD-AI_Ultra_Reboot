@@ -1,6 +1,13 @@
 {
     "id": 40,
-    "nom": "Conteneur #40",
-    "type": "furtif",
-    "status": "actif"
+    "type": "extension",
+    "name": "Centre d'Analyse",
+    "description": "Espace dédié à la consultation de rapports d'OSINT et de pentesting avec interface à deux panneaux.",
+    "version": "1.0.0",
+    "author": "Cygnus X-1",
+    "status": "actif",
+    "dependencies": [],
+    "payload": {
+        "entry_point_template": "centre_analyse.html"
+    }
 }

@@ -119,6 +119,13 @@
             51% { text-shadow: 2px 0 rgba(255, 0, 0, 0.7), -2px 0 rgba(0, 0, 255, 0.7); transform: skewX(0); }
         }
 
+        /* NOUVEAU : Animation de flash pour la transition d'accès */
+        @keyframes success-flash {
+            0% { background-color: #0d0d0d; }
+            50% { background-color: #00ffcc; }
+            100% { background-color: #0d0d0d; }
+        }
+
         @keyframes screen-shake {
             0%, 100% { transform: translate(0, 0); }
             10%, 30%, 50%, 70%, 90% { transform: translate(-2px, 2px); }
@@ -421,10 +428,10 @@
                 <!-- NOUVEAU : Indicateur VPN -->
                 <div id="vpn-status-indicator" class="disconnected" title="VPN Déconnecté">🛡</div>
                 <div id="contextMenu" class="context-menu">
-                    <div class="menu-item" data-level="2" data-name="Visualiseur VPN" data-description="Visualisation en temps réel du routage VPN." data-url="/vpn_visualization">
+                    <div class="menu-item" data-level="2" data-name="Visualiseur VPN" data-description="Visualisation en temps réel du routage VPN." data-url="/vpn_visualization" data-roles="concepteur,testeur">
                         NIVEAU 2 : Visualiseur VPN
                     </div>
-                    <div class="menu-item" data-level="4" data-name="Analyseur" data-description="Supervision centralisée des extensions actives." data-url="/analyseur">
+                    <div class="menu-item" data-level="4" data-name="Analyseur" data-description="Supervision centralisée des extensions actives." data-url="/analyseur" data-roles="concepteur,testeur">
                         NIVEAU 4 : Analyseur
                     </div>
                     <div class="menu-item" data-level="23" data-name="Logicateur" data-description="Donnera accès à un chat avec ia intégrée." data-url="/logicateur">
@@ -600,26 +607,18 @@
         }
 
         // Pre-populates the terminal with a lot of content
-        function populateTerminal() {
+        function populateTerminal(installedExtensions = []) {
             // Niveaux statiques et d'ambiance
             const baseLevels = [404, 2, 4, 23, 101, 241, 303, 500, 77, 159, 288, 341, 418];
             const linesPerLevel = 200;
 
-            // Récupérer les infos des items du menu pour savoir lesquels ont une URL
-            const menuItemsData = {};
-            document.querySelectorAll('.menu-item').forEach(item => {
-                const level = item.dataset.level;
-                menuItemsData[level] = {
-                    url: item.dataset.url,
-                    name: item.dataset.name
-                };
-            });
+            // --- REFACTORING : Logique de génération des niveaux rendue robuste ---
+            // Au lieu de lire le DOM (ce qui est fragile), nous utilisons directement
+            // la liste des extensions installées passée en argument.
+            const extensionLevels = installedExtensions.map(ext => ext.level);
 
-            // Ajouter les niveaux des extensions (ceux qui ne sont pas déjà dans la liste de base)
-            const extensionLevels = Object.keys(menuItemsData)
-                .map(level => parseInt(level, 10))
-                .filter(level => !baseLevels.includes(level));
-
+            // On combine les niveaux de base avec ceux des extensions pour avoir la liste complète
+            // de tous les "conteneurs" à générer dans le terminal.
             const levelsToGenerate = [...baseLevels, ...extensionLevels];
 
             // Trier tous les niveaux par ordre décroissant pour un affichage cohérent dans le terminal
@@ -749,8 +748,15 @@
 
         // Gère la navigation vers une autre page (appelé par le bouton ACCÉDER)
         function handleNavigation(level, url) {
-            // Le traitement spécial pour le bunker a été déplacé sur la page bunker.html elle-même.
-            window.location.href = url;
+            if (!url) return;
+
+            // Déclencher le flash AVANT la navigation
+            document.body.style.animation = "success-flash 0.8s forwards";
+            
+            // Naviguer après la fin de l'animation pour que le flash soit visible
+            setTimeout(() => {
+                window.location.href = url;
+            }, 800);
         }
         // --- FIN DE LA LOGIQUE DE NAVIGATION ---
 
@@ -823,9 +829,11 @@
                         
                         contextMenu.appendChild(menuItem);
                     });
+                    return result.extensions; // Retourne les données pour la prochaine étape
                 }
             } catch (e) {
                 console.error("Impossible de charger les extensions installées:", e);
+                return []; // Retourne un tableau vide en cas d'erreur
             }
         }
 
@@ -839,6 +847,25 @@
             vpnIndicator.title = isConnected 
                 ? `VPN Connecté (IP: ${data.virtual_ip || 'N/A'})` 
                 : 'VPN Déconnecté';
+        }
+
+        // --- NOUVEAU : Filtrage du menu par rôle ---
+        function filterMenuByRole() {
+            // Rôle par défaut 'lambda' si non connecté ou si la session est vide
+            const userRole = sessionStorage.getItem('userRole') || 'lambda';
+            console.log(`Filtrage du menu pour le rôle : ${userRole}`);
+
+            const menuItems = document.querySelectorAll('#contextMenu .menu-item');
+
+            menuItems.forEach(item => {
+                const requiredRoles = item.dataset.roles;
+                if (requiredRoles) {
+                    const rolesArray = requiredRoles.split(',');
+                    if (!rolesArray.includes(userRole)) {
+                        item.style.display = 'none';
+                    }
+                }
+            });
         }
 
         // On page load, populate and set initial view
@@ -864,8 +891,13 @@
             }
 
             async function initialize() {
-                await buildDynamicMenu();
-                populateTerminal();
+                // 1. On filtre les éléments statiques du menu en fonction du rôle de l'utilisateur.
+                filterMenuByRole();
+
+                // 2. On charge les extensions installées et on les ajoute au menu. On récupère leurs données.
+                const installedExtensions = await buildDynamicMenu();
+                // 3. On génère le contenu du terminal en lui passant explicitement les données des extensions.
+                populateTerminal(installedExtensions);
 
                 let initialLevel;
                 try {

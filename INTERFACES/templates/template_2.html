@@ -33,6 +33,40 @@
             text-align: center;
         }
         /* Ajoutez d'autres styles spécifiques ici */
+        .example-window {
+            background: rgba(0, 10, 8, 0.6);
+            border: 1px solid rgba(0, 255, 204, 0.3);
+            border-radius: 0.25rem;
+            padding: 2rem;
+            margin: auto; /* Pour centrer dans le flex container */
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 0 25px rgba(0, 255, 204, 0.1);
+        }
+
+        .example-window h2 {
+            color: #ff33ff;
+            margin-top: 0;
+            border-bottom: 1px solid rgba(255, 51, 255, 0.3);
+            padding-bottom: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .example-button {
+            padding: 0.7rem 1.5rem;
+            font-family: inherit;
+            font-size: 1rem;
+            cursor: pointer;
+            border-radius: 0.25rem;
+            transition: all 0.2s ease;
+            border: 1px solid #00ffcc;
+            background: #00ffcc;
+            color: #0d0d0d;
+        }
+
+        .example-button:hover { box-shadow: 0 0 15px rgba(0, 255, 204, 0.7); }
 
     </style>
 </head>
@@ -45,7 +79,11 @@
     <div class="main-container">
         <h1>[ NIVEAU XXX // TITRE ]</h1>
         
-        <!-- Votre contenu spécifique va ici -->
+        <div class="example-window">
+            <h2>Fenêtre d'Exemple</h2>
+            <p>Ceci est une fenêtre de démonstration avec un bouton stylisé.</p>
+            <button class="example-button">Action</button>
+        </div>
 
     </div>
 
