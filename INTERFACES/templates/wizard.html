@@ -2,257 +2,257 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Mégastructure // Initialisation</title>
-    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <title>INITIALISATION SYSTÈME</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}">
     <style>
-        html { font-size: calc(14px + 0.2vw); }
+        /* Styles from aboutissement.html for consistency */
         body {
-            margin: 0;
-            font-family: 'Share Tech Mono', monospace;
-            background-color: #0d0d0d;
-            color: #00ffcc;
-            overflow: hidden;
-            font-size: 1rem;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
+            animation: fadeIn 1.5s ease-in-out;
         }
-        .grime-Overlay, .moving-structure { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; }
-        .grime-Overlay { background: url('/static/texture_grime.png') repeat; opacity: 0.08; z-index: 3; }
-        .moving-structure { background: url('/static/structure_moving.png') center center / cover no-repeat; opacity: 0.05; animation: drift 60s infinite linear; z-index: 1; }
-        @keyframes drift { 0% { transform: translate(0, 0) scale(1); } 50% { transform: translate(-1vw, 0.5vh) scale(1.05); } 100% { transform: translate(0, 0) scale(1); } }
-        @keyframes glitch { 0%, 100% { text-shadow: 0.05em 0 red, -0.05em 0 blue; } 50% { text-shadow: -0.05em 0 red, 0.05em 0 blue; } }
-        @keyframes success-flash { 0% { background-color: #0d0d0d; } 50% { background-color: #00ffcc; } 100% { background-color: #0d0d0d; } }
-
-        .wizard-container {
-            position: relative;
-            z-index: 4;
-            width: 90%;
-            max-width: 600px;
-            background: rgba(0, 10, 8, 0.6);
-            border: 1px solid rgba(0, 255, 204, 0.2);
+        .container {
+            width: 100%;
+            max-width: 700px;
             padding: 2rem;
+        }
+        .wizard-box {
+            background: rgba(0, 10, 8, 0.4);
+            border: 1px solid rgba(0, 255, 204, 0.2);
+            padding: 2rem 3rem;
             border-radius: 0.25rem;
             box-shadow: 0 0 25px rgba(0, 255, 204, 0.1);
             backdrop-filter: blur(5px);
-            text-align: center;
         }
-
         .wizard-step {
             display: none;
-            animation: fadeIn 0.5s ease-in-out;
         }
         .wizard-step.active {
             display: block;
+            animation: stepFadeIn 0.8s ease;
         }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes stepFadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
-        h1, h2 {
+        h2 {
             color: #ff33ff;
-            animation: glitch 2.5s infinite;
-            margin-top: 0;
+            text-shadow: 0 0 8px rgba(255, 51, 255, 0.5);
+            border-bottom: 1px solid rgba(255, 51, 255, 0.3);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
         }
-        h1 { font-size: clamp(1.8rem, 4vw, 2.5rem); }
-        h2 { font-size: clamp(1.5rem, 3vw, 2rem); }
-
         p {
-            color: rgba(0, 255, 204, 0.8);
             line-height: 1.6;
-            max-width: 50ch;
-            margin: 1rem auto;
+            color: rgba(0, 255, 204, 0.8);
         }
-        p.small-text {
-            font-size: 0.8rem;
-            opacity: 0.6;
+        .form-field {
+            margin-bottom: 1.5rem;
         }
-
-        .wizard-input {
+        .form-field label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: rgba(0, 255, 204, 0.7);
+        }
+        .form-field input {
             width: 100%;
             background: rgba(0, 0, 0, 0.5);
             border: 1px solid rgba(0, 255, 204, 0.3);
             color: #00ffcc;
             font-family: inherit;
             font-size: 1.1rem;
-            padding: 0.8rem;
+            padding: 0.7rem;
             border-radius: 0.2rem;
             box-sizing: border-box;
-            margin-bottom: 1rem;
-            text-align: center;
         }
-
-        .wizard-btn {
-            padding: 0.8rem 2rem;
-            font-family: inherit;
-            font-size: 1.1rem;
-            cursor: pointer;
-            border-radius: 0.2rem;
-            transition: all 0.2s ease;
-            background: #00ffcc;
-            border: 1px solid #00ffcc;
-            color: #0d0d0d;
-            margin-top: 1rem;
-        }
-        .wizard-btn:hover {
-            box-shadow: 0 0 15px rgba(0, 255, 204, 0.7);
-        }
-        .wizard-btn.secondary {
-            background: transparent;
-            color: #00ffcc;
-            margin-right: 1rem;
-        }
-
-        .button-group {
+        .input-with-button {
             display: flex;
-            justify-content: center;
-            gap: 1rem;
+            gap: 0.5rem;
         }
-
-        #notification-container {
-            position: fixed; top: 2vh; right: 2vw; z-index: 9999;
-            display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem;
+        .input-with-button input {
+            flex-grow: 1;
         }
-        .notification {
-            padding: 0.8rem 1.2rem; background: rgba(255, 85, 85, 0.1);
-            border-left: 3px solid #ff5555; color: #ff5555;
-            border-radius: 0.2rem; box-shadow: 0 0 15px rgba(255, 85, 85, 0.2);
-            backdrop-filter: blur(5px); animation: fadeInDown 0.5s ease forwards;
+        .input-with-button .btn {
+            flex-shrink: 0;
         }
-        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        .wizard-nav {
+            margin-top: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .progress-dots {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(0, 255, 204, 0.2);
+            transition: background 0.3s ease;
+        }
+        .dot.active {
+            background: #00ffcc;
+            box-shadow: 0 0 8px rgba(0, 255, 204, 0.7);
+        }
     </style>
 </head>
 <body>
-    <div class="moving-structure"></div>
-    <div class="grime-Overlay"></div>
-    <div id="notification-container"></div>
+    <div class="container">
+        <div class="wizard-box">
+            <form id="wizard-form">
+                <!-- Étape 1: Bienvenue -->
+                <div class="wizard-step active" id="step-1">
+                    <h2>INITIALISATION REQUISE</h2>
+                    <p>Bienvenue, Opérateur. Le système a détecté un premier lancement. Une configuration initiale est nécessaire pour crypter votre identité et sécuriser votre espace de travail personnel, le "Bunker".</p>
+                    <p>Veuillez suivre les instructions pour établir le protocole.</p>
+                </div>
 
-    <div class="wizard-container">
-        <div class="wizard-step active" id="step-1">
-            <h1>Mégastructure - activation initiée</h1>
-            <p>Avant toute connexion, votre identité numérique doit être scellée.</p>
-            <button class="wizard-btn" data-next="2">Engager la procédure</button>
-        </div>
+                <!-- Étape 2: Identité -->
+                <div class="wizard-step" id="step-2">
+                    <h2>PROTOCOLE D'IDENTITÉ</h2>
+                    <p>Créez votre identifiant unique et votre clé d'accès. Ces informations seront utilisées pour sécuriser l'accès à vos données.</p>
+                    <div class="form-field">
+                        <label for="pseudo">Pseudo</label>
+                        <input type="text" id="pseudo" name="pseudo" required>
+                    </div>
+                    <div class="form-field">
+                        <label for="password">Mot de Passe</label>
+                        <input type="password" id="password" name="password" required>
+                    </div>
+                </div>
 
-        <div class="wizard-step" id="step-2">
-            <h2>Étape 1: Identité cryptée</h2>
-            <p>Choisissez un pseudonyme codé, un masque derrière lequel vous opérerez. Sécurisez-le d’un mot de passe. Vos traces seront scellées dans le système.</p>
-            <input type="text" id="pseudo" class="wizard-input" placeholder="Choisissez un pseudo..." autocomplete="username">
-            <input type="password" id="password" class="wizard-input" placeholder="Créez un mot de passe..." autocomplete="new-password">
-            <div class="button-group">
-                <button class="wizard-btn secondary" data-back="1">Retour</button>
-                <button class="wizard-btn" data-next="3">Valider</button>
+                <!-- Étape 3: Bunker -->
+                <div class="wizard-step" id="step-3">
+                    <h2>CONFIGURATION DU BUNKER</h2>
+                    <p>Le Bunker est votre espace de stockage chiffré. Confirmez ou modifiez le chemin d'accès sur votre système hôte.</p>
+                    <div class="form-field">
+                        <label for="bunker_path">Chemin du Dossier Bunker</label>
+                        <div class="input-with-button">
+                            <input type="text" id="bunker_path" name="bunker_path" value="{{ default_config.user.user_folder_path }}" required>
+                            <button type="button" id="browse-bunker-btn" class="btn">Parcourir...</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Étape 4: Finalisation -->
+                <div class="wizard-step" id="step-4">
+                    <h2>CONFIGURATION TERMINÉE</h2>
+                    <p>Le protocole d'initialisation est terminé. Votre identité est sécurisée et le Bunker est prêt. Le système va maintenant redémarrer avec vos nouveaux paramètres.</p>
+                    <p>Préparez-vous à la connexion.</p>
+                </div>
+            </form>
+
+            <div class="wizard-nav">
+                <button id="prev-btn" class="btn btn-secondary" style="visibility: hidden;">Précédent</button>
+                <div class="progress-dots">
+                    <div class="dot active"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                </div>
+                <button id="next-btn" class="btn btn-primary">Suivant</button>
             </div>
-        </div>
-
-        <div class="wizard-step" id="step-3">
-            <h2>Étape 2: Bunker</h2>
-            <p>Le Bunker est votre sanctuaire, isolé dans la mégastructure. Confirmez sa localisation, mais restez vigilant — toute modification sera tracée.</p>
-            <input type="text" id="bunker_path" class="wizard-input">
-            <p class="small-text">Le chemin peut être réassigné, mais chaque changement est enregistré (Niveau 0).</p>
-            <div class="button-group">
-                <button class="wizard-btn secondary" data-back="2">Retour</button>
-                <button class="wizard-btn" data-next="4">Suivant</button>
-            </div>
-        </div>
-
-        <div class="wizard-step" id="step-4">
-            <h2>Étape 3: Finalisation</h2>
-            <p>La configuration de votre identité est achevée. Le Bunker est actif. Préparez-vous à l’intrication dans le système — aucune erreur ne sera tolérée.</p>
-            <button id="finish-btn" class="wizard-btn">Lancer l'Interface</button>
         </div>
     </div>
 
     <script>
         window.addEventListener('pywebviewready', () => {
             const steps = document.querySelectorAll('.wizard-step');
-            const buttons = document.querySelectorAll('.wizard-btn');
-            const finishBtn = document.getElementById('finish-btn');
-
-            const pseudoInput = document.getElementById('pseudo');
-            const passwordInput = document.getElementById('password');
+            const dots = document.querySelectorAll('.dot');
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            const form = document.getElementById('wizard-form');
             const bunkerPathInput = document.getElementById('bunker_path');
+            const browseBunkerBtn = document.getElementById('browse-bunker-btn');
+            let currentStep = 0;
 
-            // Pré-remplir le chemin du Bunker avec la valeur par défaut
-            try {
-                const defaultConfig = {{ default_config | tojson }};
-                bunkerPathInput.value = defaultConfig.user.user_folder_path;
-            } catch (e) {
-                console.error("Impossible de charger la configuration par défaut.");
-            }
+            function updateWizardState() {
+                steps.forEach((step, index) => {
+                    step.classList.toggle('active', index === currentStep);
+                });
+                dots.forEach((dot, index) => {
+                    dot.classList.toggle('active', index === currentStep);
+                });
 
-            function showNotification(message, type = 'error', duration = 4000) {
-                const container = document.getElementById('notification-container');
-                if (!container) return;
-                const notif = document.createElement('div');
-                notif.className = `notification ${type}`;
-                notif.textContent = message;
-                container.appendChild(notif);
-                setTimeout(() => {
-                    notif.style.transition = 'opacity 0.5s ease';
-                    notif.style.opacity = '0';
-                    notif.addEventListener('transitionend', () => notif.remove());
-                }, duration);
-            }
+                prevBtn.style.visibility = currentStep > 0 ? 'visible' : 'hidden';
 
-            function goToStep(stepNumber) {
-                steps.forEach(step => step.classList.remove('active'));
-                const nextStep = document.getElementById(`step-${stepNumber}`);
-                if (nextStep) {
-                    nextStep.classList.add('active');
+                if (currentStep === steps.length - 1) {
+                    nextBtn.textContent = 'Terminer';
+                } else {
+                    nextBtn.textContent = 'Suivant';
                 }
             }
 
-            buttons.forEach(button => {
-                button.addEventListener('click', () => {
-                    const nextStep = button.dataset.next;
-                    const backStep = button.dataset.back;
-
-                    if (nextStep) {
-                        // Validation avant de passer à l'étape suivante
-                        if (nextStep === '3') {
-                            if (!pseudoInput.value.trim() || !passwordInput.value) {
-                                showNotification("Le pseudo et le mot de passe sont requis.");
-                                return;
-                            }
-                        }
-                        if (nextStep === '4') {
-                            if (!bunkerPathInput.value.trim()) {
-                                showNotification("Le chemin du Bunker est requis.");
-                                return;
-                            }
-                        }
-                        goToStep(nextStep);
-                    } else if (backStep) {
-                        goToStep(backStep);
+            function validateStep(stepIndex) {
+                const step = steps[stepIndex];
+                const inputs = step.querySelectorAll('input[required]');
+                for (const input of inputs) {
+                    if (!input.value.trim()) {
+                        alert(`Le champ "${input.previousElementSibling.textContent}" est requis.`);
+                        input.focus();
+                        return false;
                     }
-                });
-            });
+                }
+                return true;
+            }
 
-            finishBtn.addEventListener('click', async () => {
-                const setupData = {
-                    pseudo: pseudoInput.value.trim(),
-                    password: passwordInput.value,
-                    bunker_path: bunkerPathInput.value.trim()
-                };
+            async function finishSetup() {
+                const formData = new FormData(form);
+                const setupData = Object.fromEntries(formData.entries());
+                
+                nextBtn.disabled = true;
+                nextBtn.textContent = 'Initialisation...';
 
-                if (!setupData.pseudo || !setupData.password || !setupData.bunker_path) {
-                    showNotification("Toutes les informations sont requises pour finaliser.");
+                try {
+                    const result = await window.pywebview.api.complete_first_run_setup(setupData);
+                    if (result.status === 'success') {
+                        alert('Configuration réussie. Redirection vers l\'interface principale.');
+                        window.location.href = '/terminaux.html';
+                    } else {
+                        alert(`Erreur de configuration : ${result.message}`);
+                        nextBtn.disabled = false;
+                        nextBtn.textContent = 'Terminer';
+                    }
+                } catch (e) {
+                    alert(`Une erreur critique est survenue : ${e}`);
+                    nextBtn.disabled = false;
+                    nextBtn.textContent = 'Terminer';
+                }
+            }
+
+            nextBtn.addEventListener('click', () => {
+                if (!validateStep(currentStep)) {
                     return;
                 }
 
-                const result = await window.pywebview.api.complete_first_run_setup(setupData);
-
-                if (result.status === 'success') {
-                    document.body.style.animation = "success-flash 0.8s forwards";
-                    setTimeout(() => {
-                        window.location.href = '/terminaux.html';
-                    }, 800);
+                if (currentStep < steps.length - 1) {
+                    currentStep++;
+                    updateWizardState();
                 } else {
-                    showNotification(`Erreur de configuration: ${result.message}`);
+                    finishSetup();
                 }
             });
+
+            prevBtn.addEventListener('click', () => {
+                if (currentStep > 0) {
+                    currentStep--;
+                    updateWizardState();
+                }
+            });
+
+            if (browseBunkerBtn) {
+                browseBunkerBtn.addEventListener('click', async () => {
+                    const result = await window.pywebview.api.open_folder_dialog();
+                    if (result.status === 'success') {
+                        bunkerPathInput.value = result.path;
+                    }
+                });
+            }
+
+            updateWizardState();
         });
     </script>
 </body>

@@ -11,10 +11,9 @@ Ce projet est une application de bureau qui simule une interface informatique d'
 -   **Interface Immersive**: Une UI inspirée du cyberpunk avec des animations, des effets sonores et une typographie stylisée.
 -   **Logicateur (IA)**: Intégration avec plusieurs fournisseurs d'IA (DeepSeek, OpenAI, Google, Groq, Ollama) pour une assistance conversationnelle.
 -   **Bunker Sécurisé**: Un espace utilisateur local pour stocker, créer, renommer et supprimer des fichiers/dossiers, avec une gestion par glisser-déposer.
-    -   Interface physique avec des "cercles de données" qui flottent et entrent en collision.
-    -   Mécaniques de gameplay avec des fichiers spéciaux (contaminés, bloqués, keyloggers simulés).
 -   **Système d'Extensions Modulaire**: Une architecture robuste permettant d'installer et de désinstaller des fonctionnalités via le "Portail Conteneur".
 -   **Système d'Authentification Avancé**: Gestion de 3 rôles (Concepteur, Testeur, Utilisateur) avec des privilèges distincts et mots de passe hachés (bcrypt).
+-   **Système de Bots (BOTS-KUSO-YARO)**: Un système de ressources stratégiques où les utilisateurs génèrent et consomment des "bots" pour des actions avancées (scans, attaques simulées).
 -   **Extension OSINT Aggregator**: Un outil puissant pour mener des enquêtes en sources ouvertes, avec sélection de modules, export de rapports et analyse par l'IA.
 -   **Chargeur d'Applications Universel (en développement)**: Une sandbox basée sur Docker pour exécuter des applications dans un environnement isolé.
 -   **VPN Vénère Natif**: Un visualiseur de connexion VPN avec une intégration de proxy pour les requêtes externes.
@@ -23,9 +22,9 @@ Ce projet est une application de bureau qui simule une interface informatique d'
 
 ## Roadmap / Plan d'Action
 
-Le projet est très avancé. Les fonctionnalités majeures comme le système d'extensions, le Bunker interactif, le Chargeur d'Applications et l'authentification par rôles sont en place. Le développement se concentre sur :
--   La finalisation de la **Phase 7**, avec l'ajout des boutons de sécurité dans les paramètres.
--   L'implémentation de la **Phase 8**, une session de première utilisation guidée pour améliorer l'accueil des nouveaux utilisateurs.
+Le projet est très avancé. Les fonctionnalités majeures comme le système d'extensions, le Bunker interactif, le Chargeur d'Applications, l'authentification par rôles et le système de bots sont en place. Le développement se concentre sur :
+-   La finalisation du **système de mise à jour in-app** (Phase 13).
+-   L'amélioration continue de l'expérience utilisateur et la correction de bugs.
 
 Pour une liste complète des fonctionnalités terminées, en cours et planifiées, avec les détails de chaque phase de développement, veuillez consulter notre **Roadmap détaillée**.
 

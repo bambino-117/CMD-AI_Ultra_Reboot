@@ -1,0 +1,19 @@
+{
+  "application": {
+    "name": "CMD-AI Ultra Reboot",
+    "latest_version": "1.1.0",
+    "release_date": "2024-09-06",
+    "changelog_url": "https://github.com/bambino-117/CMD-AI_Ultra_Reboot/releases/tag/v1.1.0",
+    "download_url": "https://github.com/bambino-117/CMD-AI_Ultra_Reboot/releases/download/v1.1.0/CMD-AI_PUBLIC.zip"
+  },
+  "extensions": {
+    "OSINT Aggregator": {
+      "latest_version": "1.2.0",
+      "release_date": "2024-09-05"
+    },
+    "BOTS-KUSO-YARO": {
+      "latest_version": "1.0.1",
+      "release_date": "2024-09-04"
+    }
+  }
+}

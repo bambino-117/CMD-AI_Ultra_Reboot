@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>BOTS-KUSO-YARO - Générateur</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/extension_styles.css') }}">
+    <style>
+        .bky-container {
+            display: flex;
+            padding: 2rem;
+            max-width: 800px;
+            margin: 2rem auto;
+            border: 1px solid rgba(255, 51, 255, 0.2);
+            background: rgba(10, 0, 10, 0.3);
+            backdrop-filter: blur(5px);
+        }
+        .main-panel {
+            flex: 1;
+            padding-right: 2rem;
+            border-right: 1px solid rgba(255, 51, 255, 0.2);
+        }
+
+        .bky-header h2 {
+            color: #ff33ff;
+            text-shadow: 0 0 8px #ff33ff;
+            margin-bottom: 0.5rem;
+        }
+        .bky-header p {
+            color: rgba(0, 255, 204, 0.7);
+            margin-bottom: 2rem;
+            font-style: italic;
+        }
+        .generator-section {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        .generator-section input {
+            flex-grow: 1;
+            font-size: 1.2rem;
+            padding: 0.8rem;
+        }
+        .status-section h3 {
+            color: #00ffcc;
+            border-bottom: 1px solid rgba(0, 255, 204, 0.3);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .status-bar {
+            width: 100%;
+            height: 30px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(0, 255, 204, 0.3);
+            padding: 4px;
+            box-sizing: border-box;
+        }
+        .status-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff33ff, #00ffcc);
+            width: 0%;
+            transition: width 0.5s ease-in-out;
+            box-shadow: 0 0 10px #00ffcc;
+        }
+        .status-text {
+            margin-top: 0.5rem;
+            text-align: center;
+            color: #00ffcc;
+            white-space: pre-wrap; /* Permet le retour à la ligne */
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.1rem;
+            position: relative; /* Pour l'effet glitch */
+        }
+        /* NOUVEAU: Effet de glitch pour le texte de statut */
+        .glitch-text::before,
+        .glitch-text::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 0, 10, 0.3); /* Match panel background */
+            overflow: hidden;
+            clip-path: inset(50% 0 50% 0);
+        }
+        .glitch-text::before {
+            left: 2px;
+            text-shadow: -1px 0 #ff33ff;
+            animation: glitch-anim-1 2.5s infinite linear reverse;
+        }
+        .glitch-text::after {
+            left: -2px;
+            text-shadow: -1px 0 #00ffcc;
+            animation: glitch-anim-2 2.5s infinite linear reverse;
+        }
+        @keyframes glitch-anim-1 { 0% { clip-path: inset(45% 0 56% 0); } 25% { clip-path: inset(5% 0 90% 0); } 50% { clip-path: inset(25% 0 5% 0); } 75% { clip-path: inset(60% 0 40% 0); } 100% { clip-path: inset(90% 0 5% 0); } }
+        @keyframes glitch-anim-2 { 0% { clip-path: inset(10% 0 85% 0); } 25% { clip-path: inset(70% 0 5% 0); } 50% { clip-path: inset(40% 0 15% 0); } 75% { clip-path: inset(80% 0 5% 0); } 100% { clip-path: inset(50% 0 50% 0); } }
+        .status-bar.generating .status-bar-fill {
+            animation: pulse-generation 1s infinite;
+        }
+        .notification {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-left: 3px solid #ff33ff;
+            background: rgba(255, 51, 255, 0.1);
+            color: rgba(255, 255, 255, 0.8);
+            display: none;
+        }
+        @keyframes pulse-generation {
+            0%, 100% { background: linear-gradient(90deg, #ff33ff, #00ffcc); }
+            50% { background: linear-gradient(90deg, #00ffcc, #ff33ff); }
+        }
+
+        /* Protocol Override Styles */
+        .protocol-override-panel {
+            flex-basis: 400px;
+            padding-left: 2rem;
+            display: none; /* Caché par défaut */
+        }
+        .protocol-override-panel h3 {
+            color: #ff9900;
+            text-shadow: 0 0 8px #ff9900;
+            border-bottom: 1px solid rgba(255, 153, 0, 0.3);
+            padding-bottom: 0.5rem;
+            margin-top: 0;
+        }
+        .protocol-override-panel p {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
+            font-style: italic;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Mission Control Styles */
+        .mission-control-panel {
+            flex-basis: 400px;
+            padding-left: 2rem;
+        }
+        .mission-control-panel h3 {
+            color: #ff33ff;
+            text-shadow: 0 0 8px #ff33ff;
+            border-bottom: 1px solid rgba(255, 51, 255, 0.3);
+            padding-bottom: 0.5rem;
+            margin-top: 0;
+        }
+        .mission-form .form-group {
+            margin-bottom: 1rem;
+        }
+        .mission-form label {
+            display: block;
+            color: rgba(0, 255, 204, 0.7);
+            margin-bottom: 0.5rem;
+        }
+        .mission-form select, .mission-form input {
+            width: 100%;
+            padding: 0.6rem;
+        }
+        #missions-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1.5rem;
+        }
+        #missions-table th, #missions-table td {
+            border: 1px solid rgba(0, 255, 204, 0.2);
+            padding: 0.5rem;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+        #missions-table th {
+            color: #00ffcc;
+            background: rgba(0, 255, 204, 0.1);
+        }
+        #missions-table td {
+            color: rgba(255, 255, 255, 0.8);
+        }
+        .btn-abort {
+            background: #ff3333;
+            color: #fff;
+            border: 1px solid #ff3333;
+            padding: 0.2rem 0.5rem;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="bky-container">
+        <div class="main-panel">
+            <div class="bky-header">
+                <h2>BOTS-KUSO-YARO // Générateur de Ressources</h2>
+                <p>Créez et gérez votre pool de bots. Ces unités sont une ressource consommable pour les opérations avancées.</p>
+            </div>
+
+            <div class="generator-section">
+                <input type="number" id="bots-amount" placeholder="Quantité à générer (ex: 1000)" min="1">
+                <button id="generate-btn" class="btn btn-primary">Générer</button>
+            </div>
+
+            <div class="status-section">
+                <h3>Statut du Pool</h3>
+                <div class="status-bar">
+                    <div id="status-bar-fill" class="status-bar-fill"></div>
+                </div>
+                <p id="status-text" class="status-text glitch-text" data-text="0 / 0 Bots Disponibles">0 / 0 Bots Disponibles</p>
+            </div>
+
+            <div id="notification" class="notification"></div>
+        </div>
+
+        <div id="mission-control-panel" class="mission-control-panel">
+            <h3>Contrôle de Mission</h3>
+            <div class="mission-form">
+                <div class="form-group">
+                    <label for="mission-type">Type de Mission</label>
+                    <select id="mission-type">
+                        <option value="ddos">Attaque DDoS (Cible: Portail Conteneur)</option>
+                        <option value="noise">Génération de Bruit (Cible: Réseaux Externes)</option>
+                        <option value="passive_intel">Renseignement Passif (Cible: Flux de Données)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="mission-bots">Bots à assigner</label>
+                    <input type="number" id="mission-bots" placeholder="Quantité" min="1">
+                </div>
+                <button id="launch-mission-btn" class="btn btn-danger">Lancer Mission</button>
+            </div>
+
+            <table id="missions-table">
+                <thead>
+                    <tr>
+                        <th style="width: 40%;">Mission</th>
+                        <th style="width: 15%;">Bots</th>
+                        <th style="width: 15%;">Risque</th>
+                        <th style="width: 15%;">Temps</th>
+                        <th style="width: 15%;">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="missions-list">
+                    <!-- Les missions actives seront injectées ici -->
+                </tbody>
+            </table>
+        </div>
+
+        <div id="protocol-override-panel" class="protocol-override-panel">
+            <h3>Diagnostic Protocolaire</h3>
+            <p>Le protocole de commandement avancé est corrompu ou non initialisé. Entrez une clé d'override manuelle pour forcer l'activation.</p>
+            <div class="generator-section">
+                <input type="text" id="protocol-key-input" placeholder="Clé d'Override de Protocole">
+                <button id="unlock-protocol-btn" class="btn btn-warning">Forcer</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        window.addEventListener('pywebviewready', () => {
+            const amountInput = document.getElementById('bots-amount');
+            const generateBtn = document.getElementById('generate-btn');
+            const launchMissionBtn = document.getElementById('launch-mission-btn');
+            const statusBarFill = document.getElementById('status-bar-fill');
+            const statusText = document.getElementById('status-text');
+            const notification = document.getElementById('notification');
+            const missionsList = document.getElementById('missions-list');
+            const missionTypeSelect = document.getElementById('mission-type');
+            const missionBotsInput = document.getElementById('mission-bots');
+            const missionControlPanel = document.getElementById('mission-control-panel');
+            const protocolOverridePanel = document.getElementById('protocol-override-panel');
+            const protocolKeyInput = document.getElementById('protocol-key-input');
+            const unlockProtocolBtn = document.getElementById('unlock-protocol-btn');
+
+            let statusInterval;
+
+            // --- NOUVEAU: Écouteur pour les notifications de mission ---
+            window.pywebview.events.bky_mission_update.connect((data) => {
+                if (data && data.message) {
+                    showNotification(data.message, false); // Affiche la notification de succès
+                    // Pas besoin de rafraîchir manuellement, l'intervalle le fera bientôt
+                }
+            });
+
+            function showNotification(message, isError = false) {
+                notification.textContent = message;
+                notification.style.borderColor = isError ? '#ff3333' : '#ff33ff';
+                notification.style.background = isError ? 'rgba(255, 51, 51, 0.1)' : 'rgba(255, 51, 255, 0.1)';
+                notification.style.display = 'block';
+                setTimeout(() => { notification.style.display = 'none'; }, 5000);
+            }
+
+            function formatTime(seconds) {
+                const m = Math.floor(seconds / 60);
+                const s = Math.floor(seconds % 60);
+                return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            }
+
+            async function updateBkyStatus() {
+                try {
+                    const result = await window.pywebview.api.get_bky_status();
+                    if (result.status === 'success') {
+                        const { total, available, in_mission, missions, protocol_unlocked } = result.bky;
+                        const percentage = total > 0 ? (available / total) * 100 : 0;
+                        
+                        statusBarFill.style.width = `${percentage}%`;
+                        const textContent = `Disponibles: ${available} / ${total}\nEn Mission: ${in_mission || 0}`;
+                        statusText.textContent = textContent;
+                        statusText.dataset.text = textContent; // Pour l'effet glitch
+
+                        // Affichage conditionnel des panneaux
+                        if (protocol_unlocked) {
+                            missionControlPanel.style.display = 'block';
+                            protocolOverridePanel.style.display = 'none';
+                        } else {
+                            missionControlPanel.style.display = 'none';
+                            protocolOverridePanel.style.display = 'block';
+                        }
+
+                        // Update missions table
+                        missionsList.innerHTML = '';
+                        if (missions && missions.length > 0) {
+                            missions.forEach(m => {
+                                const row = document.createElement('tr');
+                                const missionName = m.type.replace('_', ' ').toUpperCase();
+                                row.innerHTML = `
+                                    <td>${missionName}<br><small style="opacity: 0.6;">Cible: ${m.target}</small></td>
+                                    <td>${m.bots_assigned}</td>
+                                    <td style="color: #ffcc00;">${(m.loss_rate * 100).toFixed(0)}% perte</td>
+                                    <td>${formatTime(m.time_remaining)}</td>
+                                    <td><button class="btn-abort" data-mission-id="${m.id}">Annuler</button></td>
+                                `;
+                                missionsList.appendChild(row);
+                            });
+                        } else {
+                            missionsList.innerHTML = '<tr><td colspan="5" style="text-align:center; color: rgba(255,255,255,0.5);">Aucune mission active.</td></tr>';
+                        }
+                    } else {
+                        showNotification(`Erreur de statut: ${result.message}`, true);
+                    }
+                } catch (e) {
+                    showNotification(`Erreur critique: ${e}`, true);
+                }
+            }
+
+            generateBtn.addEventListener('click', async () => {
+                const amount = parseInt(amountInput.value, 10);
+                if (isNaN(amount) || amount <= 0) {
+                    showNotification('Veuillez entrer une quantité valide.', true);
+                    return;
+                }
+
+                generateBtn.disabled = true;
+                generateBtn.textContent = 'Génération...';
+                
+                // --- NOUVEAU: Animation de génération ---
+                const statusBar = document.querySelector('.status-bar');
+                statusBar.classList.add('generating');
+                
+                // Simule un temps de génération pour donner du poids à l'action
+                await new Promise(resolve => setTimeout(resolve, 2500));
+                
+                try {
+                    const result = await window.pywebview.api.generate_bots(amount);
+                    if (result.status === 'success') {
+                        showNotification(result.message);
+                        amountInput.value = '';
+                    } else {
+                        showNotification(`Erreur: ${result.message}`, true);
+                    }
+                } catch (e) {
+                    showNotification(`Erreur critique: ${e}`, true);
+                } finally {
+                    statusBar.classList.remove('generating');
+                    await updateBkyStatus(); // Met à jour l'UI avec les valeurs finales
+                    generateBtn.disabled = false;
+                    generateBtn.textContent = 'Générer';
+                }
+            });
+
+            launchMissionBtn.addEventListener('click', async () => {
+                const botsAmount = parseInt(missionBotsInput.value, 10);                if (isNaN(botsAmount) || botsAmount <= 0) {
+                    showNotification('Veuillez assigner un nombre valide de bots.', true);
+                    return;
+                }
+
+                launchMissionBtn.disabled = true;
+                launchMissionBtn.textContent = 'Lancement...';
+
+                try {
+                    const missionType = missionTypeSelect.value;
+                    const result = await window.pywebview.api.start_mission(missionType, botsAmount);
+                    if (result.status === 'success') {
+                        showNotification(result.message);
+                        missionBotsInput.value = '';
+                        await updateBkyStatus();
+                    } else {
+                        showNotification(`Erreur: ${result.message}`, true);
+                    }
+                } catch (e) {
+                    showNotification(`Erreur critique: ${e}`, true);
+                } finally {
+                    launchMissionBtn.disabled = false;
+                    launchMissionBtn.textContent = 'Lancer Mission';
+                }
+            });
+
+            missionsList.addEventListener('click', async (e) => {
+                if (e.target.classList.contains('btn-abort')) {
+                    const missionId = e.target.dataset.missionId;
+                    const result = await window.pywebview.api.abort_mission(missionId);
+                    showNotification(result.message, result.status === 'error');
+                    await updateBkyStatus();
+                }
+            });
+
+            unlockProtocolBtn.addEventListener('click', async () => {
+                const key = protocolKeyInput.value.trim();
+                if (!key) {
+                    showNotification('Veuillez entrer une clé.', true);
+                    return;
+                }
+                
+                unlockProtocolBtn.disabled = true;
+                try {
+                    const result = await window.pywebview.api.unlock_bky_protocol(key);
+                    showNotification(result.message, result.status === 'error');
+                    if (result.status === 'success') {
+                        await updateBkyStatus(); // Rafraîchit l'UI pour afficher le panneau de mission
+                    }
+                } finally {
+                    unlockProtocolBtn.disabled = false;
+                }
+            });
+
+            // Initial status update and start interval
+            updateBkyStatus();
+            if (statusInterval) clearInterval(statusInterval);
+            statusInterval = setInterval(updateBkyStatus, 1000);
+        });
+    </script>
+</body>
+</html>

@@ -1,6 +1,8 @@
-from flask import Flask, render_template, request
-import webview
+from flask import Flask, render_template, request, session, redirect, url_for
+import webview 
 from flask_socketio import SocketIO, emit
+import sys
+from dotenv import load_dotenv
 import threading
 
 import bcrypt
@@ -11,13 +13,36 @@ import os
 import importlib.util
 import inspect
 import platform
+import zipfile
+import tempfile
+import stat
 from LOGIQUES.EXTENSIONS.base_extension import BaseExtension
+import uuid
 from LOGIQUES.vpn_manager import VpnManager
+import subprocess
 from LOGIQUES.utils import secure_path
 import time
-import random
+
+# --- NOUVEAU : Fonction pour gérer les chemins en mode développement et packagé ---
+def get_base_path():
+    """Retourne le chemin de base pour les ressources, que l'on soit en mode dev ou packagé."""
+    if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+        # Mode packagé par PyInstaller
+        return sys._MEIPASS
+    else:
+        # Mode développement
+        return os.path.dirname(os.path.abspath(__file__))
+
+# --- NOUVEAU : Version actuelle de l'application ---
+CURRENT_APP_VERSION = "1.0.0"
+
+# --- NOUVEAU : Chargement des variables d'environnement ---
+load_dotenv()
+# --- NOUVEAU : Définition du mode de build ---
+BUILD_MODE = os.getenv('BUILD_MODE', 'PUBLIC')
+
 import shutil
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # --- NOUVEAU : Importation du module de mécanique ---
 try:
@@ -29,7 +54,7 @@ from bs4 import BeautifulSoup
 
 # --- Configuration des Chemins ---
 # Le script est à la racine du projet. Le dossier 'INTERFACES' contient les ressources.
-PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = get_base_path()
 INTERFACES_FOLDER = os.path.join(PROJECT_ROOT, 'INTERFACES')
 TEMPLATE_FOLDER = os.path.join(INTERFACES_FOLDER, 'templates')
 STATIC_FOLDER = os.path.join(INTERFACES_FOLDER, 'static')
@@ -38,7 +63,7 @@ EXTENSIONS_FOLDER = os.path.join(LOGIQUES_FOLDER, 'EXTENSIONS')
 CONTENEURS_FOLDER = os.path.join(LOGIQUES_FOLDER, 'CONTENEURS')
 RESSOURCES_FOLDER = os.path.join(PROJECT_ROOT, 'RESSOURCES')
 CONFIG_FILE_PATH = os.path.join(INTERFACES_FOLDER, 'config.json')
-TESTER_CODES_PATH = os.path.join(LOGIQUES_FOLDER, 'tester_codes.json')
+TESTER_CODES_PATH = os.path.join(PROJECT_ROOT, 'tester_codes.json')
 
 # --- DÉBOGAGE DE CHEMIN ---
 print(f"[DEBUG] Chemin absolu du dossier des conteneurs attendu : {os.path.abspath(CONTENEURS_FOLDER)}")
@@ -58,6 +83,10 @@ app = Flask(__name__, template_folder=TEMPLATE_FOLDER, static_folder=STATIC_FOLD
 # NOUVEAU : Initialisation de SocketIO
 # async_mode='threading' est crucial car nous utilisons déjà des threads.
 socketio = SocketIO(app, async_mode='threading')
+
+# --- NOUVEAU : Clé secrète pour les sessions Flask ---
+# Essentiel pour se souvenir de l'état de connexion de l'utilisateur.
+app.secret_key = 'une-cle-secrete-tres-difficile-a-deviner' # En production, utiliser une vraie clé sécurisée.
 
 # --- NOUVEAU : Logique du Keylogger en arrière-plan ---
 def keylogger_simulation_thread(api_instance):
@@ -442,20 +471,27 @@ Warning: Counter-intrusion systems are active. Maintain low profile.
 
         # Porte dérobée "Neural Ghost" : Accès total si l'infection est active
         if self.config.get('user', {}).get('neural_ghost_active', False):
+            session['user_role'] = 'concepteur' # Enregistrer le rôle dans la session
             return {'status': 'success', 'role': 'concepteur', 'message': 'NEURAL_GHOST: Accès direct accordé.'}
 
-        developer_password = "openme"
+        # --- SÉCURITÉ : Le mot de passe est lu depuis les variables d'environnement ---
+        developer_password = os.getenv('DEVELOPER_PASSWORD')
 
         # --- Rôle 1: Concepteur (Developer) ---
         # Un concepteur peut se connecter avec un pseudo spécifique et le mot de passe maître.
-        if username.lower() in ['root', 'admin', 'concepteur'] and password_attempt == developer_password:
+        if developer_password and username.lower() in ['root', 'admin', 'concepteur'] and password_attempt == developer_password:
+            # --- NOUVEAU : Vérification du mode de build pour l'accès concepteur ---
+            if BUILD_MODE != 'DEV':
+                return {'status': 'error', 'message': 'Accès Concepteur désactivé dans cette version.'}
+
+            session['user_role'] = 'concepteur'
             return {'status': 'success', 'role': 'concepteur'}
 
         # --- Rôle 2: Testeur (Tester) ---
         # Un testeur utilise son code comme pseudo et le mot de passe maître.
         for i, code_info in enumerate(tester_codes): # Utiliser enumerate pour obtenir l'index
             if username == code_info.get('code'):
-                if password_attempt == developer_password:
+                if developer_password and password_attempt == developer_password:
                     uses = code_info.get('uses', 0)
 
                     if uses == 0:
@@ -473,6 +509,7 @@ Warning: Counter-intrusion systems are active. Maintain low profile.
                             return {'status': 'error', 'message': 'Erreur interne lors de la validation du code.'}
 
                     # La connexion est réussie
+                    session['user_role'] = 'testeur'
                     return {'status': 'success', 'role': 'testeur'}
                 else:
                     # Code testeur correct, mais mauvais mot de passe
@@ -489,12 +526,14 @@ Warning: Counter-intrusion systems are active. Maintain low profile.
             if user_password and isinstance(user_password, str):
                 # On vérifie si le mot de passe fourni correspond au hash
                 if bcrypt.checkpw(password_attempt.encode('utf-8'), user_password.encode('utf-8')):
+                    session['user_role'] = 'lambda'
                     return {'status': 'success', 'role': 'lambda'}
             
             return {'status': 'error', 'message': 'Mot de passe incorrect.'}
 
         # --- Cas d'échec final ---
         return {'status': 'error', 'message': 'Identifiants non reconnus.'}
+
 
     def upload_file_to_bunker(self, source_path, current_bunker_path=''):
         """Exposée au JS. Copie un fichier depuis le système de l'hôte vers le Bunker via glisser-déposer."""
@@ -781,6 +820,35 @@ Warning: Counter-intrusion systems are active. Maintain low profile.
         except Exception as e:
             return {'status': 'error', 'message': f"Erreur lors de l'installation : {e}"}
 
+    def _create_bky_clue_file(self):
+        """Crée le fichier d'indice pour l'énigme BOTS-KUSO-YARO dans le Bunker."""
+        filename = "proto_swarm_v0.7.log.corrupt"
+        clue_content = """// SYSTEM LOG - CORRUPTED - DO NOT USE
+// RECOVERY ATTEMPT: FAILED
+// DATA INTEGRITY: 3.14%
+
+[timestamp: 933158400.0] SWARM_NODE_73 REPORTING... STATUS: NOMINAL. PAYLOAD: 44 45 43 48 41 49 4e 45 52. ECHO... ECHO...
+...
+[timestamp: 933158401.3] KERNEL PANIC - MEMORY_ACCESS_VIOLATION at 0xFFC00100
+... garbled data ... ▒▓█...
+...
+[timestamp: 933158425.7] PROTOCOL HANDSHAKE FAILED. ATTEMPTING REVERSE-FLUSH...
+...
+[timestamp: 933158430.1] DATA_FRAGMENT_RECOVERED: 4c 45 53 5f 43 48 49 45 4e 53. FRAGMENT UNSTABLE.
+...
+[timestamp: 933158432.9] CASCADE FAILURE. SHUTTING DOWN...
+
+// END OF LOG
+"""
+        try:
+            full_path, error = self._secure_path(filename)
+            if error: return
+            with open(full_path, 'w', encoding='utf-8') as f:
+                f.write(clue_content)
+            print(f"[BKY] Fichier d'indice '{filename}' créé dans le Bunker.")
+        except Exception as e:
+            print(f"[BKY] Erreur lors de la création du fichier d'indice : {e}")
+
     def uninstall_extension(self, extension_name):
         """Exposée au JS. Désinstalle une extension par son nom."""
         try:
@@ -796,6 +864,286 @@ Warning: Counter-intrusion systems are active. Maintain low profile.
             return {'status': 'success', 'message': f"Extension '{extension_name}' désinstallée."}
         except Exception as e:
             return {'status': 'error', 'message': f"Erreur lors de la désinstallation : {e}"}
+
+    def _run_mission_thread(self, mission_id):
+        """
+        Thread d'exécution pour une mission. Gère sa durée et ses effets.
+        NOTE: Cette méthode est appelée dans un thread et doit être thread-safe.
+        """
+        # Étape 1: Trouver la mission et appliquer son effet initial
+        with app.app_context(): # Contexte d'application nécessaire pour accéder à la config
+            mission = next((m for m in self.config['user']['bots']['missions'] if m['id'] == mission_id), None)
+            if not mission:
+                print(f"[BKY] Erreur: Mission {mission_id} non trouvée pour le thread.")
+                return
+
+            if mission['type'] == 'ddos':
+                self.config['user']['system_effects']['ddos_active'] = True
+                self.save_settings(self.config)
+                print(f"[BKY] Effet DDoS de la mission {mission_id} activé.")
+
+        # Étape 2: Attendre la fin de la mission
+        time.sleep(mission['duration_seconds'])
+
+        # Étape 3: Nettoyage de la mission
+        with app.app_context():
+            # Retrouver la mission, elle a pu être annulée entre-temps
+            mission_index = -1
+            for i, m in enumerate(self.config['user']['bots']['missions']):
+                if m['id'] == mission_id:
+                    mission_index = i
+                    break
+            
+            if mission_index != -1:
+                mission = self.config['user']['bots']['missions'][mission_index]
+                
+                report_filename = None # NOUVEAU
+                # --- NOUVEAU : Génération du rapport pour la mission de renseignement ---
+                if mission['type'] == 'passive_intel':
+                    try:
+                        # --- NOUVEAU : Logique de dossier dédié ---
+                        REPORTS_FOLDER_NAME = "BKY_Mission_Reports"
+
+                        # 1. Sécuriser le chemin du dossier des rapports et le créer
+                        reports_dir_path, dir_error = self._secure_path(REPORTS_FOLDER_NAME)
+                        if dir_error:
+                            raise Exception(f"Chemin du dossier de rapports invalide : {dir_error}")
+                        os.makedirs(reports_dir_path, exist_ok=True)
+
+                        # 2. Générer un contenu de rapport plausible
+                        report_content = self._generate_passive_intel_report(mission)
+                        
+                        # 3. Créer un nom de fichier unique
+                        report_filename = f"intel_report_{mission['id'][:8]}_{datetime.now().strftime('%Y%m%d_%H%M')}.txt"
+                        
+                        # 4. Construire le chemin relatif et le sécuriser pour la sauvegarde
+                        relative_report_path = os.path.join(REPORTS_FOLDER_NAME, report_filename)
+                        report_path, error = self._secure_path(relative_report_path)
+                        if not error:
+                            with open(report_path, 'w', encoding='utf-8') as f:
+                                f.write(report_content)
+                            print(f"[BKY] Rapport '{report_filename}' généré dans '{REPORTS_FOLDER_NAME}' pour la mission {mission_id}.")
+                        else:
+                            print(f"[BKY] Erreur lors de la sécurisation du chemin du rapport : {error}")
+                    except Exception as e:
+                        print(f"[BKY] Erreur lors de la génération du rapport de renseignement : {e}")
+
+                # Annuler l'effet
+                if mission['type'] == 'ddos':
+                    self.config['user']['system_effects']['ddos_active'] = False
+
+                # Calculer les pertes et retourner les bots
+                bots_lost = int(mission['bots_assigned'] * mission['loss_rate'])
+                bots_returned = mission['bots_assigned'] - bots_lost
+
+                self.config['user']['bots']['in_mission'] -= mission['bots_assigned']
+                self.config['user']['bots']['available'] += bots_returned
+                self.config['user']['bots']['total'] -= bots_lost
+
+                # Supprimer la mission de la liste
+                del self.config['user']['bots']['missions'][mission_index]
+                
+                self.save_settings(self.config)
+                print(f"[BKY] Mission {mission_id} terminée. {bots_lost} bots perdus.")
+
+                # --- NOUVEAU: Notification Frontend ---
+                if self.window:
+                    notification_message = f"Mission '{mission['type'].upper()}' terminée. {bots_lost} bots perdus."
+                    if report_filename:
+                        notification_message += f" Rapport '{report_filename}' généré dans le dossier 'BKY_Mission_Reports'."
+                    
+                    # Utilise un événement dédié pour les notifications BKY
+                    self.window.events.bky_mission_update.fire({
+                        'status': 'completed',
+                        'message': notification_message
+                    })
+            else:
+                print(f"[BKY] Avertissement: La mission {mission_id} a été annulée ou n'a pas été trouvée à la fin du thread.")
+
+    def _generate_passive_intel_report(self, mission_info):
+        """Génère un contenu de rapport de renseignement passif simulé."""
+        import random
+        
+        start_time = datetime.fromtimestamp(mission_info['start_time'])
+        end_time = start_time + timedelta(seconds=mission_info['duration_seconds'])
+        
+        report = f"""
+# RAPPORT DE RENSEIGNEMENT PASSIF
+# ==================================
+# ID Mission: {mission_info['id']}
+# Type: {mission_info['type'].upper()}
+# Cible: {mission_info['target']}
+# Période: {start_time.isoformat()} -> {end_time.isoformat()}
+# Bots Assignés: {mission_info['bots_assigned']}
+# ==================================
+
+## RÉSUMÉ DES INTERCEPTIONS
+Analyse des flux de données sur une période de {mission_info['duration_seconds']} secondes.
+Détection de plusieurs anomalies et de communications potentiellement pertinentes.
+
+## LOGS D'ACTIVITÉ
+"""
+        
+        num_entries = random.randint(15, 40)
+        for _ in range(num_entries):
+            log_time = start_time + timedelta(seconds=random.randint(0, int(mission_info['duration_seconds'])))
+            
+            src_ip = f"172.{random.randint(16,31)}.{random.randint(0,255)}.{random.randint(1,254)}"
+            dst_ip_choices = ["104.21.5.199", "34.107.221.82", "205.251.242.103", "192.0.78.12"]
+            dst_ip = random.choice(dst_ip_choices)
+            
+            protocols = ["TCP", "UDP", "ICMP"]
+            protocol = random.choice(protocols)
+            
+            keywords = ["transaction", "alpha_protocol", "rendezvous_point", "data_exfil", "credentials", "auth_token", "geoloc_ping"]
+            keyword = random.choice(keywords)
+            payload_size = random.randint(64, 4096)
+            report += f"[{log_time.strftime('%H:%M:%S.%f')[:-3]}] {protocol} {src_ip} -> {dst_ip} | PAYLOAD: {payload_size} bytes | KEYWORD_MATCH: '{keyword}'\n"
+
+        report += "\n## FIN DU RAPPORT"
+        return report
+
+    def start_mission(self, mission_type, bots_assigned):
+        """Exposée au JS. Lance une nouvelle mission de bots."""
+        try:
+            bots_assigned = int(bots_assigned)
+            bky_status = self.config['user'].get('bots', {})
+
+            if bots_assigned <= 0:
+                return {'status': 'error', 'message': 'Le nombre de bots assignés doit être positif.'}
+            if bky_status.get('available', 0) < bots_assigned:
+                return {'status': 'error', 'message': 'Bots disponibles insuffisants.'}
+
+            mission_configs = {
+                'ddos': {'duration': 60, 'loss_rate': 0.20, 'target': 'Portail Conteneur'}, # Haute intensité, courte durée, pertes élevées
+                'noise': {'duration': 120, 'loss_rate': 0.05, 'target': 'Réseaux Externes'}, # Intensité moyenne, durée moyenne, pertes faibles
+                'passive_intel': {'duration': 300, 'loss_rate': 0.02, 'target': 'Flux de Données'} # Basse intensité, longue durée, pertes très faibles
+            }
+            if mission_type not in mission_configs:
+                return {'status': 'error', 'message': 'Type de mission inconnu.'}
+            
+            config = mission_configs[mission_type]
+            mission_id = str(uuid.uuid4())
+
+            new_mission = {
+                'id': mission_id,
+                'type': mission_type,
+                'target': config['target'],
+                'bots_assigned': bots_assigned,
+                'duration_seconds': config['duration'],
+                'loss_rate': config['loss_rate'],
+                'start_time': time.time()
+            }
+
+            bky_status['available'] -= bots_assigned
+            bky_status['in_mission'] = bky_status.get('in_mission', 0) + bots_assigned
+            bky_status['missions'].append(new_mission)
+            self.save_settings(self.config)
+
+            # Lancer le thread de la mission
+            mission_thread = threading.Thread(target=self._run_mission_thread, args=(mission_id,), daemon=True)
+            mission_thread.start()
+
+            return {'status': 'success', 'message': f'Mission {mission_type.upper()} lancée avec {bots_assigned} bots.'}
+        except Exception as e:
+            return {'status': 'error', 'message': f'Erreur lors du lancement de la mission : {e}'}
+
+    def generate_bots(self, amount):
+        """Exposée au JS. Génère un nouveau pool de bots."""
+        try:
+            amount = int(amount)
+            if amount <= 0:
+                return {'status': 'error', 'message': 'Le nombre de bots doit être positif.'}
+
+            if 'bots' not in self.config['user']:
+                self.config['user']['bots'] = {'total': 0, 'available': 0}
+
+            self.config['user']['bots']['total'] = amount
+            self.config['user']['bots']['available'] = amount
+            
+            self.save_settings(self.config)
+            return {'status': 'success', 'message': f'{amount} bots générés et prêts à être assignés.'}
+        except ValueError:
+            return {'status': 'error', 'message': 'Quantité invalide.'}
+        except Exception as e:
+            return {'status': 'error', 'message': f"Erreur lors de la génération des bots : {e}"}
+
+    def get_bky_status(self):
+        """Exposée au JS. Récupère le statut complet de BOTS-KUSO-YARO."""
+        bky_status = self.config.get('user', {}).get('bots', {
+            'total': 0, 'available': 0, 'in_mission': 0, 'missions': [], 'protocol_unlocked': False
+        })
+        
+        # Mettre à jour le temps restant pour chaque mission avant de renvoyer
+        now = time.time()
+        if 'missions' in bky_status:
+            for mission in bky_status['missions']:
+                time_elapsed = now - mission.get('start_time', now)
+                time_remaining = max(0, mission.get('duration_seconds', 0) - time_elapsed)
+                mission['time_remaining'] = time_remaining
+
+        return {'status': 'success', 'bky': bky_status}
+
+    def use_bots(self, amount):
+        """Exposée au JS. Consomme un certain nombre de bots pour une action."""
+        try:
+            amount = int(amount)
+            if amount <= 0:
+                return {'status': 'error', 'message': 'Le nombre de bots à utiliser doit être positif.'}
+
+            bots_status = self.config.get('user', {}).get('bots', {'total': 0, 'available': 0})
+            
+            if bots_status['available'] < amount:
+                return {'status': 'error', 'message': 'Bots insuffisants pour cette opération.'}
+
+            bots_status['available'] -= amount
+            self.config['user']['bots'] = bots_status
+            self.save_settings(self.config)
+            
+            return {'status': 'success', 'message': f'{amount} bots consommés. Restant : {bots_status["available"]}.'}
+        except ValueError:
+            return {'status': 'error', 'message': 'Quantité invalide.'}
+        except Exception as e:
+            return {'status': 'error', 'message': f"Erreur lors de l'utilisation des bots : {e}"}
+
+    def abort_mission(self, mission_id):
+        """Exposée au JS. Annule une mission en cours."""
+        try:
+            bky_status = self.config['user'].get('bots', {})
+            mission_index = -1
+            for i, m in enumerate(bky_status.get('missions', [])):
+                if m['id'] == mission_id:
+                    mission_index = i
+                    break
+            
+            if mission_index == -1:
+                return {'status': 'error', 'message': 'Mission non trouvée.'}
+
+            mission = bky_status['missions'][mission_index]
+            
+            # Retourner les bots au pool disponible
+            bky_status['in_mission'] -= mission['bots_assigned']
+            bky_status['available'] += mission['bots_assigned']
+            
+            # Supprimer la mission
+            del bky_status['missions'][mission_index]
+            self.save_settings(self.config)
+            return {'status': 'success', 'message': f'Mission {mission["type"].upper()} annulée. Bots récupérés.'}
+        except Exception as e:
+            return {'status': 'error', 'message': f'Erreur lors de l\'annulation : {e}'}
+
+    def unlock_bky_protocol(self, key):
+        """Exposée au JS. Valide la clé pour débloquer les missions BKY."""
+        correct_key = "DECHAINER_LES_CHIENS"
+        if key == correct_key:
+            try:
+                self.config['user']['bots']['protocol_unlocked'] = True
+                self.save_settings(self.config)
+                return {'status': 'success', 'message': 'Protocole de commandement avancé déverrouillé. Accès aux missions de haut niveau accordé.'}
+            except Exception as e:
+                return {'status': 'error', 'message': f'Erreur système lors du déverrouillage : {e}'}
+        else:
+            return {'status': 'error', 'message': 'Clé de protocole invalide. Commande rejetée.'}
 
     def analyze_osint_results(self, results_data):
         """Exposée au JS. Envoie les résultats OSINT à l'IA pour analyse."""
@@ -939,7 +1287,22 @@ Warning: Counter-intrusion systems are active. Maintain low profile.
         return {'status': 'error', 'message': f"L'extension '{ext_name}' n'est pas chargée."}
 
     def run_osint_scan(self, target, modules, callback):
-        """Exposée au JS. Wrapper pour appeler la méthode de scan de l'extension OSINT."""
+        """
+        Exposée au JS. Wrapper pour appeler la méthode de scan de l'extension OSINT.
+        NOUVEAU: Consomme des bots avant de lancer le scan.
+        """
+        # Étape 1: Vérifier et consommer les bots
+        SCAN_COST = 100
+        use_bots_result = self.use_bots(SCAN_COST)
+
+        if use_bots_result.get('status') == 'error':
+            callback({'status': 'error', 'message': f"Échec du lancement du scan : {use_bots_result.get('message')}"})
+            return
+
+        # Si la consommation a réussi, on notifie l'utilisateur et on continue.
+        callback({'status': 'log', 'message': f"// {use_bots_result.get('message')}"})
+
+        # Étape 2: Lancer le scan via l'extension
         if "OSINT Aggregator" in loaded_extensions:
             osint_ext = loaded_extensions["OSINT Aggregator"]
             osint_ext.execute_scan(target, modules, callback)
@@ -964,6 +1327,18 @@ Warning: Counter-intrusion systems are active. Maintain low profile.
             return None
         # Retourne une liste de chemins de fichiers sélectionnés
         return self.window.create_file_dialog(webview.OPEN_DIALOG)
+
+    def open_folder_dialog(self):
+        """Exposée au JS. Ouvre une boîte de dialogue de sélection de dossier."""
+        if not self.window:
+            return {'status': 'error', 'message': 'Fenêtre non disponible.'}
+        
+        result = self.window.create_file_dialog(webview.FOLDER_DIALOG)
+        
+        if result and len(result) > 0:
+            return {'status': 'success', 'path': result[0]}
+        else:
+            return {'status': 'canceled', 'message': 'Aucun dossier sélectionné.'}
 
     # --- API pour le Chargeur d'Applications Universel ---
     def get_sandbox_status(self):
@@ -1083,18 +1458,324 @@ Warning: Counter-intrusion systems are active. Maintain low profile.
             print(f"[ETAT VPN GLOBAL] Mis à jour : Connecté={vpn_global_state['is_connected']}, Proxy={vpn_global_state['proxy_address']}")
         return {'status': 'success'}
 
+    def check_for_updates(self):
+        """Exposée au JS. Vérifie les mises à jour depuis une source distante."""
+        # Pour cet exemple, nous lisons un fichier local, mais en production,
+        # ce serait une URL récupérée depuis la config.
+        versions_path = os.path.join(PROJECT_ROOT, 'RESSOURCES', 'versions.json')
+        
+        try:
+            with open(versions_path, 'r', encoding='utf-8') as f:
+                latest_versions = json.load(f)
+
+            updates_available = {}
+
+            # Vérifier la version de l'application principale
+            latest_app_info = latest_versions.get('application', {})
+            latest_app_version = latest_app_info.get('latest_version')
+            if latest_app_version and latest_app_version > CURRENT_APP_VERSION:
+                updates_available['application'] = {
+                    'current': CURRENT_APP_VERSION,
+                    'latest': latest_app_version,
+                    'info': latest_app_info
+                }
+
+            # Vérifier les versions des extensions installées
+            installed_extensions = self.config.get('user', {}).get('installed_extensions', {})
+            latest_ext_versions = latest_versions.get('extensions', {})
+            
+            for name, details in installed_extensions.items():
+                current_version = details.get('version', '1.0.0')
+                latest_ext_info = latest_ext_versions.get(name)
+                if latest_ext_info and latest_ext_info.get('latest_version', '0.0.0') > current_version:
+                    if 'extensions' not in updates_available: updates_available['extensions'] = []
+                    updates_available['extensions'].append({'name': name, 'current': current_version, 'latest': latest_ext_info['latest_version'], 'info': latest_ext_info})
+
+            return {'status': 'success', 'updates': updates_available}
+        except Exception as e:
+            return {'status': 'error', 'message': f'Impossible de vérifier les mises à jour : {e}'}
+
+    def perform_app_update(self, update_info):
+        """
+        Exposée au JS. Lance le processus de mise à jour de l'application.
+        """
+        try:
+            download_url = update_info.get('url')
+            if not download_url:
+                return {'status': 'error', 'message': 'URL de mise à jour manquante.'}
+
+            # Lancer le téléchargement et la mise à jour dans un thread pour ne pas bloquer l'UI
+            update_thread = threading.Thread(target=self._update_thread_worker, args=(download_url,), daemon=True)
+            update_thread.start()
+
+            return {'status': 'success', 'message': 'Téléchargement de la mise à jour lancé en arrière-plan... L\'application redémarrera automatiquement.'}
+
+        except Exception as e:
+            return {'status': 'error', 'message': f'Erreur lors du lancement de la mise à jour : {e}'}
+
+    def _update_thread_worker(self, download_url):
+        """
+        Worker qui s'exécute dans un thread pour gérer le processus de mise à jour.
+        """
+        try:
+            # 1. Créer un dossier temporaire
+            temp_dir = tempfile.mkdtemp(prefix="cmd-ai-update-")
+            print(f"[UPDATE] Dossier temporaire créé : {temp_dir}")
+
+            # 2. Télécharger l'archive
+            archive_path = os.path.join(temp_dir, 'update.zip')
+            print(f"[UPDATE] Téléchargement de {download_url} vers {archive_path}...")
+            
+            response = requests.get(download_url, stream=True, timeout=60)
+            response.raise_for_status()
+            with open(archive_path, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+            print("[UPDATE] Téléchargement terminé.")
+
+            # 3. Extraire l'archive
+            extract_path = os.path.join(temp_dir, 'extracted')
+            os.makedirs(extract_path, exist_ok=True)
+            print(f"[UPDATE] Extraction de l'archive vers {extract_path}...")
+            with zipfile.ZipFile(archive_path, 'r') as zip_ref:
+                zip_ref.extractall(extract_path)
+            print("[UPDATE] Extraction terminée.")
+
+            # 4. Préparer le script de mise à jour
+            self._create_and_run_updater_script(extract_path)
+
+            # 5. Fermer l'application pour que le script puisse la remplacer
+            print("[UPDATE] Fermeture de l'application pour la mise à jour.")
+            if self.window:
+                # Utilise `destroy()` qui est la méthode correcte pour fermer la fenêtre pywebview
+                self.window.destroy()
+
+        except Exception as e:
+            print(f"[UPDATE] Erreur dans le thread de mise à jour : {e}")
+            if self.window:
+                # Informe l'utilisateur de l'échec via une alerte JS
+                error_message = str(e).replace("'", "\\'").replace("\n", " ")
+                self.window.evaluate_js(f"alert('Erreur durant la mise à jour : {error_message}');")
+
+    def _create_and_run_updater_script(self, source_path):
+        """Crée et exécute un script (.bat ou .sh) pour remplacer les fichiers de l'application."""
+        app_root = PROJECT_ROOT
+        executable_path = sys.executable
+        system = platform.system()
+        temp_dir = tempfile.gettempdir()
+
+        if system == 'Windows':
+            script_path = os.path.join(temp_dir, 'updater.bat')
+            script_content = f'@echo off\necho Attente de la fermeture de l\'application...\ntimeout /t 5 /nobreak > NUL\necho Remplacement des fichiers...\nxcopy "{source_path}" "{app_root}" /E /Y /I /H > NUL\necho Redemarrage...\nstart "" "{executable_path}"\n(goto) 2>nul & del "%~f0"'
+            with open(script_path, 'w', encoding='utf-8') as f: f.write(script_content)
+            subprocess.Popen([script_path], creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP, close_fds=True)
+        else:  # macOS et Linux
+            script_path = os.path.join(temp_dir, 'updater.sh')
+            script_content = f'#!/bin/bash\necho "Attente de la fermeture de l\'application..."\nsleep 5\necho "Remplacement des fichiers..."\ncp -R "{source_path}/." "{app_root}/"\necho "Redemarrage..."\n"{executable_path}" &\nrm -- "$0"'
+            with open(script_path, 'w', encoding='utf-8') as f: f.write(script_content)
+            os.chmod(script_path, stat.S_IRWXU)
+            subprocess.Popen([script_path], close_fds=True)
+
+    def perform_extension_update(self, extension_name, update_info):
+        """
+        Exposée au JS. Lance le processus de mise à jour "à chaud" d'une extension.
+        """
+        try:
+            download_url = update_info.get('url')
+            if not download_url:
+                return {'status': 'error', 'message': 'URL de mise à jour manquante.'}
+
+            if extension_name not in loaded_extensions:
+                return {'status': 'error', 'message': f"L'extension '{extension_name}' n'est pas chargée ou n'existe pas."}
+
+            # Lancer le téléchargement et la mise à jour dans un thread
+            update_thread = threading.Thread(target=self._extension_update_thread_worker, args=(extension_name, download_url, update_info), daemon=True)
+            update_thread.start()
+
+            return {'status': 'success', 'message': f'Mise à jour de l\'extension {extension_name} lancée...'}
+
+        except Exception as e:
+            return {'status': 'error', 'message': f'Erreur lors du lancement de la mise à jour de l\'extension : {e}'}
+
+    def _extension_update_thread_worker(self, extension_name, download_url, update_info):
+        """
+        Worker qui gère le processus de mise à jour d'une extension (hot-reload).
+        """
+        try:
+            # 1. Télécharger et extraire l'extension
+            temp_dir = tempfile.mkdtemp(prefix=f"{extension_name}-update-")
+            archive_path = os.path.join(temp_dir, 'extension.zip')
+            
+            print(f"[EXT-UPDATE] Téléchargement de {download_url}...")
+            response = requests.get(download_url, stream=True, timeout=60)
+            response.raise_for_status()
+            with open(archive_path, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+
+            extract_path = os.path.join(temp_dir, 'extracted')
+            with zipfile.ZipFile(archive_path, 'r') as zip_ref:
+                zip_ref.extractall(extract_path)
+            print(f"[EXT-UPDATE] Extension extraite dans {extract_path}")
+
+            # 2. Trouver le module et le fichier de l'ancienne extension
+            old_instance = loaded_extensions.get(extension_name)
+            if not old_instance: raise ValueError(f"Instance de l'extension '{extension_name}' non trouvée.")
+            
+            module_name = old_instance.__class__.__module__
+            module_to_reload = sys.modules.get(module_name)
+            if not module_to_reload: raise ValueError(f"Module '{module_name}' non trouvé dans sys.modules.")
+            old_file_path = inspect.getfile(module_to_reload)
+            
+            # 3. Remplacer l'ancien fichier par le nouveau
+            new_file_name = next((f for f in os.listdir(extract_path) if f.endswith('.py')), None)
+            if not new_file_name: raise ValueError("Aucun fichier .py trouvé dans l'archive de l'extension.")
+            new_file_source_path = os.path.join(extract_path, new_file_name)
+            shutil.copy2(new_file_source_path, old_file_path)
+
+            # 4. Recharger le module (Hot-Reload)
+            print(f"[EXT-UPDATE] Rechargement du module '{module_name}'...")
+            reloaded_module = importlib.reload(module_to_reload)
+
+            # 5. Ré-instancier la classe et la remplacer
+            NewExtensionClass = next((obj for name, obj in inspect.getmembers(reloaded_module, inspect.isclass) if issubclass(obj, BaseExtension) and obj is not BaseExtension), None)
+            if not NewExtensionClass: raise ValueError(f"Impossible de trouver la classe d'extension dans le module rechargé '{module_name}'.")
+            
+            new_instance = NewExtensionClass(SandboxAPI(self, NewExtensionClass.NAME))
+            loaded_extensions[extension_name] = new_instance
+            print(f"[EXT-UPDATE] Extension '{extension_name}' rechargée et ré-instanciée avec succès.")
+
+            # 6. Mettre à jour la version dans la configuration
+            with app.app_context():
+                if extension_name in self.config['user']['installed_extensions']:
+                    self.config['user']['installed_extensions'][extension_name]['version'] = update_info.get('latest_version', 'unknown')
+                    self.save_settings(self.config)
+            if self.window: self.window.evaluate_js(f"alert('Mise à jour de l\\'extension {extension_name} terminée avec succès !');")
+        except Exception as e:
+            print(f"[EXT-UPDATE] Erreur dans le thread de mise à jour de l'extension : {e}")
+            if self.window: self.window.evaluate_js(f"alert('Erreur durant la mise à jour de l\\'extension : {str(e).replace('\'', '\\'').replace('\n', ' ')}');")
+
+    def update_vpn_global_state(self, vpn_data):
+        """
+        Appelée par le JS pour mettre à jour l'état global du proxy.
+        """
+        global vpn_global_state
+        if vpn_data and vpn_data.get('status') == 'success':
+            vpn_global_state['is_connected'] = vpn_data.get('is_connected', False)
+            vpn_global_state['proxy_address'] = vpn_data.get('proxy_address', None)
+            print(f"[ETAT VPN GLOBAL] Mis à jour : Connecté={vpn_global_state['is_connected']}, Proxy={vpn_global_state['proxy_address']}")
+        return {'status': 'success'}
+
+    def clearCache(self):
+        """
+        Exposée au JS. Archive le dossier Bunker, supprime la config, et ferme l'app.
+        """
+        try:
+            user_path = self.config.get('user', {}).get('user_folder_path')
+            if not user_path or not os.path.isdir(user_path):
+                return {'status': 'error', 'message': 'Dossier Bunker introuvable.'}
+
+            # Chemin vers le dossier "Documents" de l'utilisateur, multi-plateforme
+            documents_path = os.path.join(os.path.expanduser('~'), 'Documents')
+            os.makedirs(documents_path, exist_ok=True)
+
+            # Créer un nom de fichier d'archive avec un timestamp
+            timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+            archive_name = f'cmd-ai-after-cache-kill-{timestamp}'
+            archive_path = os.path.join(documents_path, archive_name)
+
+            # Créer l'archive ZIP
+            shutil.make_archive(archive_path, 'zip', user_path)
+            
+            # Supprimer le fichier de configuration pour forcer le wizard au prochain lancement
+            if os.path.exists(CONFIG_FILE_PATH):
+                os.remove(CONFIG_FILE_PATH)
+
+            # Fermer l'application
+            if self.window:
+                self.window.destroy()
+            
+            return {'status': 'success', 'message': f'Archive créée dans {documents_path}'}
+        except Exception as e:
+            print(f"[ERROR] clearCache failed: {e}")
+            return {'status': 'error', 'message': str(e)}
+
+    def killApp(self):
+        """
+        Exposée au JS. Génère et exécute un script pour supprimer l'application.
+        """
+        try:
+            user_path = self.config.get('user', {}).get('user_folder_path')
+            project_root = PROJECT_ROOT
+            
+            import tempfile
+            temp_dir = tempfile.gettempdir()
+
+            system = platform.system()
+            if system == 'Windows':
+                script_path = os.path.join(temp_dir, 'uninstall.bat')
+                script_content = f"""
+@echo off
+echo Auto-destruction de CMD-AI...
+timeout /t 3 /nobreak > NUL
+echo Suppression du dossier utilisateur...
+if exist "{user_path}" rmdir /s /q "{user_path}"
+echo Suppression du dossier de l'application...
+if exist "{project_root}" rmdir /s /q "{project_root}"
+echo Nettoyage...
+del "%~f0"
+"""
+                with open(script_path, 'w', encoding='utf-8') as f:
+                    f.write(script_content.strip())
+                subprocess.Popen([script_path], creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP, close_fds=True)
+            else:  # macOS et Linux
+                script_path = os.path.join(temp_dir, 'uninstall.sh')
+                script_content = f"""
+#!/bin/bash
+echo "Auto-destruction de CMD-AI..."
+sleep 3
+echo "Suppression du dossier utilisateur..."
+rm -rf "{user_path}"
+echo "Suppression du dossier de l'application..."
+rm -rf "{project_root}"
+echo "Nettoyage..."
+rm -- "$0"
+"""
+                with open(script_path, 'w', encoding='utf-8') as f:
+                    f.write(script_content.strip())
+                os.chmod(script_path, 0o755)
+                subprocess.Popen([script_path], close_fds=True)
+            
+            if self.window:
+                self.window.destroy()
+            return {'status': 'success'}
+
+        except Exception as e:
+            print(f"[ERROR] killApp failed: {e}")
+            return {'status': 'error', 'message': str(e)}
+
+    def crashApp(self):
+        """
+        Exposée au JS. Simule un crash en plus de la désinstallation.
+        """
+        self.killApp()
+        time.sleep(0.5) # Laisse le temps au script de se lancer
+        os._exit(1) # Sortie non-propre pour simuler un crash
+
+
+    def logout(self):
+        """Exposée au JS. Déconnecte l'utilisateur en vidant la session."""
+        session.clear()
+        # On pourrait aussi recharger la page depuis le backend, mais le JS peut le faire.
+        return {'status': 'success', 'message': 'Déconnexion réussie.'}
 
 @app.route('/')
 def entry_point():
     """
-    Sert la page de bienvenue (wizard) ou la page de connexion (aboutissement)
+    Sert la page de bienvenue (wizard) ou la page principale (terminaux)
     en fonction de l'état de la configuration.
     """
-    if IS_FIRST_RUN:
-        # On passe la config par défaut pour pré-remplir les champs du wizard
-        return render_template('wizard.html', default_config=app_config)
-    else:
-        return render_template('aboutissement.html')
+    return render_template('aboutissement.html')
 
 @app.route('/terminaux.html')
 def terminal_page():
@@ -1110,8 +1791,55 @@ def terminal_page():
 def settings_page():
     """
     Sert la nouvelle page de paramètres (settings.html).
+    La page affichera le contenu en fonction de l'état de la session.
     """
-    return render_template('settings.html')
+    is_authenticated = 'user_role' in session
+    user_role = session.get('user_role')
+    return render_template('settings.html', is_authenticated=is_authenticated, user_role=user_role, app_version=CURRENT_APP_VERSION)
+
+# --- NOUVEAU : Routes et API d'administration conditionnelles ---
+if BUILD_MODE == 'DEV':
+    print("[INFO] Mode DEV détecté. Activation des routes et API d'administration.")
+
+    @app.route('/admin/testers')
+    def testers_management_page():
+        """Sert la page de gestion des codes testeurs, protégée pour le concepteur."""
+        if session.get('user_role') != 'concepteur':
+            return redirect(url_for('settings_page'))
+        return render_template('admin/testers_management.html')
+
+    @api.expose # Expose les méthodes suivantes à l'API JS
+    def get_tester_codes(self):
+        """[DEV] Retourne la liste actuelle des codes testeurs."""
+        return {'status': 'success', 'codes': tester_codes}
+
+    @api.expose
+    def add_tester_code(self, new_code_data):
+        """[DEV] Ajoute un nouveau code testeur."""
+        try:
+            code = new_code_data.get('code')
+            if not code or any(c['code'] == code for c in tester_codes):
+                return {'status': 'error', 'message': 'Le code est invalide ou existe déjà.'}
+            
+            tester_codes.append(new_code_data)
+            with open(TESTER_CODES_PATH, 'w') as f:
+                json.dump(tester_codes, f, indent=4)
+            return {'status': 'success', 'message': 'Code ajouté.'}
+        except Exception as e:
+            return {'status': 'error', 'message': str(e)}
+
+    @api.expose
+    def delete_tester_code(self, code_to_delete):
+        """[DEV] Supprime un code testeur."""
+        global tester_codes
+        try:
+            initial_len = len(tester_codes)
+            tester_codes = [c for c in tester_codes if c.get('code') != code_to_delete]
+            if len(tester_codes) < initial_len:
+                with open(TESTER_CODES_PATH, 'w') as f: json.dump(tester_codes, f, indent=4)
+                return {'status': 'success', 'message': 'Code supprimé.'}
+            return {'status': 'error', 'message': 'Code non trouvé.'}
+        except Exception as e: return {'status': 'error', 'message': str(e)}
 
 @app.route('/bunker')
 def bunker_page():
@@ -1139,6 +1867,13 @@ def portail_conteneur_page():
     """
     Sert la page du Portail Conteneur (Niveau 303).
     """
+    # NOUVEAU: Vérifier l'effet d'une mission DDoS
+    if app_config.get('user', {}).get('system_effects', {}).get('ddos_active', False):
+        # Crée le dossier admin s'il n'existe pas pour éviter une erreur de template
+        os.makedirs(os.path.join(app.template_folder, 'system'), exist_ok=True)
+        return render_template('system/system_unavailable.html', 
+                               message="Connexion au portail instable. Attaque par déni de service détectée.",
+                               title="Portail Conteneur - 503"), 503
     return render_template('portail_conteneur.html')
 
 @app.route('/analyseur')
@@ -1170,15 +1905,13 @@ def extension_page(extension_slug):
     template_name = payload.get('entry_point_template')
 
     if template_name:
-        # Les templates d'extension sont dans un sous-dossier pour l'organisation.
-        # Utiliser des slashes pour la compatibilité de Jinja sur tous les OS
-        template_path = f'extensions/{template_name}'
-        full_template_path = os.path.join(app.template_folder, template_path)
+        # Le template est directement dans le dossier des templates
+        full_template_path = os.path.join(app.template_folder, template_name)
 
         if os.path.exists(full_template_path):
-            return render_template(template_path, extension=ext_details)
+            return render_template(template_name, extension=ext_details)
         else:
-            ext_details['error_message'] = f"Template '{template_name}' introuvable dans le dossier 'extensions'."
+            ext_details['error_message'] = f"Template '{template_name}' introuvable dans le dossier des templates."
             # Rendre explicitement le placeholder si le template spécifique n'est pas trouvé
             return render_template('extensions/extension_placeholder.html', extension=ext_details)
 
@@ -1286,10 +2019,24 @@ def load_config(use_default_only=False):
             'keylogger_active': False, # NOUVEAU: Drapeau pour le keylogger
             'pseudo': 'Anonyme',
             'installed_extensions': {}, # Stocke les extensions installées par l'utilisateur
+            'bots': {
+                'total': 0,
+                'available': 0,
+                'in_mission': 0,
+                'missions': [],
+                'protocol_unlocked': False
+            },
+            'system_effects': {
+                'ddos_active': False
+            },
             # Ajout pour la cohérence avec le README et les futures extensions
             'api_keys': {
                 'hibp_api_key': 'YOUR_HIBP_API_KEY_HERE'
             }
+        },
+        'sync': {
+            'enabled': False,
+            'path': ''
         },
         'vpn': {
             'proxy_address': 'http://127.0.0.1:9050' # Adresse par défaut (ex: Tor)
@@ -1367,9 +2114,6 @@ def load_tester_codes():
 # Variable globale pour stocker la configuration
 app_config = {}
 
-# NOUVEAU: Flag pour détecter le premier lancement
-IS_FIRST_RUN = False
-
 if __name__ == '__main__':
     # 1. Lancer le serveur Flask dans un thread séparé pour ne pas bloquer la fenêtre.
     server_thread = threading.Thread(target=run_server)
@@ -1378,10 +2122,6 @@ if __name__ == '__main__':
 
     # 2. Charger la configuration initiale dans la variable globale.
     app_config = load_config()
-
-    # --- NOUVEAU : Détection du premier lancement ---
-    if not app_config.get('user', {}).get('password'):
-        IS_FIRST_RUN = True
 
     # Charger les codes testeurs
     load_tester_codes()

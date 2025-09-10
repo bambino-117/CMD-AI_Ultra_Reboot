@@ -27,7 +27,7 @@ class OsintExtension(BaseExtension):
             "message": "L'interface de l'extension OSINT est gérée par son point d'entrée. Aucune action directe à exécuter ici."
         }
 
-    def execute_scan(self, target, modules, callback, config):
+    def execute_scan(self, target, modules, callback):
         """
         Orchestre le scan OSINT sur plusieurs sources, en fonction des modules sélectionnés.
         """
@@ -58,7 +58,7 @@ class OsintExtension(BaseExtension):
         # 3. Lancer la recherche de fuites de données
         if 'leaks' in modules:
             callback({'status': 'log', 'message': '// [HIBP] Interrogation des bases de données de fuites...'})
-            hibp_api_key = config.get('user', {}).get('api_keys', {}).get('hibp_api_key')
+            hibp_api_key = self.api.get_config_value('user.api_keys.hibp_api_key')
             leak_results = search_leaked_databases(target, hibp_api_key)
             # N'afficher le message de fin que si la recherche n'a pas retourné d'erreur
             if not isinstance(leak_results, dict) or 'error' not in leak_results:
@@ -106,12 +106,7 @@ class OsintExtension(BaseExtension):
             callback({'status': 'error', 'message': f'[DDG] Erreur inattendue lors du scan : {e}'})
             return []
 
-    def _secure_path(self, filename, config):
-        """Utilise la fonction de chemin sécurisé partagée."""
-        user_path = config.get('user', {}).get('user_folder_path')
-        return secure_path(filename, user_path)
-
-    def save_report(self, target, results, config):
+    def save_report(self, target, results):
         try:
             if not target or not isinstance(results, dict): return {'status': 'error', 'message': 'Données du rapport invalides.'}
             
@@ -154,7 +149,7 @@ class OsintExtension(BaseExtension):
             folder_name = f"OSINT_{safe_target_name}"
             
             # Créer le dossier dans le Bunker s'il n'existe pas
-            folder_path, error = self._secure_path(folder_name, config)
+            folder_path, error = self.api.secure_path(folder_name)
             if error: return {'status': 'error', 'message': error}
             os.makedirs(folder_path, exist_ok=True)
 

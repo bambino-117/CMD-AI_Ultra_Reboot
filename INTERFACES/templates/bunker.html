@@ -77,6 +77,27 @@
         #central-console h2 { font-size: 1rem; color: #ff33ff; margin-top: 0; margin-bottom: 1rem; letter-spacing: 0.05em; border-bottom: 1px solid rgba(255, 51, 255, 0.3); padding-bottom: 0.25rem; }
         #central-console p { font-size: 0.7rem; color: rgba(0, 255, 204, 0.6); margin-bottom: 1rem; }
 
+        /* NOUVEAU: Styles pour le champ de recherche */
+        .search-field {
+            margin-bottom: 1rem;
+        }
+        .search-field input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(0, 255, 204, 0.3);
+            color: #00ffcc;
+            font-family: inherit;
+            font-size: 0.8rem;
+            padding: 0.4rem;
+            border-radius: 0.2rem;
+            box-sizing: border-box;
+            text-align: center;
+            pointer-events: auto; /* Important pour que le champ soit utilisable */
+        }
+        .search-field input::placeholder {
+            color: rgba(0, 255, 204, 0.4);
+        }
+
         .action-btn { 
             padding: 0.5rem 1rem; 
             font-family: inherit; 
@@ -425,6 +446,9 @@
             <div id="central-console">
                 <h2>Dossier Utilisateur</h2>
                 <p>NIVEAU 101 // BUNKER</p>
+                <div class="search-field">
+                    <input type="text" id="bunker-search-input" placeholder="Rechercher ici..." autocomplete="off">
+                </div>
                 <button id="exit-btn" class="action-btn">Sortie</button>
                 <div id="expand-console-btn">
                     <span>&raquo;</span>
@@ -452,6 +476,7 @@
             const expandedFrame = document.getElementById('expanded-console-frame');
             const consoleTitle = centralConsole.querySelector('h2');
             const dropOverlay = document.getElementById('drop-overlay');
+            const bunkerSearchInput = document.getElementById('bunker-search-input');
 
             // NOUVEAU: État pour l'animation
             let circles = [];
@@ -981,6 +1006,30 @@
                 if (e.key === 'Enter') {
                     passwordInput.focus();
                 }
+            });
+
+            bunkerSearchInput.addEventListener('input', (e) => {
+                const query = e.target.value.trim().toLowerCase();
+
+                // Si la recherche est vide, on réaffiche tout
+                if (!query) {
+                    circles.forEach(c => {
+                        c.el.style.opacity = '1';
+                        c.el.style.pointerEvents = 'auto';
+                    });
+                    return;
+                }
+
+                // On filtre les cercles en fonction de la recherche
+                circles.forEach(c => {
+                    if (c.filename.toLowerCase().includes(query)) {
+                        c.el.style.opacity = '1';
+                        c.el.style.pointerEvents = 'auto';
+                    } else {
+                        c.el.style.opacity = '0.2';
+                        c.el.style.pointerEvents = 'none';
+                    }
+                });
             });
 
             // NOUVEAU: Listener pour le bouton d'expansion

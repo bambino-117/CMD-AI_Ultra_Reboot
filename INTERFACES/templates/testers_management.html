@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PANNEAU CONTRÔLE // ACCÈS TESTEUR</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}">
+    <style>
+        body {
+            background-color: #0a0a0a;
+            overflow-y: auto;
+        }
+        .container {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 2rem;
+        }
+        h1 {
+            color: #ff33ff;
+            text-shadow: 0 0 8px rgba(255, 51, 255, 0.5);
+            border-bottom: 1px solid rgba(255, 51, 255, 0.3);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        .security-banner {
+            background-color: #ffc107;
+            color: #333;
+            text-align: center;
+            padding: 0.75rem;
+            font-weight: bold;
+            border-bottom: 2px solid #e6a700;
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+            border-radius: 0.25rem;
+        }
+        .admin-section {
+            background: rgba(0, 10, 8, 0.4);
+            border: 1px solid rgba(0, 255, 204, 0.2);
+            padding: 1.5rem;
+            border-radius: 0.25rem;
+            margin-bottom: 2rem;
+        }
+        .admin-section h2 {
+            margin-top: 0;
+            font-size: 1.2rem;
+            color: #00ffcc;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(0, 255, 204, 0.2);
+        }
+        th {
+            color: rgba(0, 255, 204, 0.7);
+        }
+        td .btn-danger {
+            font-size: 0.8rem;
+            padding: 0.2rem 0.5rem;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            align-items: flex-end;
+        }
+        .form-field input {
+            width: 100%;
+        }
+        .actions {
+            text-align: right;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="security-banner">
+            ⚠️ ZONE RÉSERVÉE AU CONCEPTEUR ⚠️ Toute manipulation non autorisée est tracée.
+        </div>
+
+        <h1>PANNEAU CONTRÔLE // ACCÈS TESTEUR</h1>
+
+        <!-- Section pour lister les codes existants -->
+        <div class="admin-section">
+            <h2>Codes Actifs</h2>
+            <div style="max-height: 300px; overflow-y: auto;">
+                <table id="codes-table">
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Description</th>
+                            <th>Usages Restants</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Les lignes seront injectées par JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Section pour ajouter un nouveau code -->
+        <div class="admin-section">
+            <h2>Ajouter un Nouveau Code</h2>
+            <form id="add-code-form">
+                <div class="form-grid">
+                    <div class="form-field">
+                        <label for="new-code">Code</label>
+                        <input type="text" id="new-code" required>
+                    </div>
+                    <div class="form-field">
+                        <label for="new-description">Description</label>
+                        <input type="text" id="new-description" required>
+                    </div>
+                    <div class="form-field">
+                        <label for="new-uses">Nombre d'usages (-1 pour infini)</label>
+                        <input type="number" id="new-uses" value="1" required>
+                    </div>
+                </div>
+                <div class="actions">
+                    <button type="submit" class="btn btn-primary">Ajouter le code</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="actions">
+            <a href="/settings" class="btn btn-secondary">Retour aux Paramètres</a>
+        </div>
+    </div>
+
+    <script>
+        window.addEventListener('pywebviewready', () => {
+            const tableBody = document.querySelector('#codes-table tbody');
+            const addForm = document.getElementById('add-code-form');
+
+            async function refreshCodesList() {
+                const result = await window.pywebview.api.get_tester_codes();
+                tableBody.innerHTML = ''; // Clear list
+
+                if (result.status === 'success' && result.codes.length > 0) {
+                    result.codes.forEach(codeInfo => {
+                        const row = tableBody.insertRow();
+                        row.innerHTML = `
+                            <td>${codeInfo.code}</td>
+                            <td>${codeInfo.description}</td>
+                            <td>${codeInfo.uses === -1 ? 'Infini' : codeInfo.uses}</td>
+                            <td>
+                                <button class="btn btn-danger" data-code="${codeInfo.code}">Supprimer</button>
+                            </td>
+                        `;
+                    });
+                } else {
+                    tableBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Aucun code testeur trouvé.</td></tr>';
+                }
+                attachDeleteListeners();
+            }
+
+            function attachDeleteListeners() {
+                document.querySelectorAll('.btn-danger').forEach(button => {
+                    button.addEventListener('click', async (e) => {
+                        const codeToDelete = e.target.dataset.code;
+                        if (confirm(`Voulez-vous vraiment supprimer le code "${codeToDelete}" ?`)) {
+                            const result = await window.pywebview.api.delete_tester_code(codeToDelete);
+                            if (result.status === 'success') {
+                                await refreshCodesList();
+                            } else {
+                                alert(`Erreur: ${result.message}`);
+                            }
+                        }
+                    });
+                });
+            }
+
+            addForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const newCodeData = {
+                    code: document.getElementById('new-code').value.trim(),
+                    description: document.getElementById('new-description').value.trim(),
+                    uses: parseInt(document.getElementById('new-uses').value, 10)
+                };
+
+                if (!newCodeData.code || !newCodeData.description) {
+                    alert('Le code et la description sont requis.');
+                    return;
+                }
+
+                const result = await window.pywebview.api.add_tester_code(newCodeData);
+                if (result.status === 'success') {
+                    addForm.reset();
+                    await refreshCodesList();
+                } else {
+                    alert(`Erreur: ${result.message}`);
+                }
+            });
+
+            // Initial load
+            refreshCodesList();
+        });
+    </script>
+</body>
+</html>

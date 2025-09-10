@@ -6,3 +6,6 @@ sherlock-project
 docker 
 Flask-SocketIO
 bcrypt
+Flask-Cors
+eventlet
+python-dotenv

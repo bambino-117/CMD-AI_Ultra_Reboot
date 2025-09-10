@@ -43,16 +43,86 @@
             border-radius: 0.2rem;
             box-sizing: border-box;
         }
-        #submit-btn {
-            width: 100%;
-            padding: 0.8rem;
-            font-family: inherit; font-size: 1.1rem;
-            cursor: pointer; border-radius: 0.2rem; transition: all 0.2s ease;
-            background: #00ffcc; border: 1px solid #00ffcc; color: #0d0d0d;
+
+        .auth-box .form-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
         }
-        #submit-btn:hover { box-shadow: 0 0 15px rgba(0, 255, 204, 0.7); }
+        .auth-box .form-actions button {
+            flex-grow: 1;
+            padding: 0.8rem;
+            font-family: inherit;
+            font-size: 1.1rem;
+            cursor: pointer;
+            border-radius: 0.2rem;
+            transition: all 0.2s ease;
+            border: 1px solid;
+        }
+        .auth-box .form-actions #submit-btn {
+            background: #00ffcc;
+            border-color: #00ffcc;
+            color: #0d0d0d;
+        }
+        .auth-box .form-actions #submit-btn:hover {
+            box-shadow: 0 0 15px rgba(0, 255, 204, 0.7);
+        }
+        .auth-box .form-actions .btn-secondary {
+            background: transparent;
+            border-color: rgba(170, 170, 170, 0.5);
+            color: rgba(170, 170, 170, 0.8);
+        }
+        .auth-box .form-actions .btn-secondary:hover {
+            background: rgba(170, 170, 170, 0.1);
+            color: #fff;
+            border-color: #fff;
+        }
 
         /* --- Notification System (copié de aboutissement.html) --- */
+        .settings-group .description {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: -0.5rem;
+            margin-bottom: 1rem;
+            font-style: italic;
+        }
+
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+
+        /* NOUVEAU: Styles pour les champs de synchro */
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+        }
+        .input-with-button {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .input-with-button input {
+            flex-grow: 1;
+        }
+        .input-with-button .btn {
+            flex-shrink: 0;
+        }
+
+        .actions-grid .btn {
+            width: 100%;
+        }
+        .btn.btn-warning {
+            background: #ffcc00; border-color: #ffcc00; color: #0d0d0d;
+        }
+        .btn.btn-warning:hover { box-shadow: 0 0 15px rgba(255, 204, 0, 0.7); }
+        .btn.btn-danger-outline {
+            background: transparent; border-color: #ff5555; color: #ff5555;
+        }
+        .btn.btn-danger-outline:hover { background: rgba(255, 85, 85, 0.1); color: #ff5555; }
+
         #notification-container {
             position: fixed; top: 2vh; right: 2vw; z-index: 9999;
             display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem;
@@ -62,6 +132,28 @@
             border-left: 3px solid #ff5555; color: #ff5555;
             border-radius: 0.2rem; box-shadow: 0 0 15px rgba(255, 85, 85, 0.2);
             backdrop-filter: blur(5px); animation: fadeInDown 0.5s ease forwards;
+        }
+
+        /* NOUVEAU: Styles pour la gestion des clés API */
+        .api-key-field {
+            position: relative;
+        }
+        .api-key-field .toggle-password {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+        }
+        .api-key-field .toggle-password:hover { opacity: 1; }
+        .api-key-status {
+            display: inline-block;
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+            vertical-align: middle;
         }
         @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
     </style>
@@ -73,7 +165,8 @@
     <div class="container">
         <h1>[ NIVEAU 0 // CONFIGURATEUR ]</h1>
 
-        <!-- NOUVEAU : Groupe d'Authentification -->
+        <!-- NOUVEAU : Le formulaire de connexion est maintenant conditionnel -->
+        {% if not is_authenticated %}
         <div class="settings-group" id="group-auth">
             <h2>Authentification</h2>
             <div id="auth-box" class="auth-box">
@@ -86,11 +179,16 @@
                         <label for="password-input">Mot de Passe</label>
                         <input type="password" id="password-input" autocomplete="current-password" required>
                     </div>
-                    <button type="submit" id="submit-btn">Connexion</button>
+                    <div class="form-actions">
+                        <button type="button" id="login-back-btn" class="btn-secondary">Retour</button>
+                        <button type="submit" id="submit-btn">Connexion</button>
+                    </div>
                 </form>
             </div>
         </div>
+        {% endif %}
 
+        {% if is_authenticated %}
         <!-- Groupe: Affichage & Navigation -->
         <div class="settings-group" id="group-display">
             <h2>Affichage & Navigation</h2>
@@ -113,53 +211,6 @@
             </div>
         </div>
 
-        <!-- Groupe: IA -->
-        <div class="settings-group" id="group-ai">
-            <h2>Intelligence Artificielle</h2>
-            <div class="form-field">
-                <label for="ai_model">Modèle d'IA principal</label>
-                <input type="text" id="ai_model" name="ai.model" placeholder="ex: deepseek-coder, gpt-4, ...">
-            </div>
-            <h3>Fournisseurs d'API</h3>
-            <div class="provider-grid">
-                <div class="provider-card">
-                    <h3>DeepSeek</h3>
-                    <div class="form-field">
-                        <label for="deepseek_api_key">Clé API</label>
-                        <input type="password" id="deepseek_api_key" name="ai.providers.deepseek.api_key">
-                    </div>
-                </div>
-                <div class="provider-card">
-                    <h3>OpenAI</h3>
-                    <div class="form-field">
-                        <label for="openai_api_key">Clé API</label>
-                        <input type="password" id="openai_api_key" name="ai.providers.openai.api_key">
-                    </div>
-                </div>
-                <div class="provider-card">
-                    <h3>Google Gemini</h3>
-                    <div class="form-field">
-                        <label for="google_api_key">Clé API</label>
-                        <input type="password" id="google_api_key" name="ai.providers.google.api_key">
-                    </div>
-                </div>
-                <div class="provider-card">
-                    <h3>Groq</h3>
-                    <div class="form-field">
-                        <label for="groq_api_key">Clé API</label>
-                        <input type="password" id="groq_api_key" name="ai.providers.groq.api_key">
-                    </div>
-                </div>
-                <div class="provider-card">
-                    <h3>Ollama (Local)</h3>
-                    <div class="form-field">
-                        <label for="ollama_base_url">URL de base</label>
-                        <input type="text" id="ollama_base_url" name="ai.providers.ollama.base_url">
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- Groupe: Utilisateur -->
         <div class="settings-group" id="group-user">
             <h2>Utilisateur & Sécurité</h2>
@@ -175,10 +226,59 @@
                 <label for="user_folder_path">Chemin du dossier Bunker</label>
                 <input type="text" id="user_folder_path" name="user.user_folder_path">
             </div>
+        </div>
+
+        <!-- NOUVEAU Groupe: Clés API -->
+        <div class="settings-group" id="group-api-keys">
+            <h2>Clés API & Services Externes</h2>
             <div class="form-field">
-                <label for="hibp_api_key">Clé API "Have I Been Pwned"</label>
-                <input type="password" id="hibp_api_key" name="user.api_keys.hibp_api_key">
+                <label for="ai_model">Modèle d'IA principal</label>
+                <input type="text" id="ai_model" name="ai.model" placeholder="ex: deepseek-coder, gpt-4, ...">
+                <p class="description">Le nom du modèle détermine le fournisseur utilisé.</p>
             </div>
+            <div class="provider-grid">
+                <div class="provider-card">
+                    <h3>DeepSeek</h3>
+                    <div class="form-field api-key-field">
+                        <label for="deepseek_api_key"><span class="api-key-status"></span>Clé API</label>
+                        <input type="password" id="deepseek_api_key" name="ai.providers.deepseek.api_key" autocomplete="off">
+                        <span class="toggle-password">👁️</span>
+                    </div>
+                </div>
+                <div class="provider-card">
+                    <h3>OpenAI</h3>
+                    <div class="form-field api-key-field">
+                        <label for="openai_api_key"><span class="api-key-status"></span>Clé API</label>
+                        <input type="password" id="openai_api_key" name="ai.providers.openai.api_key" autocomplete="off">
+                        <span class="toggle-password">👁️</span>
+                    </div>
+                </div>
+                <div class="provider-card">
+                    <h3>Google Gemini</h3>
+                    <div class="form-field api-key-field">
+                        <label for="google_api_key"><span class="api-key-status"></span>Clé API</label>
+                        <input type="password" id="google_api_key" name="ai.providers.google.api_key" autocomplete="off">
+                        <span class="toggle-password">👁️</span>
+                    </div>
+                </div>
+                <div class="provider-card">
+                    <h3>Groq</h3>
+                    <div class="form-field api-key-field">
+                        <label for="groq_api_key"><span class="api-key-status"></span>Clé API</label>
+                        <input type="password" id="groq_api_key" name="ai.providers.groq.api_key" autocomplete="off">
+                        <span class="toggle-password">👁️</span>
+                    </div>
+                </div>
+                <div class="provider-card">
+                    <h3>Have I Been Pwned</h3>
+                    <div class="form-field api-key-field">
+                        <label for="hibp_api_key"><span class="api-key-status"></span>Clé API</label>
+                        <input type="password" id="hibp_api_key" name="user.api_keys.hibp_api_key" autocomplete="off">
+                        <span class="toggle-password">👁️</span>
+                    </div>
+                </div>
+            </div>
+            <p class="description" style="margin-top: 1rem;">Les clés API ne sont jamais affichées. Laissez un champ vide pour conserver la clé existante.</p>
         </div>
 
         <!-- Groupe: VPN -->
@@ -190,12 +290,56 @@
             </div>
         </div>
 
+        <!-- NOUVEAU Groupe: Configuration Locale (Ollama) -->
+        <div class="settings-group" id="group-local">
+            <h2>Configuration Locale</h2>
+            <div class="form-field">
+                <label for="ollama_base_url">URL de base Ollama</label>
+                <input type="text" id="ollama_base_url" name="ai.providers.ollama.base_url">
+            </div>
+        </div>
+
+        <!-- NOUVEAU Groupe: Synchronisation -->
+        <div class="settings-group" id="group-sync">
+            <h2>Synchronisation</h2>
+            <p class="description">Synchronisez votre Bunker en utilisant un service cloud tiers (Dropbox, Google Drive, etc.). L'application utilisera le dossier spécifié comme racine pour le Bunker.</p>
+            <div class="form-field">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="sync_enabled" name="sync.enabled">
+                    Activer la synchronisation
+                </label>
+            </div>
+            <div class="form-field" id="sync-path-field" style="display: none;">
+                <label for="sync_path">Chemin du dossier de synchronisation</label>
+                <div class="input-with-button">
+                    <input type="text" id="sync_path" name="sync.path" readonly>
+                    <button type="button" id="browse-sync-btn" class="btn">Parcourir...</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Groupe: Actions de Sécurité (visible uniquement par le concepteur) -->
+        {% if user_role == 'concepteur' %}
+        <div class="settings-group" id="group-security">
+            <h2>Actions de Sécurité</h2>
+            <p class="description">Actions irréversibles. À utiliser avec une extrême prudence.</p>
+            <div class="actions-grid">
+                <button id="clear-cache-btn" class="btn btn-warning">Vider le cache</button>
+                <button id="kill-app-btn" class="btn btn-danger">Kill-app</button>
+                <button id="crash-btn" class="btn btn-danger-outline">Crash</button>
+                <a href="/admin/testers" class="btn">Gérer les Accès Testeur</a>
+            </div>
+        </div>
+        {% endif %}
+
         <!-- Actions -->
         <div class="actions">
             <button id="save-btn" class="btn btn-primary">Sauvegarder</button>
             <button id="reset-btn" class="btn btn-danger">Réinitialiser</button>
+            <button id="logout-btn" class="btn btn-secondary">Déconnexion</button>
             <button id="back-btn" class="btn btn-secondary">Retour</button>
         </div>
+        {% endif %}
     </div>
 
     <!-- NOUVEAU : Overlay pour l'effet de transition "glitch" -->
@@ -203,7 +347,6 @@
 
     <script>
         window.addEventListener('pywebviewready', () => {
-            // --- NOUVEAU : Logique de notification (copiée de aboutissement.html) ---
             function showNotification(message, type = 'error', duration = 4000) {
                 const container = document.getElementById('notification-container');
                 if (!container) return;
@@ -220,7 +363,6 @@
                 }, duration);
             }
 
-            // --- NOUVEAU : Logique du "Time-Scroll" (Phase 6.3) ---
             const body = document.body;
             const glitchOverlay = document.getElementById('glitch-overlay');
             const eras = [
@@ -268,8 +410,14 @@
                 }
             }
 
+            {% if is_authenticated %}
             const formElements = document.querySelectorAll('input, select');
             let currentConfig = {};
+            const syncEnabledCheckbox = document.getElementById('sync_enabled');
+            const syncPathField = document.getElementById('sync-path-field');
+            const syncPathInput = document.getElementById('sync_path');
+            const browseSyncBtn = document.getElementById('browse-sync-btn');
+
 
             // Fonction pour définir une valeur dans un objet imbriqué
             function setNestedValue(obj, path, value) {
@@ -286,6 +434,25 @@
                 return path.split('.').reduce((o, k) => (o && o[k] !== 'undefined') ? o[k] : undefined, obj);
             }
 
+            function toggleSyncPathVisibility() {
+                if (!syncEnabledCheckbox) return;
+                syncPathField.style.display = syncEnabledCheckbox.checked ? 'block' : 'none';
+            }
+
+            if (syncEnabledCheckbox) {
+                syncEnabledCheckbox.addEventListener('change', toggleSyncPathVisibility);
+            }
+
+            if (browseSyncBtn) {
+                browseSyncBtn.addEventListener('click', async () => {
+                    const result = await window.pywebview.api.open_folder_dialog();
+                    if (result.status === 'success') {
+                        syncPathInput.value = result.path;
+                    }
+                });
+            }
+
+
             // Charger les paramètres
             async function loadSettings() {
                 currentConfig = await window.pywebview.api.load_settings();
@@ -296,10 +463,22 @@
                     const value = getNestedValue(currentConfig, path);
                     if (el.type === 'radio') {
                         el.checked = (el.value === value);
+                    } else if (el.type === 'checkbox') {
+                        el.checked = !!value;
                     } else if (el.type !== 'password') { // Ne pas pré-remplir les mots de passe
                         el.value = value !== undefined ? value : '';
+                    } else {
+                        // NOUVEAU: Gérer les indicateurs de statut pour les clés API
+                        const apiKeyField = el.closest('.api-key-field');
+                        if (apiKeyField) {
+                            const statusIndicator = apiKeyField.querySelector('.api-key-status');
+                            const isConfigured = value && !value.includes('YOUR_') && value.length > 5;
+                            statusIndicator.style.backgroundColor = isConfigured ? '#00ffcc' : '#ff5555';
+                            statusIndicator.title = isConfigured ? 'Clé configurée' : 'Clé non configurée';
+                        }
                     }
                 });
+                toggleSyncPathVisibility(); // Mettre à jour la visibilité après le chargement
             }
 
             // Sauvegarder les paramètres
@@ -313,6 +492,8 @@
                         if (el.checked) {
                             setNestedValue(newConfig, path, el.value);
                         }
+                    } else if (el.type === 'checkbox') {
+                        setNestedValue(newConfig, path, el.checked);
                     } else if (el.type === 'password') {
                         // Sauvegarder le mot de passe uniquement s'il a été modifié
                         if (el.value) {
@@ -326,7 +507,8 @@
                 const result = await window.pywebview.api.save_settings(newConfig);
                 if (result.status === 'success') {
                     alert('Paramètres sauvegardés.');
-                    currentConfig = newConfig; // Mettre à jour la config locale
+                    // Recharger pour mettre à jour les indicateurs de statut
+                    await loadSettings();
                 } else {
                     alert(`Erreur: ${result.message}`);
                 }
@@ -338,12 +520,27 @@
                     const result = await window.pywebview.api.reset_settings_to_default();
                     if (result.status === 'success') {
                         alert(result.message);
-                        await loadSettings(); // Recharger les paramètres pour afficher les valeurs par défaut
+                        await loadSettings();
                     } else {
                         alert(`Erreur: ${result.message}`);
                     }
                 }
             }
+            {% endif %}
+
+            // --- NOUVEAU : Logique pour afficher/cacher les clés API ---
+            document.querySelectorAll('.toggle-password').forEach(toggle => {
+                toggle.addEventListener('click', () => {
+                    const input = toggle.previousElementSibling;
+                    if (input.type === 'password') {
+                        input.type = 'text';
+                        toggle.textContent = '🙈';
+                    } else {
+                        input.type = 'password';
+                        toggle.textContent = '👁️';
+                    }
+                });
+            });
 
             // --- NOUVEAU : Logique d'authentification ---
             const loginForm = document.getElementById('login-form');
@@ -351,6 +548,7 @@
             const passwordInput = document.getElementById('password-input');
             const authBox = document.getElementById('auth-box');
 
+            if (loginForm) {
             loginForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const username = usernameInput.value.trim();
@@ -365,8 +563,8 @@
 
                 if (result.status === 'success') {
                     // Stocker le rôle de l'utilisateur pour une utilisation future
-                    sessionStorage.setItem('userRole', result.role);
-                    alert('Connexion réussie. Redirection...');
+                    // La session est maintenant gérée côté serveur. On recharge simplement la page.
+                    alert('Connexion réussie.');
                     window.location.href = '/terminaux.html';
                 } else {
                     showNotification(result.message || 'Identifiants incorrects.', 'error');
@@ -376,21 +574,74 @@
                     setTimeout(() => authBox.classList.remove('shake-effect'), 500);
                 }
             });
+            }
 
+            const loginBackBtn = document.getElementById('login-back-btn');
+            if (loginBackBtn) {
+                loginBackBtn.addEventListener('click', () => {
+                    window.location.href = '/terminaux.html';
+                });
+            }
 
-            // Listeners
-            document.getElementById('save-btn').addEventListener('click', saveSettings);
-            document.getElementById('reset-btn').addEventListener('click', resetSettings);
-            document.getElementById('back-btn').addEventListener('click', () => {
-                window.location.href = '/terminaux.html';
-            });
+            // --- NOUVEAU : Logique des boutons de sécurité ---
+            const clearCacheBtn = document.getElementById('clear-cache-btn');
+            const killAppBtn = document.getElementById('kill-app-btn');
+            const crashBtn = document.getElementById('crash-btn');
+
+            if (clearCacheBtn) {
+                clearCacheBtn.addEventListener('click', () => {
+                    if (confirm("ATTENTION : Cette action va archiver votre dossier Bunker et réinitialiser l'application à son état de première utilisation. Voulez-vous continuer ?")) {
+                        alert("Archivage et réinitialisation en cours... L'application va se fermer.");
+                        window.pywebview.api.clearCache();
+                    }
+                });
+            }
+
+            if (killAppBtn) {
+                killAppBtn.addEventListener('click', () => {
+                    if (confirm("AVERTISSEMENT EXTRÊME : Cette action va tenter de supprimer COMPLÈTEMENT l'application et toutes ses données de votre système. Cette action est IRREVERSIBLE. Êtes-vous absolument certain ?")) {
+                        alert("Procédure d'auto-destruction enclenchée. Adieu.");
+                        window.pywebview.api.killApp();
+                    }
+                });
+            }
+
+            if (crashBtn) {
+                crashBtn.addEventListener('click', () => {
+                    if (confirm("AVERTISSEMENT FINAL : Cette action va simuler un crash système majeur, tenter de supprimer l'application et ses données, et terminer le processus brutalement. Utilisez cette option uniquement en cas de compromission critique. Continuer ?")) {
+                        alert("CRASH IMMINENT...");
+                        window.pywebview.api.crashApp();
+                    }
+                });
+            }
+
+            // --- Listeners pour la vue authentifiée ---
+            const saveBtn = document.getElementById('save-btn');
+            const resetBtn = document.getElementById('reset-btn');
+            const backBtn = document.getElementById('back-btn');
+            const logoutBtn = document.getElementById('logout-btn');
+
+            if (saveBtn) saveBtn.addEventListener('click', saveSettings);
+            if (resetBtn) resetBtn.addEventListener('click', resetSettings);
+            if (backBtn) backBtn.addEventListener('click', () => { window.location.href = '/terminaux.html'; });
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', async () => {
+                    const result = await window.pywebview.api.logout();
+                    if (result.status === 'success') {
+                        alert('Déconnexion réussie.');
+                        window.location.reload(); // Recharge la page, qui affichera le formulaire de login
+                    }
+                });
+            }
 
             // Attacher l'événement de scroll et l'exécuter une fois au chargement
             window.addEventListener('scroll', updateEraStyle, { passive: true });
             updateEraStyle();
 
             // Chargement initial
+            {% if is_authenticated %}
             loadSettings();
+            {% endif %}
         });
     </script>
 </body>

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}">
+    <style>
+        .unavailable-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            text-align: center;
+            padding: 2rem;
+        }
+        h1 {
+            font-size: 3rem;
+            color: #ff3333;
+            text-shadow: 0 0 10px #ff3333;
+            animation: glitch 1.5s infinite;
+        }
+        p {
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+    </style>
+</head>
+<body>
+    <div class="moving-structure"></div>
+    <div class="grime-Overlay"></div>
+    <div class="unavailable-container">
+        <h1>// CONNEXION INTERROMPUE //</h1>
+        <p>{{ message }}</p>
+    </div>
+</body>
+</html>

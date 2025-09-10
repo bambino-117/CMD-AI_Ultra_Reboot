@@ -1,7 +1,7 @@
 {
   // 1. THÈME et APPEARANCE
   // -------------------------------
-  "workbench.colorTheme": "Matrix",
+  "workbench.colorTheme": "Oled Neon Theme Black",
   "workbench.iconTheme": "material-icon-theme",
   "window.zoomLevel": 0,
   // 2. EDITOR - Comportement de l'éditeur

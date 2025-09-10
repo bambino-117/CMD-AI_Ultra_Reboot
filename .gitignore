@@ -10,4 +10,12 @@ __pycache__/
 LOGIQUES/SANDBOX_DATA/
 
 # Fichier de roadmap personnel
-#ROADMAP.md
+ROADMAP.md
+
+# Fichiers de configuration et secrets locaux
+.env
+tester_codes.json
+
+# Dossier des fichiers temporaires de l'éditeur de code
+# Contient les fichiers temporaires créés par l'éditeur de code.
+Temporaire/

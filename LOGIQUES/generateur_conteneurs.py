@@ -122,6 +122,17 @@ def generer_conteneurs():
             "author": "Cygnus X-1",
             "status": "actif",
             "payload": {"entry_point_template": "database_search.html"}
+        },
+        # Extension BOTS-KUSO-YARO (Conteneur 65)
+        65: {
+            "id": 65,
+            "type": "extension",
+            "name": "BOTS-KUSO-YARO",
+            "description": "Générateur de ressources 'bots' pour les opérations avancées. Permet de créer et gérer un pool d'unités consommables pour les scans et autres actions.",
+            "version": "1.0.0",
+            "author": "Cygnus X-1",
+            "status": "actif",
+            "payload": {"entry_point_template": "bots_kuso_yaro.html"}
         }
     }
 
